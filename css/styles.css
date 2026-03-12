@@ -222,9 +222,16 @@ body {
 
 .section-header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-head-left {
+  display: flex;
   align-items: baseline;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
 }
 
 .section-title {
@@ -241,6 +248,35 @@ body {
   background: var(--bg-elevated);
   padding: 0.18rem 0.6rem;
   border-radius: 100px;
+}
+
+.view-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--transition), transform var(--transition), color var(--transition);
+}
+
+.view-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+.view-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.view-toggle svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* ============ GRID ============ */

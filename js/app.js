@@ -9,6 +9,7 @@ const CONFIG = {
 const state = {
   movies: [],
   series: [],
+  displayMode: 'by-year',
 };
 
 function sortByReleaseDate(items) {
@@ -44,8 +45,27 @@ function getActiveSection() {
 }
 
 function getDisplayMode() {
-  const select = document.getElementById('display-mode');
-  return select?.value || 'by-year';
+  return state.displayMode;
+}
+
+function getGridIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>';
+}
+
+function getYearIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>';
+}
+
+function updateViewToggleButtons() {
+  const isByYear = getDisplayMode() === 'by-year';
+  const nextModeLabel = isByYear ? 'Passer en affichage grille' : 'Passer en affichage par annee';
+  const icon = isByYear ? getGridIcon() : getYearIcon();
+
+  document.querySelectorAll('.view-toggle').forEach((btn) => {
+    btn.innerHTML = icon;
+    btn.setAttribute('aria-label', nextModeLabel);
+    btn.setAttribute('title', nextModeLabel);
+  });
 }
 
 function setSelectOptions(select, options, fallbackValue) {
@@ -139,14 +159,20 @@ function setupFilters() {
 }
 
 function setupDisplayMode() {
-  const modeSelect = document.getElementById('display-mode');
-  if (!modeSelect) return;
+  const buttons = document.querySelectorAll('.view-toggle');
+  if (!buttons.length) return;
 
-  modeSelect.addEventListener('change', () => {
-    renderLibrary();
-    refreshFiltersForActiveSection();
-    applyCurrentFilters();
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.displayMode = getDisplayMode() === 'by-year' ? 'grid' : 'by-year';
+      updateViewToggleButtons();
+      renderLibrary();
+      refreshFiltersForActiveSection();
+      applyCurrentFilters();
+    });
   });
+
+  updateViewToggleButtons();
 }
 
 function hideLoading() {

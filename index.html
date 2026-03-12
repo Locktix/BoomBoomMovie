@@ -38,10 +38,6 @@
       </div>
 
       <div class="filters-wrap" aria-label="Filtres">
-        <select id="display-mode" class="filter-select" aria-label="Type d'affichage">
-          <option value="by-year" selected>Affichage: Par annee</option>
-          <option value="grid">Affichage: Grille</option>
-        </select>
         <select id="filter-year" class="filter-select" aria-label="Filtrer par annee">
           <option value="all">Toutes les annees</option>
         </select>
@@ -58,8 +54,11 @@
     <!-- Movies -->
     <section id="movies" class="section active" role="tabpanel">
       <div class="section-header">
-        <h2 class="section-title">Films</h2>
-        <span class="count" id="movies-count"></span>
+        <div class="section-head-left">
+          <h2 class="section-title">Films</h2>
+          <span class="count" id="movies-count"></span>
+        </div>
+        <button id="view-toggle-movies" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
       </div>
       <div class="grid" id="movies-grid"></div>
     </section>
@@ -67,8 +66,11 @@
     <!-- Series -->
     <section id="series" class="section" role="tabpanel">
       <div class="section-header">
-        <h2 class="section-title">Séries</h2>
-        <span class="count" id="series-count"></span>
+        <div class="section-head-left">
+          <h2 class="section-title">Séries</h2>
+          <span class="count" id="series-count"></span>
+        </div>
+        <button id="view-toggle-series" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
       </div>
       <div class="grid" id="series-grid"></div>
     </section>
