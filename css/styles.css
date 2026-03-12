@@ -663,6 +663,20 @@ body {
   border-top: none;
 }
 
+.episode-playable {
+  cursor: pointer;
+}
+
+.episode-playable:hover {
+  background: var(--bg-elevated);
+}
+
+.episode-play {
+  font-size: 0.9rem;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 .episode-main {
   display: flex;
   flex-direction: column;

@@ -32,7 +32,10 @@ function showSeriesModal(seriesItem) {
   const content = document.getElementById('series-modal-content');
 
   const seasons = Array.isArray(seriesItem.seasons) ? seriesItem.seasons : [];
-  const totalEpisodes = seasons.reduce((acc, s) => acc + (Number(s.episodes) || 0), 0);
+  const totalEpisodes = seasons.reduce((acc, s) => {
+    const epList = Array.isArray(s.episodes) ? s.episodes : Array(Number(s.episodes) || 0);
+    return acc + epList.length;
+  }, 0);
 
   title.textContent = seriesItem.title;
   meta.textContent = `${seriesItem.year || ''} | ${seasons.length} saison(s) | ${totalEpisodes} episode(s)`;
@@ -40,7 +43,10 @@ function showSeriesModal(seriesItem) {
   let html = '';
   seasons.forEach((season) => {
     const seasonNum = Number(season.season) || 1;
-    const epCount = Number(season.episodes) || 0;
+    const epList = Array.isArray(season.episodes)
+      ? season.episodes
+      : Array.from({ length: Number(season.episodes) || 0 }, () => ({ url: '' }));
+    const epCount = epList.length;
     html += `
       <article class="season-card">
         <header class="season-card-head">
@@ -50,18 +56,20 @@ function showSeriesModal(seriesItem) {
         <div class="episode-list">
     `;
 
-    for (let ep = 1; ep <= epCount; ep += 1) {
-      const code = `S${String(seasonNum).padStart(2, '0')}E${String(ep).padStart(2, '0')}`;
+    epList.forEach((ep, i) => {
+      const epNum = i + 1;
+      const code = `S${String(seasonNum).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
+      const hasUrl = !!ep.url;
       html += `
-          <div class="episode-item">
+          <div class="episode-item${hasUrl ? ' episode-playable' : ''}"${hasUrl ? ` data-url="${escapeHtml(ep.url)}"` : ''}>
             <div class="episode-main">
               <p class="episode-code">${code}</p>
-              <p class="episode-title">Episode ${ep}</p>
+              <p class="episode-title">Episode ${epNum}</p>
             </div>
-            <p class="episode-year">${season.year || ''}</p>
+            ${hasUrl ? '<span class="episode-play">&#9654;</span>' : `<p class="episode-year">${season.year || ''}</p>`}
           </div>
       `;
-    }
+    });
 
     html += `
         </div>
@@ -94,6 +102,11 @@ function setupSeriesModal() {
   modal.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-modal')) {
       closeSeriesModal();
+      return;
+    }
+    const epItem = e.target instanceof HTMLElement && e.target.closest('.episode-playable');
+    if (epItem && epItem.dataset.url) {
+      window.open(epItem.dataset.url, '_blank', 'noopener,noreferrer');
     }
   });
 
