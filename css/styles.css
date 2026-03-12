@@ -251,6 +251,27 @@ body {
   gap: 14px;
 }
 
+.grid-by-year {
+  display: block;
+}
+
+.year-group {
+  margin-bottom: 1.7rem;
+  padding-top: 0.15rem;
+}
+
+.year-group-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  margin-bottom: 0.72rem;
+}
+
+.year-grid {
+  margin-bottom: 0;
+}
+
 /* ============ CARD ============ */
 
 .card {

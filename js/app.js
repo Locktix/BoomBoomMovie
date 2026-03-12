@@ -43,6 +43,11 @@ function getActiveSection() {
   return document.querySelector('.section.active');
 }
 
+function getDisplayMode() {
+  const select = document.getElementById('display-mode');
+  return select?.value || 'by-year';
+}
+
 function setSelectOptions(select, options, fallbackValue) {
   select.innerHTML = '';
   options.forEach((option) => {
@@ -115,6 +120,11 @@ function applyCurrentFilters() {
     if (isVisible) visibleCount += 1;
   });
 
+  section.querySelectorAll('.year-group').forEach((group) => {
+    const hasVisibleCard = [...group.querySelectorAll('.card')].some((card) => card.style.display !== 'none');
+    group.style.display = hasVisibleCard ? '' : 'none';
+  });
+
   const count = section.querySelector('.count');
   if (count) count.textContent = String(visibleCount);
 }
@@ -126,6 +136,17 @@ function setupFilters() {
 
   yearSelect.addEventListener('change', applyCurrentFilters);
   collectionSelect.addEventListener('change', applyCurrentFilters);
+}
+
+function setupDisplayMode() {
+  const modeSelect = document.getElementById('display-mode');
+  if (!modeSelect) return;
+
+  modeSelect.addEventListener('change', () => {
+    renderLibrary();
+    refreshFiltersForActiveSection();
+    applyCurrentFilters();
+  });
 }
 
 function hideLoading() {
@@ -348,13 +369,52 @@ function createCard(item, isTV = false, index = 0) {
 function renderGrid(items, gridId, countId, isTV) {
   const grid = document.getElementById(gridId);
   const count = document.getElementById(countId);
+  const mode = getDisplayMode();
+
+  grid.innerHTML = '';
+  grid.classList.toggle('grid-by-year', mode === 'by-year');
 
   count.textContent = items && items.length ? String(items.length) : '0';
   if (!items || items.length === 0) return;
 
+  if (mode === 'by-year') {
+    const groups = new Map();
+    items.forEach((item, index) => {
+      const yearKey = String(item.year || 'Inconnu');
+      if (!groups.has(yearKey)) groups.set(yearKey, []);
+      groups.get(yearKey).push({ item, index });
+    });
+
+    const groupsFragment = document.createDocumentFragment();
+    groups.forEach((entries, yearKey) => {
+      const group = document.createElement('section');
+      group.className = 'year-group';
+
+      const title = document.createElement('h3');
+      title.className = 'year-group-title';
+      title.textContent = yearKey;
+
+      const yearGrid = document.createElement('div');
+      yearGrid.className = 'grid year-grid';
+      entries.forEach(({ item, index }) => yearGrid.appendChild(createCard(item, isTV, index)));
+
+      group.appendChild(title);
+      group.appendChild(yearGrid);
+      groupsFragment.appendChild(group);
+    });
+
+    grid.appendChild(groupsFragment);
+    return;
+  }
+
   const fragment = document.createDocumentFragment();
   items.forEach((item, index) => fragment.appendChild(createCard(item, isTV, index)));
   grid.appendChild(fragment);
+}
+
+function renderLibrary() {
+  renderGrid(state.movies, 'movies-grid', 'movies-count', false);
+  renderGrid(state.series, 'series-grid', 'series-count', true);
 }
 
 function setupTabs() {
@@ -387,6 +447,7 @@ async function init() {
   setupTabs();
   setupSearch();
   setupFilters();
+  setupDisplayMode();
   setupSeriesModal();
 
   try {
@@ -397,8 +458,7 @@ async function init() {
     state.series = sortByReleaseDate(Array.isArray(data.series) ? data.series : []);
     state.movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
 
-    renderGrid(state.movies, 'movies-grid', 'movies-count', false);
-    renderGrid(state.series, 'series-grid', 'series-count', true);
+    renderLibrary();
     refreshFiltersForActiveSection();
     applyCurrentFilters();
   } catch (err) {
