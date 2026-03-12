@@ -1,0 +1,78 @@
+{
+  "movies": [
+    {
+      "title": "La Femme de ménage",
+      "year": 2025,
+      "poster": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR8itOFLPkWi_V2y2pwkS_-OQ0tGp1iyx16EfXfQosoRrjREN2f",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1368166/VFQ/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T201544Z&X-Amz-SignedHeaders=host&X-Amz-Expires=24256&X-Amz-Signature=008a32984fab75a7a18492d41fb2c01f3089944d25cd1c2e89b6c03c1e96840a"
+    },
+    {
+      "title": "Avengers",
+      "year": 2012,
+      "poster": "https://m.media-amazon.com/images/M/MV5BNGE0YTVjNzUtNzJjOS00NGNlLTgxMzctZTY4YTE1Y2Y1ZTU4XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+      "url": ""
+    },
+    {
+      "title": "Thor",
+      "year": 2011,
+      "poster": "https://static.wikia.nocookie.net/marvelstudios/images/4/40/Thor_affiche_def.jpg/revision/latest?cb=20151124091816&path-prefix=fr",
+      "url": ""
+    },
+    {
+      "title": "L'incroyable Hulk",
+      "year": 2008,
+      "poster": "https://fr.web.img2.acsta.net/medias/nmedia/18/65/69/21/18949753.jpg",
+      "url": ""
+    },
+    {
+      "title": "Iron Man",
+      "year": 2008,
+      "poster": "https://static.wikia.nocookie.net/marvelcinematicuniverse/images/1/1e/Iron_Man_Official_Poster.jpg/revision/latest?cb=20251125025052",
+      "url": ""
+    },
+    {
+      "title": "Iron Man 2",
+      "year": 2010,
+      "poster": "https://static.wikia.nocookie.net/marvelmovies/images/8/8f/Iron_Man_2_Theatrical_Poster.jpg/revision/latest?cb=20221014191335",
+      "url": ""
+    },
+    {
+      "title": "Captain Marvel",
+      "year": 2019,
+      "poster": "https://resizing.flixster.com/IATaLQOAfVzJ-wfnzriXuACjmgU=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzLzU5ZjVjZTkzLTkwYjEtNDI5My04ZTY0LWMwNGMzM2M0MmYwOS53ZWJw",
+      "url": ""
+    },
+    {
+      "title": "Lucy",
+      "year": 2014,
+      "poster": "https://m.media-amazon.com/images/I/81OZ3uHXe5L._AC_UF894,1000_QL80_.jpg",
+      "url": ""
+    },
+    {
+      "title": "Minecraft, le film",
+      "year": 2025,
+      "poster": "https://i0.wp.com/www.filmspourenfants.net/wp-content/uploads/2025/06/minecraft-le-film-a.jpg?fit=333%2C456&ssl=1",
+      "url": ""
+    }
+  ],
+  "series": [
+    {
+      "title": "The Last of Us",
+      "year": 2023,
+      "poster": "https://resizing.flixster.com/JoxD64qP6Nn7RQN-CCyQXDQyQWA=/fit-in/352x330/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p22672667_b_v13_aj.jpg",
+      "url": "",
+      "seasons": [
+        {
+          "season": 1,
+          "episodes": 9,
+          "year": 2023
+        },
+        {
+          "season": 2,
+          "episodes": 7,
+          "year": 2025
+        }
+      ]
+    }
+  ]
+}

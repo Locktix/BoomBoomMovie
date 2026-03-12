@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BoomBoom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        Boom<span>Boom</span>
+      </div>
+
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-target="movies" role="tab" aria-selected="true">
+          🎬 Films
+        </button>
+        <button class="tab" data-target="series" role="tab" aria-selected="false">
+          📺 Séries
+        </button>
+      </nav>
+
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="search" class="search" id="search" placeholder="Rechercher un titre…" autocomplete="off" />
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main">
+
+    <!-- Movies -->
+    <section id="movies" class="section active" role="tabpanel">
+      <div class="section-header">
+        <h2 class="section-title">Films</h2>
+        <span class="count" id="movies-count"></span>
+      </div>
+      <div class="grid" id="movies-grid"></div>
+      <div class="empty-state" id="movies-empty" hidden>
+        <span class="empty-icon">🎬</span>
+        <p>Aucun film trouvé</p>
+      </div>
+    </section>
+
+    <!-- Series -->
+    <section id="series" class="section" role="tabpanel">
+      <div class="section-header">
+        <h2 class="section-title">Séries</h2>
+        <span class="count" id="series-count"></span>
+      </div>
+      <div class="grid" id="series-grid"></div>
+      <div class="empty-state" id="series-empty" hidden>
+        <span class="empty-icon">📺</span>
+        <p>Aucune série trouvée</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== LOADING SCREEN ===== -->
+  <div id="loading" class="loading-screen" aria-live="polite" aria-label="Chargement en cours">
+    <div class="loader-wrap">
+      <div class="loader"></div>
+      <p class="loader-text">Chargement…</p>
+    </div>
+  </div>
+
+  <!-- ===== SERIES EPISODES MODAL ===== -->
+  <div id="series-modal" class="series-modal" hidden aria-hidden="true">
+    <div class="series-modal-backdrop" data-close-modal></div>
+    <section class="series-modal-panel" role="dialog" aria-modal="true" aria-labelledby="series-modal-title">
+      <button id="series-modal-close" class="series-modal-close" aria-label="Fermer">✕</button>
+      <div class="series-modal-head">
+        <p class="series-kicker">Série</p>
+        <h3 id="series-modal-title" class="series-modal-title"></h3>
+        <p id="series-modal-meta" class="series-modal-meta"></p>
+      </div>
+      <div id="series-modal-content" class="series-modal-content"></div>
+    </section>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
