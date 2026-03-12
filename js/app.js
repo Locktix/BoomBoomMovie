@@ -254,6 +254,53 @@ function closeSeriesModal() {
   document.body.style.overflow = '';
 }
 
+function openVideoPlayer(videoUrl, movieTitle) {
+  const modal = document.getElementById('video-modal');
+  const source = document.getElementById('video-source');
+  const video = document.getElementById('video-player');
+  const title = document.getElementById('video-modal-title');
+
+  source.src = videoUrl;
+  title.textContent = movieTitle;
+  video.load();
+
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  video.play().catch(() => {
+    console.warn('Autoplay was prevented. User interaction required.');
+  });
+}
+
+function closeVideoPlayer() {
+  const modal = document.getElementById('video-modal');
+  const video = document.getElementById('video-player');
+
+  video.pause();
+  video.currentTime = 0;
+
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function setupVideoModal() {
+  const modal = document.getElementById('video-modal');
+  const closeBtn = document.getElementById('video-modal-close');
+
+  closeBtn.addEventListener('click', closeVideoPlayer);
+  modal.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-video')) {
+      closeVideoPlayer();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeVideoPlayer();
+  });
+}
+
 function setupSeriesModal() {
   const modal = document.getElementById('series-modal');
   const closeBtn = document.getElementById('series-modal-close');
@@ -266,7 +313,10 @@ function setupSeriesModal() {
     }
     const epItem = e.target instanceof HTMLElement && e.target.closest('.episode-playable');
     if (epItem && epItem.dataset.url) {
-      window.open(epItem.dataset.url, '_blank', 'noopener,noreferrer');
+      const epCode = epItem.querySelector('.episode-code')?.textContent || '';
+      const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Épisode';
+      const episodeTitle = `${seriesTitle} - ${epCode}`;
+      openVideoPlayer(epItem.dataset.url, episodeTitle);
     }
   });
 
@@ -381,7 +431,7 @@ function createCard(item, isTV = false, index = 0) {
     }
 
     if (item.url) {
-      window.open(item.url, '_blank', 'noopener,noreferrer');
+      openVideoPlayer(item.url, item.title);
     }
   };
 
@@ -478,6 +528,7 @@ async function init() {
   setupSearch();
   setupFilters();
   setupDisplayMode();
+  setupVideoModal();
   setupSeriesModal();
 
   try {

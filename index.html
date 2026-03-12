@@ -87,6 +87,23 @@
     </div>
   </div>
 
+  <!-- ===== VIDEO PLAYER MODAL ===== -->
+  <div id="video-modal" class="video-modal" hidden aria-hidden="true">
+    <div class="video-modal-backdrop" data-close-video></div>
+    <section class="video-modal-panel" role="dialog" aria-modal="true">
+      <button id="video-modal-close" class="video-modal-close" aria-label="Fermer la vidéo">✕</button>
+      <div class="video-player-wrap">
+        <video id="video-player" class="video-player" controls controlsList="nodownload">
+          <source id="video-source" src="" type="video/mp4" />
+          Votre navigateur ne supporte pas la lecture vidéo.
+        </video>
+      </div>
+      <div class="video-modal-footer">
+        <h3 id="video-modal-title" class="video-modal-title"></h3>
+      </div>
+    </section>
+  </div>
+
   <!-- ===== SERIES EPISODES MODAL ===== -->
   <div id="series-modal" class="series-modal" hidden aria-hidden="true">
     <div class="series-modal-backdrop" data-close-modal></div>
