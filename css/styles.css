@@ -675,12 +675,20 @@ body {
 
   .section-header {
     flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .section-head-left {
+    flex: 1;
+    min-width: 0;
   }
 
   .section-header-right {
-    width: 100%;
-    order: 1;
-    margin-bottom: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .filter-chips {
@@ -700,6 +708,15 @@ body {
   }
 
   .logo { font-size: 1.2rem; }
+
+  .card-overlay {
+    padding: 1.5rem 0.6rem 0.6rem;
+  }
+
+  .card-title {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
 }
 
 /* ============ SERIES MODAL ============ */
