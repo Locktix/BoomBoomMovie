@@ -10,6 +10,15 @@ const state = {
   series: [],
 };
 
+function sortByReleaseDate(items) {
+  return [...items].sort((a, b) => {
+    const yearA = Number(a?.year) || 0;
+    const yearB = Number(b?.year) || 0;
+    if (yearA !== yearB) return yearB - yearA;
+    return String(a?.title || '').localeCompare(String(b?.title || ''), 'fr', { sensitivity: 'base' });
+  });
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -286,8 +295,8 @@ async function init() {
     if (!res.ok) throw new Error(`Impossible de charger ${CONFIG.DATA_FILE} (HTTP ${res.status})`);
     const data = await res.json();
 
-    state.series = Array.isArray(data.series) ? data.series : [];
-    const movies = Array.isArray(data.movies) ? data.movies : [];
+    state.series = sortByReleaseDate(Array.isArray(data.series) ? data.series : []);
+    const movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
 
     renderGrid(movies, 'movies-grid', 'movies-count', false);
     renderGrid(state.series, 'series-grid', 'series-count', true);

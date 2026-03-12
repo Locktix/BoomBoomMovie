@@ -1,96 +1,128 @@
 ﻿{
-    "movies":  [
-                   {
-                       "title":  "La Femme de ménage",
-                       "year":  2025,
-                       "poster":  "assets/poster/movie-la-femme-de-m-nage-2025.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1368166/VFQ/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD\u0026X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request\u0026X-Amz-Date=20260312T201544Z\u0026X-Amz-SignedHeaders=host\u0026X-Amz-Expires=24256\u0026X-Amz-Signature=008a32984fab75a7a18492d41fb2c01f3089944d25cd1c2e89b6c03c1e96840a"
-                   },
-                   {
-                       "title":  "Avengers",
-                       "year":  2012,
-                       "poster":  "assets/poster/movie-avengers-2012.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/24428/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212214Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20266&X-Amz-Signature=c374bf8e8fe9f4dda2c6ed16712009e1bd90b52a15231a2644d47592f19f0784"
-                   },
-                   {
-                       "title":  "Thor",
-                       "year":  2011,
-                       "poster":  "assets/poster/movie-thor-2011.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10195/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212314Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20206&X-Amz-Signature=3d4c4ebedf1346da8b868ed2fae6be0f92533a309f060255838e6a3029104a3d"
-                   },
-                   {
-                       "title":  "L\u0027incroyable Hulk",
-                       "year":  2008,
-                       "poster":  "assets/poster/movie-l-incroyable-hulk-2008.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1724/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212342Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20178&X-Amz-Signature=712bf10cfd107d6e38c3603c7324c5731b89c93a45d2442f4727321ddce8b62e"
-                   },
-                   {
-                       "title":  "Iron Man",
-                       "year":  2008,
-                       "poster":  "assets/poster/movie-iron-man-2008.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1726/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212408Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20152&X-Amz-Signature=dee3201504e5191220e029aca296807f4ca01576d8a22d26d300d52b16c27092"
-                   },
-                   {
-                       "title":  "Iron Man 2",
-                       "year":  2010,
-                       "poster":  "assets/poster/movie-iron-man-2-2010.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10138/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212446Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20114&X-Amz-Signature=0a16d0ebde6eabc38c66da941a07613066ccd6f743d942e4438f19cd98beb8e3"
-                   },
-                   {
-                       "title":  "Captain Marvel",
-                       "year":  2019,
-                       "poster":  "assets/poster/movie-captain-marvel-2019.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/299537/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212510Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20090&X-Amz-Signature=7b1185f707af7c7a2463ea359ab4efbd1f6905ba9798bf2fd42fc4d12158ce05"
-                   },
-                   {
-                       "title":  "Lucy",
-                       "year":  2014,
-                       "poster":  "assets/poster/movie-lucy-2014.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/240832/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212532Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20068&X-Amz-Signature=335eeaaf3e87c5e9f0c0e71183233754c6c90281d6c7777ba13c4c941f6c7571"
-                   },
-                   {
-                       "title":  "Minecraft, le film",
-                       "year":  2025,
-                       "poster":  "assets/poster/movie-minecraft-le-film-2025.jpg",
-                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/950387/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212553Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20047&X-Amz-Signature=cb9bddbad383b74fb75988706c8a60eaea68085fdb52dceef1ff4562a88c891d"
-                   }
-               ],
-    "series":  [
-                   {
-                       "title":  "The Last of Us",
-                       "year":  2023,
-                       "poster":  "assets/poster/series-the-last-of-us-2023.jpg",
-                       "url":  "",
-                       "seasons":  [
-                                       {
-                                           "season":  1,
-                                           "year":  2023,
-                                           "episodes":  [
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214025Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19175&X-Amz-Signature=491080f8c60eea9872e868d4aa8c185a4e7ee882b75cf9d618e93e37c2ab8892" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/02.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214103Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19137&X-Amz-Signature=07dedddcd013282689953a2cd0b39bdb71adc181667eb9a30513d2a02e34e93b" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/03.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214158Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19082&X-Amz-Signature=ee3fe55233fa6854b40d47a85fc13a7d38bb9a6bc5e4dfdc746e61c3913b949c" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/04.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214215Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19065&X-Amz-Signature=dfb1bd5fd9cb6b2c7ca27551ec8cba7a89952ed3420309feaaca6f60b3a8dfa8" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/05.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215712Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18168&X-Amz-Signature=e2aaa6e50e7398c1be88dbbebc12f372024b563dffef992b3df3cdb409605971" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/06.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215735Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18145&X-Amz-Signature=0e6d3646e8ed2c109be9f9174397fae6802933cffc495e2f412ad8eed85f3d1a" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/07.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215749Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18131&X-Amz-Signature=fbdecec59db77aa9722bd37ac8c9b6ef9b92ddcf9c51614d114dead49e51b986" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/08.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215807Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18113&X-Amz-Signature=5a3c202aa6457493d6085d918cdce8afa7802f5db5f546ad7b3ee2f94c592da2" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/09.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215910Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18050&X-Amz-Signature=8105c06ca602fda3065231b31ec00a54b9d173b7f9e2afab4811231d80d50b47" }
-                                           ]
-                                       },
-                                       {
-                                           "season":  2,
-                                           "year":  2025,
-                                           "episodes":  [
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220014Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17986&X-Amz-Signature=eac01b5bd904055d8c55d851e6fdccfa0ea2d39982dd51a9b9ecc58fd025d12a" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/02.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220042Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17958&X-Amz-Signature=eeb65272c394e214ddbd7fd61ea1c9b7f9920f2fed8264519813a3e86fb70ea8" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/03.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220114Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17926&X-Amz-Signature=1668fcce193022bb00447c92227a9a76de3f1408b0cd9b649c0439f32cccfab8" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/04.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220133Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17907&X-Amz-Signature=b1f9cddae1cd0d82ee8d8cacad2d0d5e4bae23fb4d9bdf6c4f7ff00a91133cd3" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/05.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220153Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17887&X-Amz-Signature=94943a63b7e93281455abf91af31a842798659c0377123d8c2e1c1da2ebf8fae" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/06.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220211Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17869&X-Amz-Signature=ee942dc4ded5f2269d19207c7770aeb8e9baf1e07e3fdbd5862cb751c282601e" },
-                                               { "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/07.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220224Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17856&X-Amz-Signature=70ce81ed01579d9b4de918744ca55c4992abc0ed0d64eecccdc8f1a584c50118" }
-                                           ]
-                                       }
-                                   ]
-                   }
-               ]
+  "movies": [
+    {
+      "title": "La Femme de ménage",
+      "year": 2025,
+      "poster": "assets/poster/movie-la-femme-de-m-nage-2025.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1368166/VFQ/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD\u0026X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request\u0026X-Amz-Date=20260312T201544Z\u0026X-Amz-SignedHeaders=host\u0026X-Amz-Expires=24256\u0026X-Amz-Signature=008a32984fab75a7a18492d41fb2c01f3089944d25cd1c2e89b6c03c1e96840a"
+    },
+    {
+      "title": "Avengers",
+      "year": 2012,
+      "poster": "assets/poster/movie-avengers-2012.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/24428/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212214Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20266&X-Amz-Signature=c374bf8e8fe9f4dda2c6ed16712009e1bd90b52a15231a2644d47592f19f0784"
+    },
+    {
+      "title": "Thor",
+      "year": 2011,
+      "poster": "assets/poster/movie-thor-2011.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10195/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212314Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20206&X-Amz-Signature=3d4c4ebedf1346da8b868ed2fae6be0f92533a309f060255838e6a3029104a3d"
+    },
+    {
+      "title": "L\u0027incroyable Hulk",
+      "year": 2008,
+      "poster": "assets/poster/movie-l-incroyable-hulk-2008.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1724/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212342Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20178&X-Amz-Signature=712bf10cfd107d6e38c3603c7324c5731b89c93a45d2442f4727321ddce8b62e"
+    },
+    {
+      "title": "Iron Man",
+      "year": 2008,
+      "poster": "assets/poster/movie-iron-man-2008.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1726/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212408Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20152&X-Amz-Signature=dee3201504e5191220e029aca296807f4ca01576d8a22d26d300d52b16c27092"
+    },
+    {
+      "title": "Iron Man 2",
+      "year": 2010,
+      "poster": "assets/poster/movie-iron-man-2-2010.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10138/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212446Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20114&X-Amz-Signature=0a16d0ebde6eabc38c66da941a07613066ccd6f743d942e4438f19cd98beb8e3"
+    },
+    {
+      "title": "Captain Marvel",
+      "year": 2019,
+      "poster": "assets/poster/movie-captain-marvel-2019.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/299537/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212510Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20090&X-Amz-Signature=7b1185f707af7c7a2463ea359ab4efbd1f6905ba9798bf2fd42fc4d12158ce05"
+    },
+    {
+      "title": "Lucy",
+      "year": 2014,
+      "poster": "assets/poster/movie-lucy-2014.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/240832/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212532Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20068&X-Amz-Signature=335eeaaf3e87c5e9f0c0e71183233754c6c90281d6c7777ba13c4c941f6c7571"
+    },
+    {
+      "title": "Minecraft, le film",
+      "year": 2025,
+      "poster": "assets/poster/movie-minecraft-le-film-2025.jpg",
+      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/950387/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212553Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20047&X-Amz-Signature=cb9bddbad383b74fb75988706c8a60eaea68085fdb52dceef1ff4562a88c891d"
+    }
+  ],
+  "series": [
+    {
+      "title": "The Last of Us",
+      "year": 2023,
+      "poster": "assets/poster/series-the-last-of-us-2023.jpg",
+      "url": "",
+      "seasons": [
+        {
+          "season": 1,
+          "year": 2023,
+          "episodes": [
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214025Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19175&X-Amz-Signature=491080f8c60eea9872e868d4aa8c185a4e7ee882b75cf9d618e93e37c2ab8892"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/02.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214103Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19137&X-Amz-Signature=07dedddcd013282689953a2cd0b39bdb71adc181667eb9a30513d2a02e34e93b"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/03.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214158Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19082&X-Amz-Signature=ee3fe55233fa6854b40d47a85fc13a7d38bb9a6bc5e4dfdc746e61c3913b949c"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/04.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T214215Z&X-Amz-SignedHeaders=host&X-Amz-Expires=19065&X-Amz-Signature=dfb1bd5fd9cb6b2c7ca27551ec8cba7a89952ed3420309feaaca6f60b3a8dfa8"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/05.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215712Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18168&X-Amz-Signature=e2aaa6e50e7398c1be88dbbebc12f372024b563dffef992b3df3cdb409605971"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/06.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215735Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18145&X-Amz-Signature=0e6d3646e8ed2c109be9f9174397fae6802933cffc495e2f412ad8eed85f3d1a"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/07.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215749Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18131&X-Amz-Signature=fbdecec59db77aa9722bd37ac8c9b6ef9b92ddcf9c51614d114dead49e51b986"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/08.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215807Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18113&X-Amz-Signature=5a3c202aa6457493d6085d918cdce8afa7802f5db5f546ad7b3ee2f94c592da2"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S01/09.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T215910Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18050&X-Amz-Signature=8105c06ca602fda3065231b31ec00a54b9d173b7f9e2afab4811231d80d50b47"
+            }
+          ]
+        },
+        {
+          "season": 2,
+          "year": 2025,
+          "episodes": [
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220014Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17986&X-Amz-Signature=eac01b5bd904055d8c55d851e6fdccfa0ea2d39982dd51a9b9ecc58fd025d12a"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/02.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220042Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17958&X-Amz-Signature=eeb65272c394e214ddbd7fd61ea1c9b7f9920f2fed8264519813a3e86fb70ea8"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/03.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220114Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17926&X-Amz-Signature=1668fcce193022bb00447c92227a9a76de3f1408b0cd9b649c0439f32cccfab8"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/04.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220133Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17907&X-Amz-Signature=b1f9cddae1cd0d82ee8d8cacad2d0d5e4bae23fb4d9bdf6c4f7ff00a91133cd3"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/05.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220153Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17887&X-Amz-Signature=94943a63b7e93281455abf91af31a842798659c0377123d8c2e1c1da2ebf8fae"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/06.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220211Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17869&X-Amz-Signature=ee942dc4ded5f2269d19207c7770aeb8e9baf1e07e3fdbd5862cb751c282601e"
+            },
+            {
+              "url": "https://634c24c674ac59b4b474a86fc26df548.r2.cloudflarestorage.com/linkedin/SERIES/100088/VF/S02/07.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=81d0b5a6b9a346a76b157fbb747b5862%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T220224Z&X-Amz-SignedHeaders=host&X-Amz-Expires=17856&X-Amz-Signature=70ce81ed01579d9b4de918744ca55c4992abc0ed0d64eecccdc8f1a584c50118"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
