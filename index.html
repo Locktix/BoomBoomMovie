@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BoomBoom</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -37,19 +38,14 @@
         <input type="search" class="search" id="search" placeholder="Rechercher un titre…" autocomplete="off" />
       </div>
 
-      <div class="filters-wrap" aria-label="Filtres">
-        <select id="filter-year" class="filter-select" aria-label="Filtrer par annee">
-          <option value="all">Toutes les annees</option>
-        </select>
-        <select id="filter-collection" class="filter-select" aria-label="Filtrer par collection">
-          <option value="all">Toutes les collections</option>
-        </select>
-      </div>
+
     </div>
   </header>
 
   <!-- ===== MAIN CONTENT ===== -->
   <main class="main">
+
+
 
     <!-- Movies -->
     <section id="movies" class="section active" role="tabpanel">
@@ -58,7 +54,10 @@
           <h2 class="section-title">Films</h2>
           <span class="count" id="movies-count"></span>
         </div>
+      <div class="section-header-right">
+        <div class="filter-chips" id="movies-collection-filters"></div>
         <button id="view-toggle-movies" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
+      </div>
       </div>
       <div class="grid" id="movies-grid"></div>
     </section>
@@ -70,7 +69,10 @@
           <h2 class="section-title">Séries</h2>
           <span class="count" id="series-count"></span>
         </div>
+      <div class="section-header-right">
+        <div class="filter-chips" id="series-collection-filters"></div>
         <button id="view-toggle-series" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
+      </div>
       </div>
       <div class="grid" id="series-grid"></div>
     </section>

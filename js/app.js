@@ -9,7 +9,8 @@ const CONFIG = {
 const state = {
   movies: [],
   series: [],
-  displayMode: 'by-year',
+  displayMode: 'grid',
+  selectedCollection: 'all',
 };
 
 function sortByReleaseDate(items) {
@@ -83,16 +84,9 @@ function setSelectOptions(select, options, fallbackValue) {
 
 function refreshFiltersForActiveSection() {
   const section = getActiveSection();
-  const yearSelect = document.getElementById('filter-year');
-  const collectionSelect = document.getElementById('filter-collection');
-  if (!section || !yearSelect || !collectionSelect) return;
+  if (!section) return;
 
   const cards = [...section.querySelectorAll('.card')];
-  const currentYear = yearSelect.value || 'all';
-  const currentCollection = collectionSelect.value || 'all';
-
-  const years = [...new Set(cards.map((card) => card.dataset.year).filter(Boolean))]
-    .sort((a, b) => Number(b) - Number(a));
 
   const collectionMap = new Map();
   cards.forEach((card) => {
@@ -105,36 +99,51 @@ function refreshFiltersForActiveSection() {
     .sort((a, b) => a[1].localeCompare(b[1], 'fr', { sensitivity: 'base' }))
     .map(([value, label]) => ({ value, label }));
 
-  setSelectOptions(
-    yearSelect,
-    [{ value: 'all', label: 'Toutes les annees' }, ...years.map((year) => ({ value: year, label: year }))],
-    currentYear
-  );
-  setSelectOptions(
-    collectionSelect,
-    [{ value: 'all', label: 'Toutes les collections' }, ...collections],
-    currentCollection
-  );
+  renderAllCollectionChips(collections);
+}
+
+function renderAllCollectionChips(collections) {
+  const isSeries = document.querySelector('.section.active').id === 'series';
+  const containerId = isSeries ? 'series-collection-filters' : 'movies-collection-filters';
+  renderCollectionChips(containerId, collections);
+}
+
+function renderCollectionChips(containerId, collections) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  collections.forEach(({ value, label }) => {
+    const chip = document.createElement('button');
+    chip.className = `filter-chip ${state.selectedCollection === value ? 'active' : ''}`;
+    chip.textContent = label;
+    chip.addEventListener('click', () => {
+      state.selectedCollection = state.selectedCollection === value ? 'all' : value;
+      refreshFiltersForActiveSection();
+      applyCurrentFilters();
+    });
+    fragment.appendChild(chip);
+  });
+
+  container.appendChild(fragment);
 }
 
 function applyCurrentFilters() {
   const section = getActiveSection();
   const input = document.getElementById('search');
-  const yearSelect = document.getElementById('filter-year');
-  const collectionSelect = document.getElementById('filter-collection');
-  if (!section || !input || !yearSelect || !collectionSelect) return;
+  if (!section || !input) return;
 
   const q = input.value.trim().toLowerCase();
-  const selectedYear = yearSelect.value;
-  const selectedCollection = collectionSelect.value;
+  const selectedCollection = state.selectedCollection;
   let visibleCount = 0;
 
   section.querySelectorAll('.card').forEach((card) => {
     const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
     const matchSearch = !q || title.includes(q);
-    const matchYear = selectedYear === 'all' || card.dataset.year === selectedYear;
     const matchCollection = selectedCollection === 'all' || card.dataset.collection === selectedCollection;
-    const isVisible = matchSearch && matchYear && matchCollection;
+    const isVisible = matchSearch && matchCollection;
 
     card.style.display = isVisible ? '' : 'none';
     if (isVisible) visibleCount += 1;
@@ -150,12 +159,7 @@ function applyCurrentFilters() {
 }
 
 function setupFilters() {
-  const yearSelect = document.getElementById('filter-year');
-  const collectionSelect = document.getElementById('filter-collection');
-  if (!yearSelect || !collectionSelect) return;
-
-  yearSelect.addEventListener('change', applyCurrentFilters);
-  collectionSelect.addEventListener('change', applyCurrentFilters);
+  refreshFiltersForActiveSection();
 }
 
 function setupDisplayMode() {
