@@ -1,5 +1,5 @@
 /**
- * BoomBoom � app.js
+ * BoomBoom - app.js
  * API removed: posters come only from data.json (field: poster).
  */
 const CONFIG = {
@@ -9,21 +9,6 @@ const CONFIG = {
 const state = {
   series: [],
 };
-
-const deferredPosterLoads = new WeakMap();
-const posterObserver = 'IntersectionObserver' in window
-  ? new IntersectionObserver((entries, observer) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      const run = deferredPosterLoads.get(entry.target);
-      if (run) {
-        run();
-        deferredPosterLoads.delete(entry.target);
-      }
-      observer.unobserve(entry.target);
-    });
-  }, { rootMargin: '320px 0px' })
-  : null;
 
 function escapeHtml(str) {
   return String(str)
@@ -50,7 +35,7 @@ function showSeriesModal(seriesItem) {
   const totalEpisodes = seasons.reduce((acc, s) => acc + (Number(s.episodes) || 0), 0);
 
   title.textContent = seriesItem.title;
-  meta.textContent = `${seriesItem.year || ''} � ${seasons.length} saison(s) � ${totalEpisodes} episode(s)`;
+  meta.textContent = `${seriesItem.year || ''} | ${seasons.length} saison(s) | ${totalEpisodes} episode(s)`;
 
   let html = '';
   seasons.forEach((season) => {
@@ -60,7 +45,7 @@ function showSeriesModal(seriesItem) {
       <article class="season-card">
         <header class="season-card-head">
           <h4>Saison ${seasonNum}</h4>
-          <span>${epCount} episode(s) � ${season.year || ''}</span>
+          <span>${epCount} episode(s) | ${season.year || ''}</span>
         </header>
         <div class="episode-list">
     `;
@@ -126,7 +111,7 @@ function createCard(item, isTV = false, index = 0) {
 
   card.innerHTML = `
     <div class="card-placeholder">
-      <span class="placeholder-icon">${isTV ? '??' : '??'}</span>
+      <span class="placeholder-icon">${isTV ? 'TV' : 'FILM'}</span>
       <span class="placeholder-title">${escapeHtml(item.title)}</span>
     </div>
     <img class="card-img" alt="${escapeHtml(item.title)}" loading="lazy" />
@@ -144,10 +129,33 @@ function createCard(item, isTV = false, index = 0) {
   const img = card.querySelector('.card-img');
   const placeholder = card.querySelector('.card-placeholder');
   img.decoding = 'async';
+  img.referrerPolicy = 'no-referrer';
 
   if (item.poster) {
+    const isRemotePoster = /^https?:\/\//i.test(item.poster);
+    const posterCandidates = [item.poster];
+    if (isRemotePoster) {
+      const strippedPoster = item.poster.replace(/^https?:\/\//, '');
+      posterCandidates.push(
+        `https://images.weserv.nl/?url=${encodeURIComponent(strippedPoster)}&w=500&h=750&fit=cover`
+      );
+    }
+
+    let posterCandidateIndex = 0;
+
+    const tryNextPoster = () => {
+      if (posterCandidateIndex >= posterCandidates.length) {
+        placeholder.style.display = '';
+        img.classList.remove('loaded');
+        return;
+      }
+      img.src = posterCandidates[posterCandidateIndex];
+      posterCandidateIndex += 1;
+    };
+
     const loadPoster = () => {
-      img.src = item.poster;
+      posterCandidateIndex = 0;
+      tryNextPoster();
     };
 
     img.onload = () => {
@@ -155,18 +163,31 @@ function createCard(item, isTV = false, index = 0) {
       placeholder.style.display = 'none';
     };
 
+    img.onerror = () => {
+      tryNextPoster();
+    };
+
     if (index < 8) {
       img.loading = 'eager';
       img.fetchPriority = 'high';
-      loadPoster();
-    } else if (posterObserver) {
-      img.loading = 'lazy';
-      img.fetchPriority = 'low';
-      deferredPosterLoads.set(img, loadPoster);
-      posterObserver.observe(img);
     } else {
       img.loading = 'lazy';
-      loadPoster();
+      img.fetchPriority = 'low';
+    }
+
+    // For local files we reveal immediately and only rollback on actual error.
+    if (!isRemotePoster) {
+      img.classList.add('loaded');
+      placeholder.style.display = 'none';
+    }
+
+    loadPoster();
+
+    // If the browser served the image from cache very quickly,
+    // ensure we still reveal it even if onload was skipped.
+    if (img.complete && img.naturalWidth > 0) {
+      img.classList.add('loaded');
+      placeholder.style.display = 'none';
     }
   }
 
@@ -192,18 +213,13 @@ function createCard(item, isTV = false, index = 0) {
   return card;
 }
 
-function renderGrid(items, gridId, countId, emptyId, isTV) {
+function renderGrid(items, gridId, countId, isTV) {
   const grid = document.getElementById(gridId);
   const count = document.getElementById(countId);
-  const empty = document.getElementById(emptyId);
 
-  if (!items || items.length === 0) {
-    empty.hidden = false;
-    count.textContent = '0';
-    return;
-  }
+  count.textContent = items && items.length ? String(items.length) : '0';
+  if (!items || items.length === 0) return;
 
-  count.textContent = String(items.length);
   const fragment = document.createDocumentFragment();
   items.forEach((item, index) => fragment.appendChild(createCard(item, isTV, index)));
   grid.appendChild(fragment);
@@ -236,11 +252,7 @@ function setupSearch() {
       card.style.display = !q || title.includes(q) ? '' : 'none';
     });
 
-    document.querySelectorAll('.section.active').forEach((sec) => {
-      const visible = [...sec.querySelectorAll('.card')].some((c) => c.style.display !== 'none');
-      const emptyEl = sec.querySelector('.empty-state');
-      if (emptyEl) emptyEl.hidden = visible || !q;
-    });
+
   });
 
   document.querySelectorAll('.tab').forEach((tab) => {
@@ -264,14 +276,14 @@ async function init() {
     state.series = Array.isArray(data.series) ? data.series : [];
     const movies = Array.isArray(data.movies) ? data.movies : [];
 
-    renderGrid(movies, 'movies-grid', 'movies-count', 'movies-empty', false);
-    renderGrid(state.series, 'series-grid', 'series-count', 'series-empty', true);
+    renderGrid(movies, 'movies-grid', 'movies-count', false);
+    renderGrid(state.series, 'series-grid', 'series-count', true);
   } catch (err) {
     console.error('[BoomBoom]', err.message);
     if (location.protocol === 'file:') {
       document.querySelector('.main').innerHTML = `
         <div class="empty-state">
-          <span class="empty-icon">??</span>
+          <span class="empty-icon">!</span>
           <p>Pour executer le site localement, lancez un serveur HTTP :</p>
           <pre style="margin-top:.75rem;padding:.75rem 1rem;background:var(--bg-elevated);border-radius:8px;font-size:.8rem;color:var(--accent)">npx serve .</pre>
         </div>

@@ -1,78 +1,78 @@
-{
-  "movies": [
-    {
-      "title": "La Femme de ménage",
-      "year": 2025,
-      "poster": "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR8itOFLPkWi_V2y2pwkS_-OQ0tGp1iyx16EfXfQosoRrjREN2f",
-      "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1368166/VFQ/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T201544Z&X-Amz-SignedHeaders=host&X-Amz-Expires=24256&X-Amz-Signature=008a32984fab75a7a18492d41fb2c01f3089944d25cd1c2e89b6c03c1e96840a"
-    },
-    {
-      "title": "Avengers",
-      "year": 2012,
-      "poster": "https://m.media-amazon.com/images/M/MV5BNGE0YTVjNzUtNzJjOS00NGNlLTgxMzctZTY4YTE1Y2Y1ZTU4XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
-      "url": ""
-    },
-    {
-      "title": "Thor",
-      "year": 2011,
-      "poster": "https://static.wikia.nocookie.net/marvelstudios/images/4/40/Thor_affiche_def.jpg/revision/latest?cb=20151124091816&path-prefix=fr",
-      "url": ""
-    },
-    {
-      "title": "L'incroyable Hulk",
-      "year": 2008,
-      "poster": "https://fr.web.img2.acsta.net/medias/nmedia/18/65/69/21/18949753.jpg",
-      "url": ""
-    },
-    {
-      "title": "Iron Man",
-      "year": 2008,
-      "poster": "https://static.wikia.nocookie.net/marvelcinematicuniverse/images/1/1e/Iron_Man_Official_Poster.jpg/revision/latest?cb=20251125025052",
-      "url": ""
-    },
-    {
-      "title": "Iron Man 2",
-      "year": 2010,
-      "poster": "https://static.wikia.nocookie.net/marvelmovies/images/8/8f/Iron_Man_2_Theatrical_Poster.jpg/revision/latest?cb=20221014191335",
-      "url": ""
-    },
-    {
-      "title": "Captain Marvel",
-      "year": 2019,
-      "poster": "https://resizing.flixster.com/IATaLQOAfVzJ-wfnzriXuACjmgU=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzLzU5ZjVjZTkzLTkwYjEtNDI5My04ZTY0LWMwNGMzM2M0MmYwOS53ZWJw",
-      "url": ""
-    },
-    {
-      "title": "Lucy",
-      "year": 2014,
-      "poster": "https://m.media-amazon.com/images/I/81OZ3uHXe5L._AC_UF894,1000_QL80_.jpg",
-      "url": ""
-    },
-    {
-      "title": "Minecraft, le film",
-      "year": 2025,
-      "poster": "https://fr.web.img5.acsta.net/img/3e/61/3e619c6423fd2c82be9ec8b727aa217b.jpg",
-      "url": ""
-    }
-  ],
-  "series": [
-    {
-      "title": "The Last of Us",
-      "year": 2023,
-      "poster": "https://resizing.flixster.com/JoxD64qP6Nn7RQN-CCyQXDQyQWA=/fit-in/352x330/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p22672667_b_v13_aj.jpg",
-      "url": "",
-      "seasons": [
-        {
-          "season": 1,
-          "episodes": 9,
-          "year": 2023
-        },
-        {
-          "season": 2,
-          "episodes": 7,
-          "year": 2025
-        }
-      ]
-    }
-  ]
+﻿{
+    "movies":  [
+                   {
+                       "title":  "La Femme de ménage",
+                       "year":  2025,
+                       "poster":  "assets/poster/movie-la-femme-de-m-nage-2025.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1368166/VFQ/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD\u0026X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request\u0026X-Amz-Date=20260312T201544Z\u0026X-Amz-SignedHeaders=host\u0026X-Amz-Expires=24256\u0026X-Amz-Signature=008a32984fab75a7a18492d41fb2c01f3089944d25cd1c2e89b6c03c1e96840a"
+                   },
+                   {
+                       "title":  "Avengers",
+                       "year":  2012,
+                       "poster":  "assets/poster/movie-avengers-2012.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/24428/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212214Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20266&X-Amz-Signature=c374bf8e8fe9f4dda2c6ed16712009e1bd90b52a15231a2644d47592f19f0784"
+                   },
+                   {
+                       "title":  "Thor",
+                       "year":  2011,
+                       "poster":  "assets/poster/movie-thor-2011.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10195/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212314Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20206&X-Amz-Signature=3d4c4ebedf1346da8b868ed2fae6be0f92533a309f060255838e6a3029104a3d"
+                   },
+                   {
+                       "title":  "L\u0027incroyable Hulk",
+                       "year":  2008,
+                       "poster":  "assets/poster/movie-l-incroyable-hulk-2008.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1724/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212342Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20178&X-Amz-Signature=712bf10cfd107d6e38c3603c7324c5731b89c93a45d2442f4727321ddce8b62e"
+                   },
+                   {
+                       "title":  "Iron Man",
+                       "year":  2008,
+                       "poster":  "assets/poster/movie-iron-man-2008.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1726/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212408Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20152&X-Amz-Signature=dee3201504e5191220e029aca296807f4ca01576d8a22d26d300d52b16c27092"
+                   },
+                   {
+                       "title":  "Iron Man 2",
+                       "year":  2010,
+                       "poster":  "assets/poster/movie-iron-man-2-2010.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10138/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212446Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20114&X-Amz-Signature=0a16d0ebde6eabc38c66da941a07613066ccd6f743d942e4438f19cd98beb8e3"
+                   },
+                   {
+                       "title":  "Captain Marvel",
+                       "year":  2019,
+                       "poster":  "assets/poster/movie-captain-marvel-2019.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/299537/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212510Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20090&X-Amz-Signature=7b1185f707af7c7a2463ea359ab4efbd1f6905ba9798bf2fd42fc4d12158ce05"
+                   },
+                   {
+                       "title":  "Lucy",
+                       "year":  2014,
+                       "poster":  "assets/poster/movie-lucy-2014.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/240832/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212532Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20068&X-Amz-Signature=335eeaaf3e87c5e9f0c0e71183233754c6c90281d6c7777ba13c4c941f6c7571"
+                   },
+                   {
+                       "title":  "Minecraft, le film",
+                       "year":  2025,
+                       "poster":  "assets/poster/movie-minecraft-le-film-2025.jpg",
+                       "url":  "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/950387/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212553Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20047&X-Amz-Signature=cb9bddbad383b74fb75988706c8a60eaea68085fdb52dceef1ff4562a88c891d"
+                   }
+               ],
+    "series":  [
+                   {
+                       "title":  "The Last of Us",
+                       "year":  2023,
+                       "poster":  "assets/poster/series-the-last-of-us-2023.jpg",
+                       "url":  "",
+                       "seasons":  [
+                                       {
+                                           "season":  1,
+                                           "episodes":  9,
+                                           "year":  2023
+                                       },
+                                       {
+                                           "season":  2,
+                                           "episodes":  7,
+                                           "year":  2025
+                                       }
+                                   ]
+                   }
+               ]
 }
