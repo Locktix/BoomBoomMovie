@@ -7,6 +7,7 @@ const CONFIG = {
 };
 
 const state = {
+  movies: [],
   series: [],
 };
 
@@ -26,6 +27,105 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
+}
+
+function normalizeCollection(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase();
+}
+
+function getItemCollection(item) {
+  return String(item?.collection || '').trim();
+}
+
+function getActiveSection() {
+  return document.querySelector('.section.active');
+}
+
+function setSelectOptions(select, options, fallbackValue) {
+  select.innerHTML = '';
+  options.forEach((option) => {
+    const el = document.createElement('option');
+    el.value = option.value;
+    el.textContent = option.label;
+    select.appendChild(el);
+  });
+
+  const hasFallback = options.some((option) => option.value === fallbackValue);
+  select.value = hasFallback ? fallbackValue : 'all';
+}
+
+function refreshFiltersForActiveSection() {
+  const section = getActiveSection();
+  const yearSelect = document.getElementById('filter-year');
+  const collectionSelect = document.getElementById('filter-collection');
+  if (!section || !yearSelect || !collectionSelect) return;
+
+  const cards = [...section.querySelectorAll('.card')];
+  const currentYear = yearSelect.value || 'all';
+  const currentCollection = collectionSelect.value || 'all';
+
+  const years = [...new Set(cards.map((card) => card.dataset.year).filter(Boolean))]
+    .sort((a, b) => Number(b) - Number(a));
+
+  const collectionMap = new Map();
+  cards.forEach((card) => {
+    const key = card.dataset.collection || '';
+    const label = card.dataset.collectionLabel || '';
+    if (key && label && !collectionMap.has(key)) collectionMap.set(key, label);
+  });
+
+  const collections = [...collectionMap.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'fr', { sensitivity: 'base' }))
+    .map(([value, label]) => ({ value, label }));
+
+  setSelectOptions(
+    yearSelect,
+    [{ value: 'all', label: 'Toutes les annees' }, ...years.map((year) => ({ value: year, label: year }))],
+    currentYear
+  );
+  setSelectOptions(
+    collectionSelect,
+    [{ value: 'all', label: 'Toutes les collections' }, ...collections],
+    currentCollection
+  );
+}
+
+function applyCurrentFilters() {
+  const section = getActiveSection();
+  const input = document.getElementById('search');
+  const yearSelect = document.getElementById('filter-year');
+  const collectionSelect = document.getElementById('filter-collection');
+  if (!section || !input || !yearSelect || !collectionSelect) return;
+
+  const q = input.value.trim().toLowerCase();
+  const selectedYear = yearSelect.value;
+  const selectedCollection = collectionSelect.value;
+  let visibleCount = 0;
+
+  section.querySelectorAll('.card').forEach((card) => {
+    const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+    const matchSearch = !q || title.includes(q);
+    const matchYear = selectedYear === 'all' || card.dataset.year === selectedYear;
+    const matchCollection = selectedCollection === 'all' || card.dataset.collection === selectedCollection;
+    const isVisible = matchSearch && matchYear && matchCollection;
+
+    card.style.display = isVisible ? '' : 'none';
+    if (isVisible) visibleCount += 1;
+  });
+
+  const count = section.querySelector('.count');
+  if (count) count.textContent = String(visibleCount);
+}
+
+function setupFilters() {
+  const yearSelect = document.getElementById('filter-year');
+  const collectionSelect = document.getElementById('filter-collection');
+  if (!yearSelect || !collectionSelect) return;
+
+  yearSelect.addEventListener('change', applyCurrentFilters);
+  collectionSelect.addEventListener('change', applyCurrentFilters);
 }
 
 function hideLoading() {
@@ -130,6 +230,13 @@ function createCard(item, isTV = false, index = 0) {
   card.tabIndex = 0;
   card.setAttribute('role', 'button');
   card.setAttribute('aria-label', `${item.title} (${item.year})`);
+  card.dataset.year = String(item.year || '');
+  const collectionLabel = getItemCollection(item);
+  card.dataset.collection = normalizeCollection(collectionLabel);
+  card.dataset.collectionLabel = collectionLabel;
+  const collectionBadge = collectionLabel
+    ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
+    : '';
 
   card.innerHTML = `
     <div class="card-placeholder">
@@ -144,7 +251,10 @@ function createCard(item, isTV = false, index = 0) {
     </div>
     <div class="card-overlay">
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
-      <span class="card-year">${item.year || ''}</span>
+      <div class="card-meta">
+        <span class="card-year">${item.year || ''}</span>
+        ${collectionBadge}
+      </div>
     </div>
   `;
 
@@ -259,6 +369,8 @@ function setupTabs() {
         t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
       });
       sections.forEach((s) => s.classList.toggle('active', s.id === target));
+      refreshFiltersForActiveSection();
+      applyCurrentFilters();
     });
   });
 }
@@ -267,27 +379,14 @@ function setupSearch() {
   const input = document.getElementById('search');
 
   input.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase();
-
-    document.querySelectorAll('.section.active .card').forEach((card) => {
-      const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
-      card.style.display = !q || title.includes(q) ? '' : 'none';
-    });
-
-
-  });
-
-  document.querySelectorAll('.tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      input.value = '';
-      input.dispatchEvent(new Event('input'));
-    });
+    applyCurrentFilters();
   });
 }
 
 async function init() {
   setupTabs();
   setupSearch();
+  setupFilters();
   setupSeriesModal();
 
   try {
@@ -296,10 +395,12 @@ async function init() {
     const data = await res.json();
 
     state.series = sortByReleaseDate(Array.isArray(data.series) ? data.series : []);
-    const movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
+    state.movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
 
-    renderGrid(movies, 'movies-grid', 'movies-count', false);
+    renderGrid(state.movies, 'movies-grid', 'movies-count', false);
     renderGrid(state.series, 'series-grid', 'series-count', true);
+    refreshFiltersForActiveSection();
+    applyCurrentFilters();
   } catch (err) {
     console.error('[BoomBoom]', err.message);
     if (location.protocol === 'file:') {

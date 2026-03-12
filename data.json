@@ -9,36 +9,42 @@
     {
       "title": "Avengers",
       "year": 2012,
+      "collection": "MCU",
       "poster": "assets/poster/movie-avengers-2012.jpg",
       "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/24428/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212214Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20266&X-Amz-Signature=c374bf8e8fe9f4dda2c6ed16712009e1bd90b52a15231a2644d47592f19f0784"
     },
     {
       "title": "Thor",
       "year": 2011,
+      "collection": "MCU",
       "poster": "assets/poster/movie-thor-2011.jpg",
       "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10195/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212314Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20206&X-Amz-Signature=3d4c4ebedf1346da8b868ed2fae6be0f92533a309f060255838e6a3029104a3d"
     },
     {
       "title": "L\u0027incroyable Hulk",
       "year": 2008,
+      "collection": "MCU",
       "poster": "assets/poster/movie-l-incroyable-hulk-2008.jpg",
       "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1724/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212342Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20178&X-Amz-Signature=712bf10cfd107d6e38c3603c7324c5731b89c93a45d2442f4727321ddce8b62e"
     },
     {
       "title": "Iron Man",
       "year": 2008,
+      "collection": "MCU",
       "poster": "assets/poster/movie-iron-man-2008.jpg",
       "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1726/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212408Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20152&X-Amz-Signature=dee3201504e5191220e029aca296807f4ca01576d8a22d26d300d52b16c27092"
     },
     {
       "title": "Iron Man 2",
       "year": 2010,
+      "collection": "MCU",
       "poster": "assets/poster/movie-iron-man-2-2010.jpg",
       "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/10138/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212446Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20114&X-Amz-Signature=0a16d0ebde6eabc38c66da941a07613066ccd6f743d942e4438f19cd98beb8e3"
     },
     {
       "title": "Captain Marvel",
       "year": 2019,
+      "collection": "MCU",
       "poster": "assets/poster/movie-captain-marvel-2019.jpg",
       "url": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/299537/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260312%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260312T212510Z&X-Amz-SignedHeaders=host&X-Amz-Expires=20090&X-Amz-Signature=7b1185f707af7c7a2463ea359ab4efbd1f6905ba9798bf2fd42fc4d12158ce05"
     },
