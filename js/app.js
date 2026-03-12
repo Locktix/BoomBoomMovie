@@ -10,6 +10,21 @@ const state = {
   series: [],
 };
 
+const deferredPosterLoads = new WeakMap();
+const posterObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const run = deferredPosterLoads.get(entry.target);
+      if (run) {
+        run();
+        deferredPosterLoads.delete(entry.target);
+      }
+      observer.unobserve(entry.target);
+    });
+  }, { rootMargin: '320px 0px' })
+  : null;
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -128,12 +143,31 @@ function createCard(item, isTV = false, index = 0) {
 
   const img = card.querySelector('.card-img');
   const placeholder = card.querySelector('.card-placeholder');
+  img.decoding = 'async';
+
   if (item.poster) {
-    img.src = item.poster;
+    const loadPoster = () => {
+      img.src = item.poster;
+    };
+
     img.onload = () => {
       img.classList.add('loaded');
       placeholder.style.display = 'none';
     };
+
+    if (index < 8) {
+      img.loading = 'eager';
+      img.fetchPriority = 'high';
+      loadPoster();
+    } else if (posterObserver) {
+      img.loading = 'lazy';
+      img.fetchPriority = 'low';
+      deferredPosterLoads.set(img, loadPoster);
+      posterObserver.observe(img);
+    } else {
+      img.loading = 'lazy';
+      loadPoster();
+    }
   }
 
   const open = () => {
