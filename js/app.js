@@ -13,6 +13,11 @@ const state = {
   selectedCollection: 'all',
 };
 
+const playerState = {
+  urlCandidates: [],
+  currentIndex: 0,
+};
+
 const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
 
 function parseSignedUrlExpiry(url) {
@@ -83,6 +88,25 @@ function showNotice(message, type = 'warning') {
   root.appendChild(notice);
 }
 
+function getMediaUrlCandidates(entry) {
+  const raw = [];
+  if (Array.isArray(entry?.urls)) raw.push(...entry.urls);
+  raw.push(entry?.url, entry?.tempUrl);
+
+  const seen = new Set();
+  return raw
+    .map((url) => String(url || '').trim())
+    .filter((url) => {
+      if (!url || seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
+}
+
+function hasPlayableCandidate(candidates) {
+  return candidates.some((url) => !getUrlAvailability(url).isExpired);
+}
+
 function annotateLibraryLinks() {
   const stats = {
     signed: 0,
@@ -91,12 +115,18 @@ function annotateLibraryLinks() {
   };
 
   state.movies.forEach((movie) => {
-    const availability = getUrlAvailability(movie.url);
+    const candidates = getMediaUrlCandidates(movie);
+    const availability = getUrlAvailability(candidates[0] || '');
+    movie._urlCandidates = candidates;
+    movie._hasPlayableCandidate = hasPlayableCandidate(candidates);
     movie._urlAvailability = availability;
 
-    if (availability.hasSignedExpiry) stats.signed += 1;
-    if (availability.isExpired) stats.expired += 1;
-    if (availability.isExpiringSoon) stats.expiringSoon += 1;
+    candidates.forEach((url) => {
+      const candidateAvailability = getUrlAvailability(url);
+      if (candidateAvailability.hasSignedExpiry) stats.signed += 1;
+      if (candidateAvailability.isExpired) stats.expired += 1;
+      if (candidateAvailability.isExpiringSoon) stats.expiringSoon += 1;
+    });
   });
 
   state.series.forEach((show) => {
@@ -104,12 +134,18 @@ function annotateLibraryLinks() {
     seasons.forEach((season) => {
       const episodes = Array.isArray(season.episodes) ? season.episodes : [];
       episodes.forEach((ep) => {
-        const availability = getUrlAvailability(ep.url);
+        const candidates = getMediaUrlCandidates(ep);
+        const availability = getUrlAvailability(candidates[0] || '');
+        ep._urlCandidates = candidates;
+        ep._hasPlayableCandidate = hasPlayableCandidate(candidates);
         ep._urlAvailability = availability;
 
-        if (availability.hasSignedExpiry) stats.signed += 1;
-        if (availability.isExpired) stats.expired += 1;
-        if (availability.isExpiringSoon) stats.expiringSoon += 1;
+        candidates.forEach((url) => {
+          const candidateAvailability = getUrlAvailability(url);
+          if (candidateAvailability.hasSignedExpiry) stats.signed += 1;
+          if (candidateAvailability.isExpired) stats.expired += 1;
+          if (candidateAvailability.isExpiringSoon) stats.expiringSoon += 1;
+        });
       });
     });
   });
@@ -323,11 +359,12 @@ function showSeriesModal(seriesItem) {
     epList.forEach((ep, i) => {
       const epNum = i + 1;
       const code = `S${String(seasonNum).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
-      const hasUrl = !!ep.url;
-      const isExpired = !!ep?._urlAvailability?.isExpired;
-      const isPlayable = hasUrl && !isExpired;
+      const urlCandidates = Array.isArray(ep?._urlCandidates) ? ep._urlCandidates : getMediaUrlCandidates(ep);
+      const hasUrl = urlCandidates.length > 0;
+      const isPlayable = hasUrl && hasPlayableCandidate(urlCandidates);
+      const isExpired = hasUrl && !isPlayable;
       html += `
-          <div class="episode-item${isPlayable ? ' episode-playable' : ''}${isExpired ? ' episode-expired' : ''}"${isPlayable ? ` data-url="${escapeHtml(ep.url)}"` : ''}>
+          <div class="episode-item${isPlayable ? ' episode-playable' : ''}${isExpired ? ' episode-expired' : ''}"${isPlayable ? ` data-url-candidates="${escapeHtml(JSON.stringify(urlCandidates))}"` : ''}>
             <div class="episode-main">
               <p class="episode-code">${code}</p>
               <p class="episode-title">Episode ${epNum}</p>
@@ -365,12 +402,23 @@ function closeSeriesModal() {
 }
 
 function openVideoPlayer(videoUrl, movieTitle) {
+  const candidates = Array.isArray(videoUrl)
+    ? videoUrl
+    : getMediaUrlCandidates({ url: videoUrl });
+  if (!candidates.length) {
+    showNotice('Aucun lien video disponible pour ce contenu.', 'error');
+    return;
+  }
+
   const modal = document.getElementById('video-modal');
   const source = document.getElementById('video-source');
   const video = document.getElementById('video-player');
   const title = document.getElementById('video-modal-title');
 
-  source.src = videoUrl;
+  playerState.urlCandidates = candidates;
+  playerState.currentIndex = 0;
+
+  source.src = candidates[0];
   title.textContent = movieTitle;
   video.load();
 
@@ -385,10 +433,14 @@ function openVideoPlayer(videoUrl, movieTitle) {
 
 function closeVideoPlayer() {
   const modal = document.getElementById('video-modal');
+  const source = document.getElementById('video-source');
   const video = document.getElementById('video-player');
 
   video.pause();
   video.currentTime = 0;
+  source.src = '';
+  playerState.urlCandidates = [];
+  playerState.currentIndex = 0;
 
   modal.hidden = true;
   modal.setAttribute('aria-hidden', 'true');
@@ -412,6 +464,20 @@ function setupVideoModal() {
   });
 
   video.addEventListener('error', () => {
+    const hasNextCandidate = playerState.currentIndex + 1 < playerState.urlCandidates.length;
+    if (hasNextCandidate) {
+      playerState.currentIndex += 1;
+      const nextUrl = playerState.urlCandidates[playerState.currentIndex];
+      const source = document.getElementById('video-source');
+      source.src = nextUrl;
+      video.load();
+      video.play().catch(() => {
+        console.warn('Autoplay was prevented. User interaction required.');
+      });
+      showNotice('Lien principal indisponible. Lecture basculee vers le lien temporaire.', 'warning');
+      return;
+    }
+
     showNotice('Lecture impossible. Le lien video est peut-etre expire.', 'error');
   });
 }
@@ -427,11 +493,17 @@ function setupSeriesModal() {
       return;
     }
     const epItem = e.target instanceof HTMLElement && e.target.closest('.episode-playable');
-    if (epItem && epItem.dataset.url) {
+    if (epItem && epItem.dataset.urlCandidates) {
       const epCode = epItem.querySelector('.episode-code')?.textContent || '';
       const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Épisode';
       const episodeTitle = `${seriesTitle} - ${epCode}`;
-      openVideoPlayer(epItem.dataset.url, episodeTitle);
+      let urlCandidates = [];
+      try {
+        urlCandidates = JSON.parse(epItem.dataset.urlCandidates);
+      } catch {
+        urlCandidates = [];
+      }
+      openVideoPlayer(urlCandidates, episodeTitle);
     }
   });
 
@@ -450,8 +522,9 @@ function createCard(item, isTV = false, index = 0) {
   const collectionLabel = getItemCollection(item);
   card.dataset.collection = normalizeCollection(collectionLabel);
   card.dataset.collectionLabel = collectionLabel;
-  const isExpired = !!item?._urlAvailability?.isExpired;
-  if (!isTV && isExpired) card.classList.add('card-unavailable');
+  const urlCandidates = Array.isArray(item?._urlCandidates) ? item._urlCandidates : getMediaUrlCandidates(item);
+  const hasPlayableUrl = hasPlayableCandidate(urlCandidates);
+  if (!isTV && !hasPlayableUrl) card.classList.add('card-unavailable');
   const collectionBadge = collectionLabel
     ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
     : '';
@@ -547,14 +620,12 @@ function createCard(item, isTV = false, index = 0) {
       return;
     }
 
-    if (isExpired) {
+    if (!hasPlayableUrl) {
       showNotice('Ce film ne peut pas se lancer: le lien video a expire.', 'error');
       return;
     }
 
-    if (item.url) {
-      openVideoPlayer(item.url, item.title);
-    }
+    openVideoPlayer(urlCandidates, item.title);
   };
 
   card.addEventListener('click', open);

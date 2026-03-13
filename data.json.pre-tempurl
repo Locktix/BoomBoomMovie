@@ -1,0 +1,140 @@
+﻿{
+  "movies": [
+    {
+      "title": "La Femme de ménage",
+      "year": 2025,
+      "poster": "assets/poster/movie-la-femme-de-m-nage-2025.jpg",
+      "url": ""
+    },
+    {
+      "title": "Avengers",
+      "year": 2012,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-avengers-2012.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Avengers%20-%202012.mp4"
+    },
+    {
+      "title": "Thor",
+      "year": 2011,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-thor-2011.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Thor%20-%202011.mp4"
+    },
+    {
+      "title": "L\u0027incroyable Hulk",
+      "year": 2008,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-l-incroyable-hulk-2008.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/LIncroyable%20Hulk%20-%202008.mp4"
+    },
+    {
+      "title": "Iron Man",
+      "year": 2008,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-iron-man-2008.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Iron%20Man%20-%202008.mp4"
+    },
+    {
+      "title": "Iron Man 2",
+      "year": 2010,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-iron-man-2-2010.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Iron%20Man%202%20-%202010.mp4"
+    },
+    {
+      "title": "Captain Marvel",
+      "year": 2019,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-captain-marvel-2019.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20Marvel%20-%202019.mp4"
+    },
+    {
+      "title": "Lucy",
+      "year": 2014,
+      "poster": "assets/poster/movie-lucy-2014.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Lucy%20(2014).mp4"
+    },
+    {
+      "title": "Minecraft, le film",
+      "year": 2025,
+      "poster": "assets/poster/movie-minecraft-le-film-2025.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Minecraft_Le_Film.mp4"
+    },
+    {
+      "title": "Spermageddon",
+      "year": 2024,
+      "poster": "https://cdn.sortiraparis.com/images/80/69688/1198787-spermageddon-comedie-animee-dejantee-en-exclusivite-sur-paramount.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spermageddon.mp4"
+    }
+  ],
+  "series": [
+    {
+      "title": "The Last of Us",
+      "year": 2023,
+      "poster": "assets/poster/series-the-last-of-us-2023.jpg",
+      "url": "",
+      "seasons": [
+        {
+          "season": 1,
+          "year": 2023,
+          "episodes": [
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e1.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e2.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e3.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e4.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e5.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e6.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e7.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e8.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%201/The_last_of_us_s1_e9.mp4"
+            }
+          ]
+        },
+        {
+          "season": 2,
+          "year": 2025,
+          "episodes": [
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e1.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e2.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e3.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e4.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e5.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e6.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e7.mp4"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
