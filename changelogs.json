@@ -1,0 +1,37 @@
+[
+  {
+    "version": "1.0",
+    "date": "2026-03-13",
+    "label": "Sortie initiale",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Bibliothèque de films avec affichage en grille de cartes"
+      },
+      {
+        "type": "feature",
+        "description": "Bibliothèque de séries avec navigation par saisons et épisodes"
+      },
+      {
+        "type": "feature",
+        "description": "Lecteur vidéo intégré avec contrôles personnalisés"
+      },
+      {
+        "type": "feature",
+        "description": "Recherche en temps réel sur les titres"
+      },
+      {
+        "type": "feature",
+        "description": "Support des URLs primaires (url) et temporaires (tempUrl) avec bascule automatique"
+      },
+      {
+        "type": "feature",
+        "description": "Détection côté client des liens signés expirés ou bientôt expirés"
+      },
+      {
+        "type": "feature",
+        "description": "Streaming via Cloudflare R2 (bucket boomboom-media)"
+      }
+    ]
+  }
+]

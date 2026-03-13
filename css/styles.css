@@ -91,7 +91,22 @@ body {
   user-select: none;
 }
 
-.logo span { color: var(--accent); }
+.logo > span:first-of-type { color: var(--accent); }
+
+.version-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  text-transform: uppercase;
+  align-self: center;
+  margin-left: 1px;
+  margin-bottom: 2px;
+}
 
 .logo-icon {
   width: 30px;
