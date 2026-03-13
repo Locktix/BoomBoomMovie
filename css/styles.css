@@ -374,6 +374,27 @@ body {
   z-index: 10;
 }
 
+.card.card-unavailable {
+  filter: saturate(0.65) brightness(0.88);
+}
+
+.card.card-unavailable::after {
+  content: 'Lien expire';
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 6;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(145, 33, 48, 0.9);
+  color: #ffd8df;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 /* Poster image */
 
 .card-img {
@@ -638,6 +659,19 @@ body {
 }
 
 .notice-close:hover { color: var(--text-primary); }
+
+.notice.notice-warning {
+  border-left-color: var(--accent);
+}
+
+.notice.notice-error {
+  border-left-color: #ef4444;
+  color: #e4e4e7;
+}
+
+.episode-item.episode-expired {
+  opacity: 0.8;
+}
 
 /* ============ RESPONSIVE ============ */
 

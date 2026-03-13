@@ -13,6 +13,110 @@ const state = {
   selectedCollection: 'all',
 };
 
+const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
+
+function parseSignedUrlExpiry(url) {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+
+  try {
+    const parsed = new URL(url);
+    const signedAt = parsed.searchParams.get('X-Amz-Date');
+    const expiresIn = Number(parsed.searchParams.get('X-Amz-Expires'));
+    if (!signedAt || !Number.isFinite(expiresIn)) return null;
+
+    const signedMatch = signedAt.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+    if (!signedMatch) return null;
+
+    const [, year, month, day, hour, minute, second] = signedMatch;
+    const signedAtMs = Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    );
+
+    return signedAtMs + expiresIn * 1000;
+  } catch {
+    return null;
+  }
+}
+
+function getUrlAvailability(url, nowMs = Date.now()) {
+  const expiresAt = parseSignedUrlExpiry(url);
+  if (!expiresAt) {
+    return {
+      hasSignedExpiry: false,
+      isExpired: false,
+      isExpiringSoon: false,
+      expiresAt: null,
+    };
+  }
+
+  return {
+    hasSignedExpiry: true,
+    isExpired: expiresAt <= nowMs,
+    isExpiringSoon: expiresAt > nowMs && expiresAt - nowMs <= EXPIRING_SOON_MS,
+    expiresAt,
+  };
+}
+
+function showNotice(message, type = 'warning') {
+  const root = document.body;
+  if (!root) return;
+
+  const existing = document.getElementById('runtime-notice');
+  if (existing) existing.remove();
+
+  const notice = document.createElement('div');
+  notice.id = 'runtime-notice';
+  notice.className = `notice notice-${type}`;
+  notice.innerHTML = `
+    <span>${escapeHtml(message)}</span>
+    <button class="notice-close" type="button" aria-label="Fermer">✕</button>
+  `;
+
+  const closeBtn = notice.querySelector('.notice-close');
+  closeBtn?.addEventListener('click', () => notice.remove());
+
+  root.appendChild(notice);
+}
+
+function annotateLibraryLinks() {
+  const stats = {
+    signed: 0,
+    expired: 0,
+    expiringSoon: 0,
+  };
+
+  state.movies.forEach((movie) => {
+    const availability = getUrlAvailability(movie.url);
+    movie._urlAvailability = availability;
+
+    if (availability.hasSignedExpiry) stats.signed += 1;
+    if (availability.isExpired) stats.expired += 1;
+    if (availability.isExpiringSoon) stats.expiringSoon += 1;
+  });
+
+  state.series.forEach((show) => {
+    const seasons = Array.isArray(show.seasons) ? show.seasons : [];
+    seasons.forEach((season) => {
+      const episodes = Array.isArray(season.episodes) ? season.episodes : [];
+      episodes.forEach((ep) => {
+        const availability = getUrlAvailability(ep.url);
+        ep._urlAvailability = availability;
+
+        if (availability.hasSignedExpiry) stats.signed += 1;
+        if (availability.isExpired) stats.expired += 1;
+        if (availability.isExpiringSoon) stats.expiringSoon += 1;
+      });
+    });
+  });
+
+  return stats;
+}
+
 function sortByReleaseDate(items) {
   return [...items].sort((a, b) => {
     const yearA = Number(a?.year) || 0;
@@ -220,13 +324,19 @@ function showSeriesModal(seriesItem) {
       const epNum = i + 1;
       const code = `S${String(seasonNum).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
       const hasUrl = !!ep.url;
+      const isExpired = !!ep?._urlAvailability?.isExpired;
+      const isPlayable = hasUrl && !isExpired;
       html += `
-          <div class="episode-item${hasUrl ? ' episode-playable' : ''}"${hasUrl ? ` data-url="${escapeHtml(ep.url)}"` : ''}>
+          <div class="episode-item${isPlayable ? ' episode-playable' : ''}${isExpired ? ' episode-expired' : ''}"${isPlayable ? ` data-url="${escapeHtml(ep.url)}"` : ''}>
             <div class="episode-main">
               <p class="episode-code">${code}</p>
               <p class="episode-title">Episode ${epNum}</p>
             </div>
-            ${hasUrl ? '<span class="episode-play">&#9654;</span>' : `<p class="episode-year">${season.year || ''}</p>`}
+            ${isPlayable
+              ? '<span class="episode-play">&#9654;</span>'
+              : isExpired
+                ? '<p class="episode-year">Lien expire</p>'
+                : `<p class="episode-year">${season.year || ''}</p>`}
           </div>
       `;
     });
@@ -288,6 +398,7 @@ function closeVideoPlayer() {
 function setupVideoModal() {
   const modal = document.getElementById('video-modal');
   const closeBtn = document.getElementById('video-modal-close');
+  const video = document.getElementById('video-player');
 
   closeBtn.addEventListener('click', closeVideoPlayer);
   modal.addEventListener('click', (e) => {
@@ -298,6 +409,10 @@ function setupVideoModal() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !modal.hidden) closeVideoPlayer();
+  });
+
+  video.addEventListener('error', () => {
+    showNotice('Lecture impossible. Le lien video est peut-etre expire.', 'error');
   });
 }
 
@@ -335,6 +450,8 @@ function createCard(item, isTV = false, index = 0) {
   const collectionLabel = getItemCollection(item);
   card.dataset.collection = normalizeCollection(collectionLabel);
   card.dataset.collectionLabel = collectionLabel;
+  const isExpired = !!item?._urlAvailability?.isExpired;
+  if (!isTV && isExpired) card.classList.add('card-unavailable');
   const collectionBadge = collectionLabel
     ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
     : '';
@@ -427,6 +544,11 @@ function createCard(item, isTV = false, index = 0) {
   const open = () => {
     if (isTV) {
       showSeriesModal(state.series[index]);
+      return;
+    }
+
+    if (isExpired) {
+      showNotice('Ce film ne peut pas se lancer: le lien video a expire.', 'error');
       return;
     }
 
@@ -539,9 +661,23 @@ async function init() {
     state.series = sortByReleaseDate(Array.isArray(data.series) ? data.series : []);
     state.movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
 
+    const linkStats = annotateLibraryLinks();
+
     renderLibrary();
     refreshFiltersForActiveSection();
     applyCurrentFilters();
+
+    if (linkStats.expired > 0) {
+      showNotice(
+        `${linkStats.expired} lien(s) video expire(s). Regenerer les URLs signees dans data.json.`,
+        'error'
+      );
+    } else if (linkStats.expiringSoon > 0) {
+      showNotice(
+        `${linkStats.expiringSoon} lien(s) video vont expirer bientot. Pense a regenerer data.json.`,
+        'warning'
+      );
+    }
   } catch (err) {
     console.error('[BoomBoom]', err.message);
     if (location.protocol === 'file:') {
