@@ -4,8 +4,7 @@
       "title": "La Femme de ménage",
       "year": 2025,
       "poster": "assets/poster/movie-la-femme-de-m-nage-2025.jpg",
-      "url": "",
-      "tempUrl": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1368166/VFQ/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260313%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260313T192420Z&X-Amz-SignedHeaders=host&X-Amz-Expires=27340&X-Amz-Signature=a6681912123f4aab821c27e4d52b8a86c3d62bb550fef38df03f6a1826b080de"
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/La%20Femme%20de%20menage%20-%202025.mp4"
     },
     {
       "title": "Avengers",
@@ -50,6 +49,41 @@
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20Marvel%20-%202019.mp4"
     },
     {
+      "title": "Iron Man 3",
+      "year": 2013,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-iron-man-3-2013.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Iron%20Man%203%20-%202013.mp4"
+    },
+    {
+      "title": "Thor: Le Monde des tenebres",
+      "year": 2013,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-thor-le-monde-des-tenebres-2013.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Thor%20Le%20Monde%20des%20tnbres%20-%202013.mp4"
+    },
+    {
+      "title": "Captain America: Le Soldat de l'hiver",
+      "year": 2014,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-captain-america-le-soldat-de-l-hiver-2014.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20America%20Le%20Soldat%20de%20lhiver%20-%202014.mp4"
+    },
+    {
+      "title": "Les Gardiens de la Galaxie",
+      "year": 2014,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-les-gardiens-de-la-galaxie-2014.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Les%20Gardiens%20de%20la%20Galaxie%20-%202014.mp4"
+    },
+    {
+      "title": "Les Gardiens de la Galaxie Vol. 2",
+      "year": 2017,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-les-gardiens-de-la-galaxie-vol-2-2017.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Les%20Gardiens%20de%20la%20Galaxie%20Vol%202%20-%202017.mp4"
+    },
+    {
       "title": "Lucy",
       "year": 2014,
       "poster": "assets/poster/movie-lucy-2014.jpg",
@@ -65,8 +99,7 @@
       "title": "Spermageddon",
       "year": 2024,
       "poster": "assets/poster/Spermageddon - 2024-poster.jpg",
-      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spermageddon.mp4",
-      "tempUrl": "https://aede11cdcdebb29cf63b2a8cfa29aefa.r2.cloudflarestorage.com/jeffrey/MOVIES/1064307/VF/01.mp4?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=fa4b52e18b5bf59cb33e83353e6f18e7%2F20260313%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260313T191224Z&X-Amz-SignedHeaders=host&X-Amz-Expires=28056&X-Amz-Signature=aa842893977a2ae51a09d98f75ddd24dff49c940188502fc58e8e3b31b8c2c56"
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spermageddon%20-%202024.mp4"
     }
   ],
   "series": [
