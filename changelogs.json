@@ -1,5 +1,32 @@
 [
   {
+    "version": "1.1",
+    "date": "2026-03-15",
+    "label": "Tier List",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Page Tier List : classe tous les films et séries par rang (S → F)"
+      },
+      {
+        "type": "feature",
+        "description": "Sauvegarde automatique du classement dans le navigateur (localStorage)"
+      },
+      {
+        "type": "feature",
+        "description": "Filtres Tier List par type (Films / Séries) et par collection (MCU, etc.)"
+      },
+      {
+        "type": "feature",
+        "description": "Drag & drop natif pour déplacer les contenus entre les rangs"
+      },
+      {
+        "type": "feature",
+        "description": "Bouton de réinitialisation de la tier list"
+      }
+    ]
+  },
+  {
     "version": "1.0",
     "date": "2026-03-13",
     "label": "Sortie initiale",

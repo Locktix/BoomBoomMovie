@@ -4,13 +4,23 @@
  */
 const CONFIG = {
   DATA_FILE: 'data.json',
+  TIER_STORAGE_KEY: 'boomboom:tier-order:v1',
 };
+
+const TIER_LABELS = ['S', 'A', 'B', 'C', 'D', 'F'];
+const TIER_POOL = 'pool';
 
 const state = {
   movies: [],
   series: [],
   displayMode: 'grid',
   selectedCollection: 'all',
+  tierItems: [],
+  tierItemMap: new Map(),
+  tierOrder: null,
+  tierTypeFilter: 'all',
+  tierCollectionFilter: 'all',
+  draggedTierItemId: '',
 };
 
 const playerState = {
@@ -162,6 +172,15 @@ function sortByReleaseDate(items) {
   });
 }
 
+function slugifyValue(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -179,6 +198,10 @@ function normalizeCollection(value) {
 
 function getItemCollection(item) {
   return String(item?.collection || '').trim();
+}
+
+function getTierCollectionKey(item) {
+  return normalizeCollection(getItemCollection(item)) || 'none';
 }
 
 function getActiveSection() {
@@ -222,9 +245,33 @@ function setSelectOptions(select, options, fallbackValue) {
   select.value = hasFallback ? fallbackValue : 'all';
 }
 
+function renderChoiceChips(containerId, options, activeValue, onSelect) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  options.forEach(({ value, label }) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `filter-chip ${activeValue === value ? 'active' : ''}`;
+    chip.textContent = label;
+    chip.addEventListener('click', () => onSelect(value));
+    fragment.appendChild(chip);
+  });
+
+  container.appendChild(fragment);
+}
+
 function refreshFiltersForActiveSection() {
   const section = getActiveSection();
   if (!section) return;
+
+  if (section.id === 'tiers') {
+    renderTierFilterChips();
+    return;
+  }
 
   const cards = [...section.querySelectorAll('.card')];
 
@@ -270,10 +317,285 @@ function renderCollectionChips(containerId, collections) {
   container.appendChild(fragment);
 }
 
+function createTierItem(item, mediaType) {
+  const collection = getItemCollection(item);
+  return {
+    id: `${mediaType}-${slugifyValue(item.title)}-${item.year || 'na'}`,
+    title: item.title,
+    year: item.year,
+    poster: item.poster || '',
+    collection,
+    collectionKey: getTierCollectionKey(item),
+    mediaType,
+  };
+}
+
+function buildTierItems() {
+  const items = [
+    ...state.movies.map((item) => createTierItem(item, 'movie')),
+    ...state.series.map((item) => createTierItem(item, 'series')),
+  ].sort((a, b) => {
+    const titleCompare = String(a.title || '').localeCompare(String(b.title || ''), 'fr', { sensitivity: 'base' });
+    if (titleCompare !== 0) return titleCompare;
+    return (Number(b.year) || 0) - (Number(a.year) || 0);
+  });
+
+  state.tierItems = items;
+  state.tierItemMap = new Map(items.map((item) => [item.id, item]));
+}
+
+function getTierZones() {
+  return [TIER_POOL, ...TIER_LABELS];
+}
+
+function getDefaultTierOrder() {
+  const order = { [TIER_POOL]: state.tierItems.map((item) => item.id) };
+  TIER_LABELS.forEach((label) => {
+    order[label] = [];
+  });
+  return order;
+}
+
+function sanitizeTierOrder(rawOrder) {
+  const knownIds = new Set(state.tierItems.map((item) => item.id));
+  const seen = new Set();
+  const sanitized = {};
+
+  getTierZones().forEach((zone) => {
+    const ids = Array.isArray(rawOrder?.[zone]) ? rawOrder[zone] : [];
+    sanitized[zone] = ids.filter((id) => {
+      if (!knownIds.has(id) || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  });
+
+  state.tierItems.forEach((item) => {
+    if (!seen.has(item.id)) sanitized[TIER_POOL].push(item.id);
+  });
+
+  return sanitized;
+}
+
+function loadTierOrder() {
+  const fallback = getDefaultTierOrder();
+
+  try {
+    const raw = localStorage.getItem(CONFIG.TIER_STORAGE_KEY);
+    if (!raw) return fallback;
+    return sanitizeTierOrder(JSON.parse(raw));
+  } catch {
+    return fallback;
+  }
+}
+
+function saveTierOrder() {
+  try {
+    localStorage.setItem(CONFIG.TIER_STORAGE_KEY, JSON.stringify(state.tierOrder));
+  } catch {
+    showNotice('Impossible d\'enregistrer la tier list localement.', 'error');
+  }
+}
+
+function getTierCollectionOptions() {
+  const options = new Map([['all', 'Toutes']]);
+
+  state.tierItems.forEach((item) => {
+    const label = item.collection || 'Sans collection';
+    if (!options.has(item.collectionKey)) options.set(item.collectionKey, label);
+  });
+
+  return [...options.entries()].map(([value, label]) => ({ value, label }));
+}
+
+function renderTierFilterChips() {
+  renderChoiceChips(
+    'tier-type-filters',
+    [
+      { value: 'all', label: 'Tout' },
+      { value: 'movie', label: 'Films' },
+      { value: 'series', label: 'Séries' },
+    ],
+    state.tierTypeFilter,
+    (value) => {
+      state.tierTypeFilter = value;
+      renderTierFilterChips();
+      renderTierBoard();
+    }
+  );
+
+  renderChoiceChips(
+    'tier-collection-filters',
+    getTierCollectionOptions(),
+    state.tierCollectionFilter,
+    (value) => {
+      state.tierCollectionFilter = value;
+      renderTierFilterChips();
+      renderTierBoard();
+    }
+  );
+}
+
+function matchesTierFilters(item, query) {
+  const title = String(item?.title || '').toLowerCase();
+  const matchesSearch = !query || title.includes(query);
+  const matchesType = state.tierTypeFilter === 'all' || item.mediaType === state.tierTypeFilter;
+  const matchesCollection = state.tierCollectionFilter === 'all' || item.collectionKey === state.tierCollectionFilter;
+  return matchesSearch && matchesType && matchesCollection;
+}
+
+function createTierTile(item) {
+  const tile = document.createElement('article');
+  tile.className = 'tier-item';
+  tile.draggable = true;
+  tile.dataset.itemId = item.id;
+  tile.setAttribute('aria-label', `${item.title} (${item.year || ''})`);
+
+  const collectionBadge = item.collection
+    ? `<span class="tier-item-badge">${escapeHtml(item.collection)}</span>`
+    : '<span class="tier-item-badge tier-item-badge-muted">Sans collection</span>';
+
+  tile.innerHTML = `
+    <div class="tier-item-poster-wrap">
+      ${item.poster
+        ? `<img class="tier-item-poster" src="${escapeHtml(item.poster)}" alt="${escapeHtml(item.title)}" loading="lazy" />`
+        : `<div class="tier-item-fallback">${item.mediaType === 'series' ? 'SERIE' : 'FILM'}</div>`}
+    </div>
+    <div class="tier-item-copy">
+      <h3 class="tier-item-title">${escapeHtml(item.title)}</h3>
+      <p class="tier-item-meta">${item.mediaType === 'series' ? 'Série' : 'Film'} · ${item.year || 'N/A'}</p>
+      <div class="tier-item-tags">${collectionBadge}</div>
+    </div>
+  `;
+
+  tile.addEventListener('dragstart', (event) => {
+    state.draggedTierItemId = item.id;
+    tile.classList.add('tier-item-dragging');
+    event.dataTransfer?.setData('text/plain', item.id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  });
+
+  tile.addEventListener('dragend', () => {
+    tile.classList.remove('tier-item-dragging');
+    state.draggedTierItemId = '';
+    document.querySelectorAll('.tier-dropzone-active').forEach((zone) => zone.classList.remove('tier-dropzone-active'));
+  });
+
+  return tile;
+}
+
+function moveTierItem(itemId, targetZone) {
+  if (!itemId || !state.tierItemMap.has(itemId) || !getTierZones().includes(targetZone)) return;
+
+  getTierZones().forEach((zone) => {
+    state.tierOrder[zone] = state.tierOrder[zone].filter((id) => id !== itemId);
+  });
+
+  state.tierOrder[targetZone].push(itemId);
+  saveTierOrder();
+  renderTierBoard();
+}
+
+function createTierDropzone(zone, items, emptyLabel) {
+  const dropzone = document.createElement('div');
+  dropzone.className = `tier-dropzone ${zone === TIER_POOL ? 'tier-dropzone-pool' : ''}`;
+  dropzone.dataset.zone = zone;
+
+  dropzone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropzone.classList.add('tier-dropzone-active');
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('tier-dropzone-active');
+  });
+
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('tier-dropzone-active');
+    const itemId = event.dataTransfer?.getData('text/plain') || state.draggedTierItemId;
+    moveTierItem(itemId, zone);
+  });
+
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'tier-empty';
+    empty.textContent = emptyLabel;
+    dropzone.appendChild(empty);
+    return dropzone;
+  }
+
+  items.forEach((item) => dropzone.appendChild(createTierTile(item)));
+  return dropzone;
+}
+
+function renderTierBoard() {
+  const board = document.getElementById('tier-board');
+  const count = document.getElementById('tiers-count');
+  if (!board || !count || !state.tierOrder) return;
+
+  const query = document.getElementById('search')?.value.trim().toLowerCase() || '';
+  const total = state.tierItems.length;
+  const rankedTotal = TIER_LABELS.reduce((sum, label) => sum + state.tierOrder[label].length, 0);
+  count.textContent = `${rankedTotal}/${total} classés`;
+
+  board.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  TIER_LABELS.forEach((label) => {
+    const items = state.tierOrder[label]
+      .map((id) => state.tierItemMap.get(id))
+      .filter((item) => item && matchesTierFilters(item, query));
+
+    const row = document.createElement('section');
+    row.className = 'tier-row';
+    row.innerHTML = `
+      <div class="tier-rank tier-rank-${label.toLowerCase()}">${label}</div>
+      <div class="tier-row-body">
+        <div class="tier-row-head">
+          <h3>${label} Tier</h3>
+          <span>${items.length} visible(s)</span>
+        </div>
+      </div>
+    `;
+
+    row.querySelector('.tier-row-body').appendChild(
+      createTierDropzone(label, items, 'Dépose un film ou une série ici')
+    );
+    fragment.appendChild(row);
+  });
+
+  const poolItems = state.tierOrder[TIER_POOL]
+    .map((id) => state.tierItemMap.get(id))
+    .filter((item) => item && matchesTierFilters(item, query));
+
+  const pool = document.createElement('section');
+  pool.className = 'tier-pool';
+  pool.innerHTML = `
+    <div class="tier-pool-head">
+      <div>
+        <p class="tier-pool-kicker">Bibliothèque</p>
+        <h3>À classer</h3>
+      </div>
+      <span>${poolItems.length} visible(s)</span>
+    </div>
+  `;
+  pool.appendChild(createTierDropzone(TIER_POOL, poolItems, 'Aucun résultat avec les filtres actuels'));
+  fragment.appendChild(pool);
+
+  board.appendChild(fragment);
+}
+
 function applyCurrentFilters() {
   const section = getActiveSection();
   const input = document.getElementById('search');
   if (!section || !input) return;
+
+  if (section.id === 'tiers') {
+    renderTierBoard();
+    return;
+  }
 
   const q = input.value.trim().toLowerCase();
   const selectedCollection = state.selectedCollection;
@@ -300,6 +622,16 @@ function applyCurrentFilters() {
 
 function setupFilters() {
   refreshFiltersForActiveSection();
+}
+
+function updateSearchPlaceholder() {
+  const input = document.getElementById('search');
+  const section = getActiveSection();
+  if (!input || !section) return;
+
+  input.placeholder = section.id === 'tiers'
+    ? 'Rechercher dans la tier list…'
+    : 'Rechercher un titre…';
 }
 
 function setupDisplayMode() {
@@ -688,6 +1020,7 @@ function renderGrid(items, gridId, countId, isTV) {
 function renderLibrary() {
   renderGrid(state.movies, 'movies-grid', 'movies-count', false);
   renderGrid(state.series, 'series-grid', 'series-count', true);
+  renderTierBoard();
 }
 
 function setupTabs() {
@@ -702,6 +1035,7 @@ function setupTabs() {
         t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
       });
       sections.forEach((s) => s.classList.toggle('active', s.id === target));
+      updateSearchPlaceholder();
       refreshFiltersForActiveSection();
       applyCurrentFilters();
     });
@@ -716,6 +1050,86 @@ function setupSearch() {
   });
 }
 
+function setupTierListControls() {
+  const resetButton = document.getElementById('tier-reset');
+  if (!resetButton) return;
+
+  resetButton.addEventListener('click', () => {
+    state.tierOrder = getDefaultTierOrder();
+    saveTierOrder();
+    renderTierBoard();
+    showNotice('La tier list a été réinitialisée sur cet appareil.', 'warning');
+  });
+}
+
+const changelogState = {
+  data: null,
+};
+
+function openRoadmapModal() {
+  const modal = document.getElementById('roadmap-modal');
+  if (!modal) return;
+  renderChangelogContent();
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRoadmapModal() {
+  const modal = document.getElementById('roadmap-modal');
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function renderChangelogContent() {
+  const content = document.getElementById('roadmap-modal-content');
+  if (!content || !changelogState.data) return;
+
+  const releases = Array.isArray(changelogState.data) ? changelogState.data : [];
+  content.innerHTML = releases.map((release) => `
+    <div class="roadmap-release">
+      <div class="roadmap-release-head">
+        <span class="roadmap-version-pill roadmap-version-released">${escapeHtml(release.version)}</span>
+        <h3 class="roadmap-release-title">${escapeHtml(release.label)}</h3>
+        <span class="roadmap-release-date">${escapeHtml(release.date || '')}</span>
+      </div>
+      <ul class="roadmap-changes-list">
+        ${(Array.isArray(release.changes) ? release.changes : []).map((change) =>
+          `<li>
+            <span class="roadmap-change-type roadmap-change-${escapeHtml(change.type)}">${
+              change.type === 'feature' ? 'Nouveauté' :
+              change.type === 'fix' ? 'Correctif' :
+              change.type === 'improvement' ? 'Amélioration' :
+              escapeHtml(change.type)
+            }</span>
+            ${escapeHtml(change.description)}
+          </li>`
+        ).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+function setupRoadmapModal() {
+  const openBtn = document.getElementById('open-roadmap');
+  const closeBtn = document.getElementById('roadmap-modal-close');
+  const modal = document.getElementById('roadmap-modal');
+  if (!modal) return;
+
+  openBtn?.addEventListener('click', openRoadmapModal);
+  closeBtn?.addEventListener('click', closeRoadmapModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-roadmap')) {
+      closeRoadmapModal();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeRoadmapModal();
+  });
+}
+
 async function init() {
   setupTabs();
   setupSearch();
@@ -723,6 +1137,9 @@ async function init() {
   setupDisplayMode();
   setupVideoModal();
   setupSeriesModal();
+  setupTierListControls();
+  setupRoadmapModal();
+  updateSearchPlaceholder();
 
   try {
     const res = await fetch(CONFIG.DATA_FILE);
@@ -731,8 +1148,17 @@ async function init() {
 
     state.series = sortByReleaseDate(Array.isArray(data.series) ? data.series : []);
     state.movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
+    buildTierItems();
+    state.tierOrder = loadTierOrder();
 
     const linkStats = annotateLibraryLinks();
+
+    try {
+      const clRes = await fetch('changelogs.json');
+      if (clRes.ok) changelogState.data = await clRes.json();
+    } catch {
+      roadmapState.changelogData = null;
+    }
 
     renderLibrary();
     refreshFiltersForActiveSection();

@@ -20,7 +20,7 @@
           <path d="M8 5v14l11-7z"/>
         </svg>
         Boom<span>Boom</span>
-        <span class="version-badge">v1.0</span>
+        <button class="version-badge" id="open-roadmap" type="button" aria-haspopup="dialog" title="Voir le changelog">v1.1</button>
       </div>
 
       <nav class="tabs" role="tablist">
@@ -29,6 +29,9 @@
         </button>
         <button class="tab" data-target="series" role="tab" aria-selected="false">
           📺 Séries
+        </button>
+        <button class="tab" data-target="tiers" role="tab" aria-selected="false">
+          🏆 Tier List
         </button>
       </nav>
 
@@ -78,6 +81,33 @@
       <div class="grid" id="series-grid"></div>
     </section>
 
+    <section id="tiers" class="section" role="tabpanel">
+      <div class="section-header section-header-tier">
+        <div class="section-head-left">
+          <h2 class="section-title">Tier List</h2>
+          <span class="count" id="tiers-count"></span>
+        </div>
+        <div class="section-header-right tier-header-actions">
+          <span class="tier-local-badge">Sauvegarde locale</span>
+          <button id="tier-reset" class="tier-reset" type="button">Réinitialiser</button>
+        </div>
+      </div>
+
+      <div class="tier-toolbar">
+        <div class="tier-toolbar-block">
+          <span class="tier-toolbar-label">Type</span>
+          <div class="filter-chips" id="tier-type-filters"></div>
+        </div>
+        <div class="tier-toolbar-block">
+          <span class="tier-toolbar-label">Collection</span>
+          <div class="filter-chips" id="tier-collection-filters"></div>
+        </div>
+      </div>
+
+      <p class="tier-board-intro">Glisse les affiches dans les rangs pour enregistrer ton classement sur cet appareil.</p>
+      <div id="tier-board" class="tier-board"></div>
+    </section>
+
   </main>
 
   <!-- ===== LOADING SCREEN ===== -->
@@ -116,6 +146,19 @@
         <p id="series-modal-meta" class="series-modal-meta"></p>
       </div>
       <div id="series-modal-content" class="series-modal-content"></div>
+    </section>
+  </div>
+
+  <!-- ===== ROADMAP MODAL ===== -->
+  <div id="roadmap-modal" class="roadmap-modal" hidden aria-hidden="true">
+    <div class="roadmap-modal-backdrop" data-close-roadmap></div>
+    <section class="roadmap-modal-panel" role="dialog" aria-modal="true" aria-labelledby="roadmap-modal-title">
+      <button id="roadmap-modal-close" class="roadmap-modal-close" aria-label="Fermer">✕</button>
+      <div class="roadmap-modal-head">
+        <p class="roadmap-kicker">BoomBoom</p>
+        <h2 id="roadmap-modal-title" class="roadmap-modal-title">Changelog</h2>
+      </div>
+      <div id="roadmap-modal-content" class="roadmap-modal-content"></div>
     </section>
   </div>
 

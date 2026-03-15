@@ -106,6 +106,19 @@ body {
   align-self: center;
   margin-left: 1px;
   margin-bottom: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transition), box-shadow var(--transition);
+}
+
+.version-badge:hover {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.version-badge:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .logo-icon {
@@ -575,6 +588,521 @@ body {
   font-weight: 500;
 }
 
+/* ============ TIER LIST ============ */
+
+.section-header-tier {
+  align-items: flex-start;
+}
+
+.tier-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.tier-local-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tier-reset {
+  min-height: 34px;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(130, 24, 24, 0.2);
+  color: #f4d0d0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.tier-reset:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 120, 120, 0.35);
+  background: rgba(130, 24, 24, 0.34);
+}
+
+.tier-toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.tier-toolbar-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(145deg, rgba(229, 160, 13, 0.09), transparent 45%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.tier-toolbar-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.tier-board-intro {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.tier-board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.tier-row,
+.tier-pool {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(229, 160, 13, 0.12), transparent 28%),
+    rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.tier-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+.tier-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #09090b;
+}
+
+.tier-rank-s { background: #ff6b6b; }
+.tier-rank-a { background: #ff9f43; }
+.tier-rank-b { background: #ffd166; }
+.tier-rank-c { background: #7bd389; }
+.tier-rank-d { background: #4ecdc4; }
+.tier-rank-f { background: #5dade2; }
+
+.tier-row-body,
+.tier-pool {
+  padding: 1rem;
+}
+
+.tier-row-head,
+.tier-pool-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.tier-row-head h3,
+.tier-pool-head h3 {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.tier-row-head span,
+.tier-pool-head span,
+.tier-pool-kicker {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.tier-pool-kicker {
+  margin-bottom: 0.18rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tier-dropzone {
+  min-height: 132px;
+  padding: 0.2rem;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  align-content: start;
+  transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.tier-dropzone-pool {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.tier-dropzone-active {
+  border-color: rgba(229, 160, 13, 0.6);
+  background: rgba(229, 160, 13, 0.08);
+}
+
+.tier-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 1rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.tier-item {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  min-height: 96px;
+  padding: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(8, 10, 15, 0.76);
+  cursor: grab;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.tier-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(229, 160, 13, 0.35);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+}
+
+.tier-item:active,
+.tier-item-dragging {
+  cursor: grabbing;
+  opacity: 0.55;
+}
+
+.tier-item-poster-wrap {
+  width: 62px;
+  aspect-ratio: 2 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(229, 160, 13, 0.16), rgba(255, 255, 255, 0.04));
+}
+
+.tier-item-poster,
+.tier-item-fallback {
+  width: 100%;
+  height: 100%;
+}
+
+.tier-item-poster {
+  object-fit: cover;
+  display: block;
+}
+
+.tier-item-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tier-item-copy {
+  min-width: 0;
+}
+
+.tier-item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.22rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tier-item-meta {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  margin-bottom: 0.45rem;
+}
+
+.tier-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.tier-item-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(229, 160, 13, 0.14);
+  color: #ffd792;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.tier-item-badge-muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+/* ============ ROADMAP MODAL ============ */
+
+.roadmap-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+}
+
+.roadmap-modal[hidden] {
+  display: none;
+}
+
+.roadmap-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.roadmap-modal-panel {
+  position: relative;
+  width: min(760px, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at 70% 0%, rgba(229, 160, 13, 0.13), transparent 38%),
+    linear-gradient(160deg, rgba(28, 16, 8, 0.97) 0%, rgba(14, 16, 22, 0.97) 100%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(229, 160, 13, 0.12);
+  padding: 1.75rem 1.75rem 1.5rem;
+  animation: modalIn 0.22s var(--ease);
+}
+
+.roadmap-modal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: background var(--transition);
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+}
+
+.roadmap-modal-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.roadmap-modal-head {
+  margin-bottom: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+.roadmap-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+
+.roadmap-modal-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.roadmap-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-elevated);
+  padding: 4px;
+  border-radius: var(--radius);
+  width: fit-content;
+  margin-bottom: 1.5rem;
+}
+
+.roadmap-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.42rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.roadmap-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.roadmap-tab.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+.roadmap-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* Changelog releases */
+
+.roadmap-release {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.roadmap-release-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-wrap: wrap;
+}
+
+.roadmap-version-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(229, 160, 13, 0.18);
+  border: 1px solid rgba(229, 160, 13, 0.3);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.roadmap-version-released {
+  background: rgba(124, 210, 138, 0.14);
+  border-color: rgba(124, 210, 138, 0.3);
+  color: #7cd28a;
+}
+
+.roadmap-release-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.roadmap-release-date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.roadmap-planned-badge,
+.roadmap-tabs,
+.roadmap-tab {
+  display: none;
+}
+
+.roadmap-changes-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+
+.roadmap-changes-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  padding: 0.52rem 1rem;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.roadmap-changes-list li:first-child {
+  border-top: none;
+}
+
+.roadmap-change-type {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.roadmap-change-feature {
+  background: rgba(229, 160, 13, 0.14);
+  color: #ffd792;
+}
+
+.roadmap-change-fix {
+  background: rgba(99, 210, 140, 0.14);
+  color: #6dd49a;
+}
+
+.roadmap-change-improvement {
+  background: rgba(93, 173, 226, 0.14);
+  color: #8ad5f8;
+}
+
+@media (max-width: 560px) {
+  .roadmap-modal-panel {
+    padding: 1.25rem;
+    width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+  }
+
+  .roadmap-modal-title {
+    font-size: 1.2rem;
+  }
+}
+
 /* ============ LOADING SCREEN ============ */
 
 .loading-screen {
@@ -748,6 +1276,23 @@ body {
     padding: 0.25rem 0.6rem;
     font-size: 0.65rem;
   }
+
+  .tier-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .tier-row {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .tier-rank {
+    font-size: 1.45rem;
+  }
+
+  .tier-dropzone,
+  .tier-dropzone-pool {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
 }
 
 @media (max-width: 480px) {
@@ -755,7 +1300,26 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
+    .logo { font-size: 1.2rem; }
 
+    .tier-row {
+      grid-template-columns: 1fr;
+    }
+
+    .tier-rank {
+      min-height: 56px;
+      font-size: 1.35rem;
+    }
+
+    .tier-item {
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 0.65rem;
+    }
+
+    .tier-dropzone,
+    .tier-dropzone-pool {
+      grid-template-columns: 1fr;
+    }
   .logo { font-size: 1.2rem; }
 
   .card-overlay {
