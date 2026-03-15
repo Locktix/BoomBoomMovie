@@ -28,6 +28,10 @@ const playerState = {
   currentIndex: 0,
 };
 
+const mediaProbeCache = new Map();
+const MEDIA_PROBE_SUCCESS_TTL_MS = 30 * 60 * 1000;
+const MEDIA_PROBE_FAILURE_TTL_MS = 20 * 1000;
+
 const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
 
 function parseSignedUrlExpiry(url) {
@@ -115,6 +119,121 @@ function getMediaUrlCandidates(entry) {
 
 function hasPlayableCandidate(candidates) {
   return candidates.some((url) => !getUrlAvailability(url).isExpired);
+}
+
+function clearProbeCache(url) {
+  if (!url) return;
+  mediaProbeCache.delete(url);
+}
+
+function setProbeCache(url, ok) {
+  if (!url) return;
+  mediaProbeCache.set(url, {
+    ok,
+    checkedAt: Date.now(),
+  });
+}
+
+function getFreshProbeCache(url) {
+  if (!url) return null;
+  const cached = mediaProbeCache.get(url);
+  if (!cached || typeof cached !== 'object' || !('checkedAt' in cached)) return null;
+
+  const age = Date.now() - Number(cached.checkedAt || 0);
+  const maxAge = cached.ok ? MEDIA_PROBE_SUCCESS_TTL_MS : MEDIA_PROBE_FAILURE_TTL_MS;
+  if (age > maxAge) {
+    mediaProbeCache.delete(url);
+    return null;
+  }
+
+  return cached;
+}
+
+function probeVideoUrl(url, timeoutMs = 9000) {
+  if (!url) return Promise.resolve(false);
+
+  const freshCached = getFreshProbeCache(url);
+  if (freshCached) return Promise.resolve(Boolean(freshCached.ok));
+
+  const inFlightKey = `${url}::inflight`;
+  if (mediaProbeCache.has(inFlightKey)) return mediaProbeCache.get(inFlightKey);
+
+  const probePromise = new Promise((resolve) => {
+    const probe = document.createElement('video');
+    let settled = false;
+
+    const finalize = (isReachable) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      probe.removeEventListener('loadedmetadata', onSuccess);
+      probe.removeEventListener('canplay', onSuccess);
+      probe.removeEventListener('error', onError);
+      probe.src = '';
+      probe.load();
+      resolve(isReachable);
+    };
+
+    const onSuccess = () => finalize(true);
+    const onError = () => {
+      setProbeCache(url, false);
+      finalize(false);
+    };
+
+    const timer = setTimeout(() => {
+      setProbeCache(url, false);
+      finalize(false);
+    }, timeoutMs);
+
+    probe.preload = 'metadata';
+    probe.muted = true;
+    probe.playsInline = true;
+    probe.addEventListener('loadedmetadata', onSuccess, { once: true });
+    probe.addEventListener('canplay', onSuccess, { once: true });
+    probe.addEventListener('error', onError, { once: true });
+    probe.src = url;
+    probe.load();
+  }).then((ok) => {
+    setProbeCache(url, ok);
+    mediaProbeCache.delete(inFlightKey);
+    return ok;
+  });
+
+  mediaProbeCache.set(inFlightKey, probePromise);
+  return probePromise;
+}
+
+function openVideoModalWithUrl(url, index, movieTitle, candidates) {
+  const modal = document.getElementById('video-modal');
+  const source = document.getElementById('video-source');
+  const video = document.getElementById('video-player');
+  const title = document.getElementById('video-modal-title');
+
+  playerState.urlCandidates = candidates;
+  playerState.currentIndex = index;
+
+  source.src = url;
+  title.textContent = movieTitle;
+  video.load();
+
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  video.play().catch(() => {
+    console.warn('Autoplay was prevented. User interaction required.');
+  });
+}
+
+async function findReachableCandidate(candidates, startIndex = 0) {
+  for (let i = Math.max(0, startIndex); i < candidates.length; i += 1) {
+    const candidate = candidates[i];
+    if (!candidate || getUrlAvailability(candidate).isExpired) continue;
+    // Verify the stream can actually load before attempting playback in modal.
+    const isReachable = await probeVideoUrl(candidate);
+    if (isReachable) return { url: candidate, index: i };
+  }
+  return null;
 }
 
 function annotateLibraryLinks() {
@@ -733,34 +852,38 @@ function closeSeriesModal() {
   document.body.style.overflow = '';
 }
 
-function openVideoPlayer(videoUrl, movieTitle) {
+async function openVideoPlayer(videoUrl, movieTitle) {
   const candidates = Array.isArray(videoUrl)
     ? videoUrl
     : getMediaUrlCandidates({ url: videoUrl });
-  if (!candidates.length) {
-    showNotice('Aucun lien video disponible pour ce contenu.', 'error');
+  const validCandidates = candidates.filter((candidate) => !getUrlAvailability(candidate).isExpired);
+
+  if (!validCandidates.length) {
+    showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
     return;
   }
 
-  const modal = document.getElementById('video-modal');
-  const source = document.getElementById('video-source');
-  const video = document.getElementById('video-player');
-  const title = document.getElementById('video-modal-title');
+  const firstUrl = validCandidates[0];
+  const firstIndex = candidates.indexOf(firstUrl);
 
-  playerState.urlCandidates = candidates;
-  playerState.currentIndex = 0;
+  const cached = getFreshProbeCache(firstUrl);
+  if (cached?.ok) {
+    openVideoModalWithUrl(firstUrl, firstIndex, movieTitle, candidates);
+    return;
+  }
 
-  source.src = candidates[0];
-  title.textContent = movieTitle;
-  video.load();
+  // Keep the pre-check short to avoid delaying normal playback for healthy links.
+  const quickProbe = await Promise.race([
+    probeVideoUrl(firstUrl, 1800),
+    new Promise((resolve) => setTimeout(() => resolve('timeout'), 1800)),
+  ]);
 
-  modal.hidden = false;
-  modal.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
+  if (quickProbe === false) {
+    showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
+    return;
+  }
 
-  video.play().catch(() => {
-    console.warn('Autoplay was prevented. User interaction required.');
-  });
+  openVideoModalWithUrl(firstUrl, firstIndex, movieTitle, candidates);
 }
 
 function closeVideoPlayer() {
@@ -795,22 +918,30 @@ function setupVideoModal() {
     if (e.key === 'Escape' && !modal.hidden) closeVideoPlayer();
   });
 
-  video.addEventListener('error', () => {
-    const hasNextCandidate = playerState.currentIndex + 1 < playerState.urlCandidates.length;
-    if (hasNextCandidate) {
-      playerState.currentIndex += 1;
-      const nextUrl = playerState.urlCandidates[playerState.currentIndex];
+  video.addEventListener('error', async () => {
+    const currentUrl = playerState.urlCandidates[playerState.currentIndex];
+    setProbeCache(currentUrl, false);
+
+    const nextCandidate = await findReachableCandidate(playerState.urlCandidates, playerState.currentIndex + 1);
+    if (nextCandidate) {
+      playerState.currentIndex = nextCandidate.index;
       const source = document.getElementById('video-source');
-      source.src = nextUrl;
+      source.src = nextCandidate.url;
       video.load();
       video.play().catch(() => {
         console.warn('Autoplay was prevented. User interaction required.');
       });
-      showNotice('Lien principal indisponible. Lecture basculee vers le lien temporaire.', 'warning');
+      showNotice('Lien principal indisponible. Lecture basculee vers un autre lien.', 'warning');
       return;
     }
 
-    showNotice('Lecture impossible. Le lien video est peut-etre expire.', 'error');
+    closeVideoPlayer();
+    showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
+  });
+
+  video.addEventListener('loadedmetadata', () => {
+    const currentUrl = playerState.urlCandidates[playerState.currentIndex];
+    setProbeCache(currentUrl, true);
   });
 }
 
@@ -856,9 +987,13 @@ function createCard(item, isTV = false, index = 0) {
   card.dataset.collectionLabel = collectionLabel;
   const urlCandidates = Array.isArray(item?._urlCandidates) ? item._urlCandidates : getMediaUrlCandidates(item);
   const hasPlayableUrl = hasPlayableCandidate(urlCandidates);
-  if (!isTV && !hasPlayableUrl) card.classList.add('card-unavailable');
+  const showUnavailableBadge = !isTV && !hasPlayableUrl;
+  if (showUnavailableBadge) card.classList.add('card-unavailable');
   const collectionBadge = collectionLabel
     ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
+    : '';
+  const unavailableBadge = showUnavailableBadge
+    ? '<span class="card-status-badge" aria-label="Indisponible">Pas disponible</span>'
     : '';
 
   card.innerHTML = `
@@ -867,6 +1002,7 @@ function createCard(item, isTV = false, index = 0) {
       <span class="placeholder-title">${escapeHtml(item.title)}</span>
     </div>
     <img class="card-img" alt="${escapeHtml(item.title)}" loading="lazy" />
+    ${unavailableBadge}
     <div class="card-play" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="#000" width="22" height="22">
         <path d="M8 5v14l11-7z"/>
@@ -946,18 +1082,18 @@ function createCard(item, isTV = false, index = 0) {
     }
   }
 
-  const open = () => {
+  const open = async () => {
     if (isTV) {
       showSeriesModal(state.series[index]);
       return;
     }
 
     if (!hasPlayableUrl) {
-      showNotice('Ce film ne peut pas se lancer: le lien video a expire.', 'error');
+      showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
       return;
     }
 
-    openVideoPlayer(urlCandidates, item.title);
+    await openVideoPlayer(urlCandidates, item.title);
   };
 
   card.addEventListener('click', open);

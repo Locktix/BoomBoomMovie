@@ -102,12 +102,19 @@
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spermageddon%20-%202024.mp4"
     },
     {
+      "title": "Barbie Au Bal Des Douze Princesses",
+      "year": 2006,
+      "poster": "assets/poster/movie-barbie-au-bal-des-douze-princesses-2006.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Barbie%20Au%20Bal%20Des%20Douze%20Princesses%20-%202006.mp4"
+    },
+    {
       "title": "Captain America: First Avenger",
       "year": 2022,
       "collection": "MCU",
       "poster": "assets/poster/movie-captain-america-first-avenger-2022.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20America%20First%20Avenger%20-%202022.mp4"
     }
+
   ],
   "series": [
     {
