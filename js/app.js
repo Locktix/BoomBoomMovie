@@ -812,19 +812,15 @@ function showSeriesModal(seriesItem) {
       const code = `S${String(seasonNum).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
       const urlCandidates = Array.isArray(ep?._urlCandidates) ? ep._urlCandidates : getMediaUrlCandidates(ep);
       const hasUrl = urlCandidates.length > 0;
-      const isPlayable = hasUrl && hasPlayableCandidate(urlCandidates);
-      const isExpired = hasUrl && !isPlayable;
       html += `
-          <div class="episode-item${isPlayable ? ' episode-playable' : ''}${isExpired ? ' episode-expired' : ''}"${isPlayable ? ` data-url-candidates="${escapeHtml(JSON.stringify(urlCandidates))}"` : ''}>
+          <div class="episode-item${hasUrl ? ' episode-playable' : ''}"${hasUrl ? ` data-url-candidates="${escapeHtml(JSON.stringify(urlCandidates))}"` : ''}>
             <div class="episode-main">
               <p class="episode-code">${code}</p>
               <p class="episode-title">Episode ${epNum}</p>
             </div>
-            ${isPlayable
+            ${hasUrl
               ? '<span class="episode-play">&#9654;</span>'
-              : isExpired
-                ? '<p class="episode-year">Lien expire</p>'
-                : `<p class="episode-year">${season.year || ''}</p>`}
+              : `<p class="episode-year">${season.year || ''}</p>`}
           </div>
       `;
     });
@@ -852,38 +848,13 @@ function closeSeriesModal() {
   document.body.style.overflow = '';
 }
 
-async function openVideoPlayer(videoUrl, movieTitle) {
+function openVideoPlayer(videoUrl, movieTitle) {
   const candidates = Array.isArray(videoUrl)
     ? videoUrl
     : getMediaUrlCandidates({ url: videoUrl });
-  const validCandidates = candidates.filter((candidate) => !getUrlAvailability(candidate).isExpired);
 
-  if (!validCandidates.length) {
-    showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
-    return;
-  }
-
-  const firstUrl = validCandidates[0];
-  const firstIndex = candidates.indexOf(firstUrl);
-
-  const cached = getFreshProbeCache(firstUrl);
-  if (cached?.ok) {
-    openVideoModalWithUrl(firstUrl, firstIndex, movieTitle, candidates);
-    return;
-  }
-
-  // Keep the pre-check short to avoid delaying normal playback for healthy links.
-  const quickProbe = await Promise.race([
-    probeVideoUrl(firstUrl, 1800),
-    new Promise((resolve) => setTimeout(() => resolve('timeout'), 1800)),
-  ]);
-
-  if (quickProbe === false) {
-    showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
-    return;
-  }
-
-  openVideoModalWithUrl(firstUrl, firstIndex, movieTitle, candidates);
+  const firstUrl = candidates[0] || '';
+  openVideoModalWithUrl(firstUrl, 0, movieTitle, candidates);
 }
 
 function closeVideoPlayer() {
@@ -918,31 +889,7 @@ function setupVideoModal() {
     if (e.key === 'Escape' && !modal.hidden) closeVideoPlayer();
   });
 
-  video.addEventListener('error', async () => {
-    const currentUrl = playerState.urlCandidates[playerState.currentIndex];
-    setProbeCache(currentUrl, false);
 
-    const nextCandidate = await findReachableCandidate(playerState.urlCandidates, playerState.currentIndex + 1);
-    if (nextCandidate) {
-      playerState.currentIndex = nextCandidate.index;
-      const source = document.getElementById('video-source');
-      source.src = nextCandidate.url;
-      video.load();
-      video.play().catch(() => {
-        console.warn('Autoplay was prevented. User interaction required.');
-      });
-      showNotice('Lien principal indisponible. Lecture basculee vers un autre lien.', 'warning');
-      return;
-    }
-
-    closeVideoPlayer();
-    showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
-  });
-
-  video.addEventListener('loadedmetadata', () => {
-    const currentUrl = playerState.urlCandidates[playerState.currentIndex];
-    setProbeCache(currentUrl, true);
-  });
 }
 
 function setupSeriesModal() {
@@ -986,14 +933,8 @@ function createCard(item, isTV = false, index = 0) {
   card.dataset.collection = normalizeCollection(collectionLabel);
   card.dataset.collectionLabel = collectionLabel;
   const urlCandidates = Array.isArray(item?._urlCandidates) ? item._urlCandidates : getMediaUrlCandidates(item);
-  const hasPlayableUrl = hasPlayableCandidate(urlCandidates);
-  const showUnavailableBadge = !isTV && !hasPlayableUrl;
-  if (showUnavailableBadge) card.classList.add('card-unavailable');
   const collectionBadge = collectionLabel
     ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
-    : '';
-  const unavailableBadge = showUnavailableBadge
-    ? '<span class="card-status-badge" aria-label="Indisponible">Pas disponible</span>'
     : '';
 
   card.innerHTML = `
@@ -1002,7 +943,6 @@ function createCard(item, isTV = false, index = 0) {
       <span class="placeholder-title">${escapeHtml(item.title)}</span>
     </div>
     <img class="card-img" alt="${escapeHtml(item.title)}" loading="lazy" />
-    ${unavailableBadge}
     <div class="card-play" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="#000" width="22" height="22">
         <path d="M8 5v14l11-7z"/>
@@ -1082,18 +1022,13 @@ function createCard(item, isTV = false, index = 0) {
     }
   }
 
-  const open = async () => {
+  const open = () => {
     if (isTV) {
       showSeriesModal(state.series[index]);
       return;
     }
 
-    if (!hasPlayableUrl) {
-      showNotice('Pas encore encode. Disponible des que ce sera pret.', 'warning');
-      return;
-    }
-
-    await openVideoPlayer(urlCandidates, item.title);
+    openVideoPlayer(urlCandidates, item.title);
   };
 
   card.addEventListener('click', open);
