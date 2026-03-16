@@ -112,6 +112,20 @@
       "year": 2023,
       "poster": "assets/poster/movie-barbie-2023.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Barbie%20-%202023.mp4"
+    },
+    {
+      "title": "Ant-Man",
+      "year": 2015,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-ant-man-2015.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Ant-Man%20-%202015.mp4"
+    },
+    {
+      "title": "Avengers: L'ere d'Ultron",
+      "year": 2015,
+      "collection": "MCU",
+      "poster": "assets/poster/movie-avengers-l-ere-d-ultron-2015.jpg",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Avengers%20L%20ere%20dUltron%20-%202015.mp4"
     }
 
   ],
@@ -179,6 +193,59 @@
             },
             {
               "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/The%20Last%20Of%20Us/Saison%202/The_last_of_us_s2_e7.mp4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Marvels Daredevil",
+      "year": 2015,
+      "collection": "MCU",
+      "poster": "assets/poster/series-marvels-daredevil-2015.jpg",
+      "seasons": [
+        {
+          "season": 1,
+          "year": 2015,
+          "episodes": [
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-1.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-2.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-3.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-4.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-5.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-6.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-7.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-8.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-9.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-10.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-11.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-12.mp4"
+            },
+            {
+              "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Daredevil/saison%201/Marvels%20Daredevil%201-13.mp4"
             }
           ]
         }

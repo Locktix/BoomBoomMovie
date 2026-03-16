@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.2",
+    "date": "2026-03-16",
+    "label": "Catalogue MCU",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Ajout des films MCU Ant-Man (2015) et Avengers: L'ere d'Ultron (2015)"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout de la serie Marvels Daredevil avec la saison 1 complete (13 episodes)"
+      }
+    ]
+  },
+  {
     "version": "1.1",
     "date": "2026-03-15",
     "label": "Tier List",
