@@ -20,7 +20,7 @@
           <path d="M8 5v14l11-7z"/>
         </svg>
         Boom<span>Boom</span>
-        <button class="version-badge" id="open-roadmap" type="button" aria-haspopup="dialog" title="Voir le changelog">v1.1</button>
+        <button class="version-badge" id="open-roadmap" type="button" aria-haspopup="dialog" title="Voir le changelog">v...</button>
       </div>
 
       <nav class="tabs" role="tablist">
@@ -109,6 +109,15 @@
     </section>
 
   </main>
+
+  <!-- ===== MEDIA DETAILS MODAL ===== -->
+  <div id="details-modal" class="details-modal" hidden aria-hidden="true">
+    <div class="details-modal-backdrop" data-close-details></div>
+    <section class="details-modal-panel" role="dialog" aria-modal="true" aria-labelledby="details-modal-title">
+      <button id="details-modal-close" class="details-modal-close" aria-label="Fermer">✕</button>
+      <div id="details-modal-content" class="details-modal-content"></div>
+    </section>
+  </div>
 
   <!-- ===== LOADING SCREEN ===== -->
   <div id="loading" class="loading-screen" aria-live="polite" aria-label="Chargement en cours">

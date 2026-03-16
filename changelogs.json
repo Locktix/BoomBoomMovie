@@ -1,5 +1,67 @@
 [
   {
+    "version": "1.4",
+    "date": "2026-03-16",
+    "label": "Fiche detail et UX cinema",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Ajout d'une fiche detail TMDB au clic sur une carte (synopsis, genres, note, runtime/saisons)"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout des bandes-annonces YouTube directement dans la fiche detail"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout du casting avec photos TMDB et fallback visuel quand aucune photo n'est disponible"
+      },
+      {
+        "type": "improvement",
+        "description": "Bouton Lecture repositionne sur l'affiche dans la fiche detail avec comportement mobile/desktop coherent"
+      },
+      {
+        "type": "improvement",
+        "description": "Refonte responsive de la modal detail (gestion des debordements, focus clavier, lisibilite mobile)"
+      },
+      {
+        "type": "fix",
+        "description": "Suppression de l'ancien slider cast instable au profit d'un affichage en cartes simple et stable"
+      }
+    ]
+  },
+  {
+    "version": "1.3",
+    "date": "2026-03-16",
+    "label": "Integration TMDB complete",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Integration TMDB pour enrichir automatiquement affiches, titres et dates de sortie"
+      },
+      {
+        "type": "feature",
+        "description": "Support des films et des series via endpoints details/credits/videos/saisons"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout de la configuration TMDB via fichier tmdb.config.json"
+      },
+      {
+        "type": "feature",
+        "description": "Recuperation des noms d'episodes, dates et images de still TMDB dans la modal series"
+      },
+      {
+        "type": "improvement",
+        "description": "Hydratation parallelisee et cache local pour limiter les appels API et accelerer l'affichage"
+      },
+      {
+        "type": "fix",
+        "description": "Passage en mode strict base sur tmdbId pour eviter les erreurs de matching par titre"
+      }
+    ]
+  },
+  {
     "version": "1.2",
     "date": "2026-03-16",
     "label": "Catalogue MCU",

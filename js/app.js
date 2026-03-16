@@ -109,6 +109,50 @@ function buildTmdbDetailsRequest(mediaType, tmdbId) {
   };
 }
 
+function buildTmdbCreditsRequest(mediaType, tmdbId) {
+  const endpointRoot = mediaType === 'tv'
+    ? CONFIG.TMDB_TV_DETAILS_ENDPOINT
+    : CONFIG.TMDB_MOVIE_DETAILS_ENDPOINT;
+
+  const params = new URLSearchParams({
+    language: CONFIG.TMDB_LANG,
+  });
+
+  if (!CONFIG.TMDB_BEARER_TOKEN && CONFIG.TMDB_API_KEY) {
+    params.set('api_key', CONFIG.TMDB_API_KEY);
+  }
+
+  const headers = {};
+  if (CONFIG.TMDB_BEARER_TOKEN) headers.Authorization = `Bearer ${CONFIG.TMDB_BEARER_TOKEN}`;
+
+  return {
+    url: `${endpointRoot}/${tmdbId}/credits?${params.toString()}`,
+    options: { headers },
+  };
+}
+
+function buildTmdbVideosRequest(mediaType, tmdbId) {
+  const endpointRoot = mediaType === 'tv'
+    ? CONFIG.TMDB_TV_DETAILS_ENDPOINT
+    : CONFIG.TMDB_MOVIE_DETAILS_ENDPOINT;
+
+  const params = new URLSearchParams({
+    language: CONFIG.TMDB_LANG,
+  });
+
+  if (!CONFIG.TMDB_BEARER_TOKEN && CONFIG.TMDB_API_KEY) {
+    params.set('api_key', CONFIG.TMDB_API_KEY);
+  }
+
+  const headers = {};
+  if (CONFIG.TMDB_BEARER_TOKEN) headers.Authorization = `Bearer ${CONFIG.TMDB_BEARER_TOKEN}`;
+
+  return {
+    url: `${endpointRoot}/${tmdbId}/videos?${params.toString()}`,
+    options: { headers },
+  };
+}
+
 function buildTmdbSeasonDetailsRequest(tmdbSeriesId, seasonNumber) {
   const params = new URLSearchParams({
     language: CONFIG.TMDB_LANG,
@@ -210,6 +254,220 @@ async function resolveTmdbMovieMetadataById(movie) {
     };
   } catch {
     return null;
+  }
+}
+
+function formatRuntime(minutes) {
+  const value = Number(minutes);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  const h = Math.floor(value / 60);
+  const m = value % 60;
+  if (!h) return `${m} min`;
+  return `${h}h${String(m).padStart(2, '0')}`;
+}
+
+function getMediaDisplayType(mediaType) {
+  return mediaType === 'tv' ? 'Série' : 'Film';
+}
+
+function openDetailsModal() {
+  const modal = document.getElementById('details-modal');
+  if (!modal) return;
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetailsModal() {
+  const modal = document.getElementById('details-modal');
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+async function fetchTmdbDetailsBundle(item, mediaType = 'movie') {
+  const tmdbId = getTmdbNumericId(item);
+  if (!tmdbId || !hasTmdbCredentials()) return null;
+
+  const detailsKey = getTmdbDetailsCacheKey(mediaType, tmdbId);
+
+  if (!tmdbDetailsCache.has(detailsKey)) {
+    const detailsRequest = buildTmdbDetailsRequest(mediaType, tmdbId);
+    const detailsRes = await fetch(detailsRequest.url, detailsRequest.options);
+    if (!detailsRes.ok) return null;
+    tmdbDetailsCache.set(detailsKey, await detailsRes.json());
+  }
+
+  const details = tmdbDetailsCache.get(detailsKey);
+
+  const [creditsData, videosData] = await Promise.all([
+    (async () => {
+      try {
+        const creditsRequest = buildTmdbCreditsRequest(mediaType, tmdbId);
+        const creditsRes = await fetch(creditsRequest.url, creditsRequest.options);
+        return creditsRes.ok ? await creditsRes.json() : null;
+      } catch {
+        return null;
+      }
+    })(),
+    (async () => {
+      try {
+        const videosRequest = buildTmdbVideosRequest(mediaType, tmdbId);
+        const videosRes = await fetch(videosRequest.url, videosRequest.options);
+        return videosRes.ok ? await videosRes.json() : null;
+      } catch {
+        return null;
+      }
+    })(),
+  ]);
+
+  return {
+    details,
+    credits: creditsData,
+    videos: videosData,
+  };
+}
+
+function renderDetailsModalContent(item, mediaType, bundle) {
+  const content = document.getElementById('details-modal-content');
+  if (!content) return;
+
+  const details = bundle?.details || {};
+  const credits = Array.isArray(bundle?.credits?.cast) ? bundle.credits.cast : [];
+  const videos = Array.isArray(bundle?.videos?.results) ? bundle.videos.results : [];
+
+  const title = String(
+    mediaType === 'tv'
+      ? (details.name || details.original_name || item.title || '')
+      : (details.title || details.original_title || item.title || '')
+  ).trim();
+
+  const posterPath = String(details.poster_path || '').trim();
+  const posterUrl = posterPath ? `${CONFIG.TMDB_IMAGE_BASE_URL}${posterPath}` : String(item.poster || '');
+  const overview = String(details.overview || '').trim();
+
+  const genres = Array.isArray(details.genres)
+    ? details.genres.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+    : [];
+
+  const voteAverage = Number(details.vote_average);
+  const runtimeLabel = mediaType === 'movie'
+    ? formatRuntime(details.runtime)
+    : `${Number(details.number_of_seasons) || Number(item?.seasons?.length) || 0} saison(s)`;
+
+  const releaseDate = String(
+    mediaType === 'tv'
+      ? (details.first_air_date || item.year || '')
+      : (details.release_date || item.releaseDate || item.year || '')
+  );
+
+  const topCast = credits.slice(0, 8);
+
+  const trailers = videos
+    .filter((entry) => entry?.site === 'YouTube' && (entry?.type === 'Trailer' || entry?.type === 'Teaser'))
+    .slice(0, 3);
+
+  const detailsUrlCandidates = Array.isArray(item?._urlCandidates)
+    ? item._urlCandidates
+    : getMediaUrlCandidates(item);
+  const hasPlaybackTarget = mediaType === 'tv' || detailsUrlCandidates.length > 0;
+
+  content.innerHTML = `
+    <div class="details-hero">
+      <div class="details-poster-wrap">
+        ${posterUrl
+          ? `<img class="details-poster" src="${escapeHtml(posterUrl)}" alt="${escapeHtml(title)}" loading="lazy" />`
+          : `<div class="details-poster-fallback">${escapeHtml(getMediaDisplayType(mediaType))}</div>`}
+        <button type="button" class="details-poster-play" data-details-action="play" ${hasPlaybackTarget ? '' : 'disabled'} aria-label="Lecture ${escapeHtml(title)}">
+          <span>▶</span>
+        </button>
+      </div>
+      <div class="details-head">
+        <h3 id="details-modal-title" class="details-title">${escapeHtml(title)}</h3>
+        <p class="details-subtitle">${escapeHtml(getMediaDisplayType(mediaType))} · ${escapeHtml(String(releaseDate))}</p>
+        <div class="details-stats">
+          ${runtimeLabel ? `<span class="details-stat">${escapeHtml(runtimeLabel)}</span>` : ''}
+          ${Number.isFinite(voteAverage) ? `<span class="details-stat">Note TMDB: ${escapeHtml(voteAverage.toFixed(1))}/10</span>` : ''}
+          ${genres.slice(0, 4).map((genre) => `<span class="details-stat">${escapeHtml(genre)}</span>`).join('')}
+        </div>
+        <p class="details-overview">${overview ? escapeHtml(overview) : 'Aucun synopsis TMDB disponible.'}</p>
+      </div>
+    </div>
+
+    <section class="details-section">
+      <h4>Casting</h4>
+      ${topCast.length
+        ? `<div class="details-cast-list">${topCast.map((person) => {
+            const actorName = String(person?.name || '').trim() || 'Acteur inconnu';
+            const actorRole = String(person?.character || '').trim();
+            const profilePath = String(person?.profile_path || '').trim();
+            const profileUrl = profilePath ? `${CONFIG.TMDB_IMAGE_BASE_URL}${profilePath}` : '';
+
+            return `<article class="details-cast-item">
+              <div class="details-cast-avatar-wrap">
+                ${profileUrl
+                  ? `<img class="details-cast-avatar" src="${escapeHtml(profileUrl)}" alt="${escapeHtml(actorName)}" loading="lazy" />`
+                  : `<div class="details-cast-avatar-fallback" aria-hidden="true">${escapeHtml(getNameInitials(actorName))}</div>`}
+              </div>
+              <div class="details-cast-copy">
+                <p class="details-cast-name">${escapeHtml(actorName)}</p>
+                ${actorRole ? `<p class="details-cast-role">${escapeHtml(actorRole)}</p>` : ''}
+              </div>
+            </article>`;
+          }).join('')}</div>`
+        : '<p class="details-empty">Casting indisponible.</p>'}
+    </section>
+
+    <section class="details-section">
+      <h4>Bandes-annonces</h4>
+      ${trailers.length
+        ? `<div class="details-trailer-list">${trailers.map((video) => {
+            const key = String(video?.key || '');
+            const label = String(video?.name || 'Voir la bande-annonce');
+            return `<button type="button" class="details-btn" data-trailer-key="${escapeHtml(key)}">${escapeHtml(label)}</button>`;
+          }).join('')}</div>`
+        : '<p class="details-empty">Aucune bande-annonce YouTube disponible.</p>'}
+    </section>
+  `;
+
+  content.querySelectorAll('[data-trailer-key]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const key = button.getAttribute('data-trailer-key') || '';
+      if (!key) return;
+      window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener,noreferrer');
+    });
+  });
+
+  const playBtn = content.querySelector('[data-details-action="play"]');
+  playBtn?.addEventListener('click', () => {
+    closeDetailsModal();
+
+    if (mediaType === 'tv') {
+      showSeriesModal(item);
+      return;
+    }
+
+    openVideoPlayer(detailsUrlCandidates, item.title);
+  });
+}
+
+async function showDetailsModal(item, mediaType = 'movie') {
+  const content = document.getElementById('details-modal-content');
+  if (!content) return;
+
+  openDetailsModal();
+  content.innerHTML = '<p class="details-empty">Chargement de la fiche TMDB...</p>';
+
+  try {
+    const bundle = await fetchTmdbDetailsBundle(item, mediaType);
+    if (!bundle?.details) {
+      content.innerHTML = '<p class="details-empty">Impossible de charger la fiche TMDB. Verifie le tmdbId.</p>';
+      return;
+    }
+    renderDetailsModalContent(item, mediaType, bundle);
+  } catch {
+    content.innerHTML = '<p class="details-empty">Erreur pendant le chargement de la fiche.</p>';
   }
 }
 
@@ -579,6 +837,18 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
+}
+
+function getNameInitials(value) {
+  const name = String(value || '').trim();
+  if (!name) return '?';
+
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+
+  const first = parts[0]?.charAt(0) || '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.charAt(0) || '') : '';
+  return `${first}${last}`.toUpperCase() || '?';
 }
 
 function normalizeCollection(value) {
@@ -1191,6 +1461,23 @@ function setupVideoModal() {
 
 }
 
+function setupDetailsModal() {
+  const modal = document.getElementById('details-modal');
+  const closeBtn = document.getElementById('details-modal-close');
+  if (!modal) return;
+
+  closeBtn?.addEventListener('click', closeDetailsModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-details')) {
+      closeDetailsModal();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeDetailsModal();
+  });
+}
+
 function setupSeriesModal() {
   const modal = document.getElementById('series-modal');
   const closeBtn = document.getElementById('series-modal-close');
@@ -1330,7 +1617,11 @@ function createCard(item, isTV = false, index = 0) {
     }
   }
 
-  const open = () => {
+  const openDetails = () => {
+    showDetailsModal(item, isTV ? 'tv' : 'movie');
+  };
+
+  const openPlayer = () => {
     if (isTV) {
       showSeriesModal(state.series[index]);
       return;
@@ -1339,11 +1630,16 @@ function createCard(item, isTV = false, index = 0) {
     openVideoPlayer(urlCandidates, item.title);
   };
 
-  card.addEventListener('click', open);
+  card.addEventListener('click', openDetails);
   card.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      open();
+      openDetails();
+      return;
+    }
+    if (e.key === ' ') {
+      e.preventDefault();
+      openPlayer();
     }
   });
 
@@ -1445,6 +1741,66 @@ const changelogState = {
   data: null,
 };
 
+function parseVersionParts(versionValue) {
+  return String(versionValue || '')
+    .trim()
+    .replace(/^v/i, '')
+    .split('.')
+    .map((part) => Number(part))
+    .map((part) => (Number.isFinite(part) && part >= 0 ? part : 0));
+}
+
+function compareVersionParts(aParts, bParts) {
+  const maxLen = Math.max(aParts.length, bParts.length, 3);
+  for (let i = 0; i < maxLen; i += 1) {
+    const a = Number(aParts[i] || 0);
+    const b = Number(bParts[i] || 0);
+    if (a > b) return 1;
+    if (a < b) return -1;
+  }
+  return 0;
+}
+
+function findLatestChangelogRelease(releases) {
+  if (!Array.isArray(releases) || !releases.length) return null;
+
+  let latest = null;
+  releases.forEach((release) => {
+    if (!release || typeof release !== 'object') return;
+    if (!latest) {
+      latest = release;
+      return;
+    }
+
+    const releaseParts = parseVersionParts(release.version);
+    const latestParts = parseVersionParts(latest.version);
+    if (compareVersionParts(releaseParts, latestParts) > 0) {
+      latest = release;
+    }
+  });
+
+  return latest;
+}
+
+function updateVersionBadgeFromChangelog() {
+  const badge = document.getElementById('open-roadmap');
+  if (!badge) return;
+
+  const releases = Array.isArray(changelogState.data) ? changelogState.data : [];
+  const latestRelease = findLatestChangelogRelease(releases);
+  if (!latestRelease) return;
+
+  const rawVersion = String(latestRelease.version || '').trim().replace(/^v/i, '');
+  if (!rawVersion) return;
+
+  const badgeVersion = `v${rawVersion}`;
+  const label = String(latestRelease.label || '').trim();
+
+  badge.textContent = badgeVersion;
+  badge.setAttribute('title', label ? `Voir le changelog (${badgeVersion} - ${label})` : `Voir le changelog (${badgeVersion})`);
+  badge.setAttribute('aria-label', label ? `Voir le changelog ${badgeVersion} ${label}` : `Voir le changelog ${badgeVersion}`);
+}
+
 function openRoadmapModal() {
   const modal = document.getElementById('roadmap-modal');
   if (!modal) return;
@@ -1517,6 +1873,7 @@ async function init() {
   setupFilters();
   setupDisplayMode();
   setupVideoModal();
+  setupDetailsModal();
   setupSeriesModal();
   setupTierListControls();
   setupRoadmapModal();
@@ -1560,9 +1917,12 @@ async function init() {
 
     try {
       const clRes = await fetch('changelogs.json');
-      if (clRes.ok) changelogState.data = await clRes.json();
+      if (clRes.ok) {
+        changelogState.data = await clRes.json();
+        updateVersionBadgeFromChangelog();
+      }
     } catch {
-      roadmapState.changelogData = null;
+      changelogState.data = null;
     }
 
     renderLibrary();
