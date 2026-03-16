@@ -1,10 +1,18 @@
 /**
  * BoomBoom - app.js
- * API removed: posters come only from data.json (field: poster).
+ * Movies metadata and posters can be resolved from TMDB when configured.
  */
 const CONFIG = {
-  DATA_FILE: 'data.json',
+  MOVIES_DATA_FILE: 'data.movie.json',
+  SERIES_DATA_FILE: 'data.series.json',
+  TMDB_CONFIG_FILE: 'tmdb.config.json',
   TIER_STORAGE_KEY: 'boomboom:tier-order:v1',
+  TMDB_API_KEY: window.BOOMBOOM_TMDB_API_KEY || localStorage.getItem('boomboom:tmdb:api-key') || '',
+  TMDB_BEARER_TOKEN: window.BOOMBOOM_TMDB_BEARER_TOKEN || localStorage.getItem('boomboom:tmdb:bearer-token') || '',
+  TMDB_LANG: 'fr-FR',
+  TMDB_IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
+  TMDB_MOVIE_DETAILS_ENDPOINT: 'https://api.themoviedb.org/3/movie',
+  TMDB_TV_DETAILS_ENDPOINT: 'https://api.themoviedb.org/3/tv',
 };
 
 const TIER_LABELS = ['S', 'A', 'B', 'C', 'D', 'F'];
@@ -33,6 +41,228 @@ const MEDIA_PROBE_SUCCESS_TTL_MS = 30 * 60 * 1000;
 const MEDIA_PROBE_FAILURE_TTL_MS = 20 * 1000;
 
 const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
+const tmdbPosterCache = new Map();
+const tmdbDetailsCache = new Map();
+
+function hasTmdbCredentials() {
+  return Boolean(CONFIG.TMDB_BEARER_TOKEN || CONFIG.TMDB_API_KEY);
+}
+
+function applyTmdbConfig(configData) {
+  const apiKey = String(
+    configData?.tmdbApiKey
+    || configData?.apiKey
+    || ''
+  ).trim();
+
+  const bearerToken = String(
+    configData?.tmdbBearerToken
+    || configData?.bearerToken
+    || ''
+  ).trim();
+
+  if (apiKey) CONFIG.TMDB_API_KEY = apiKey;
+  if (bearerToken) CONFIG.TMDB_BEARER_TOKEN = bearerToken;
+}
+
+async function loadTmdbConfigFile() {
+  try {
+    const response = await fetch(CONFIG.TMDB_CONFIG_FILE, { cache: 'no-store' });
+    if (!response.ok) return;
+    const configData = await response.json();
+    applyTmdbConfig(configData);
+  } catch {
+    // Ignore config loading errors and keep runtime/browser defaults.
+  }
+}
+
+function getTmdbNumericId(item) {
+  const raw = item?.tmdbId ?? item?.tmdb_id ?? item?.tmdbID;
+  const id = Number(raw);
+  return Number.isFinite(id) && id > 0 ? id : 0;
+}
+
+function getTmdbDetailsCacheKey(mediaType, tmdbId) {
+  return `${mediaType}::${tmdbId}`;
+}
+
+function buildTmdbDetailsRequest(mediaType, tmdbId) {
+  const endpointRoot = mediaType === 'tv'
+    ? CONFIG.TMDB_TV_DETAILS_ENDPOINT
+    : CONFIG.TMDB_MOVIE_DETAILS_ENDPOINT;
+
+  const params = new URLSearchParams({
+    language: CONFIG.TMDB_LANG,
+  });
+
+  if (!CONFIG.TMDB_BEARER_TOKEN && CONFIG.TMDB_API_KEY) {
+    params.set('api_key', CONFIG.TMDB_API_KEY);
+  }
+
+  const headers = {};
+  if (CONFIG.TMDB_BEARER_TOKEN) headers.Authorization = `Bearer ${CONFIG.TMDB_BEARER_TOKEN}`;
+
+  return {
+    url: `${endpointRoot}/${tmdbId}?${params.toString()}`,
+    options: { headers },
+  };
+}
+
+async function resolveTmdbPosterById(item, mediaType) {
+  const tmdbId = getTmdbNumericId(item);
+  if (!tmdbId) return null;
+
+  try {
+    const cacheKey = getTmdbDetailsCacheKey(mediaType, tmdbId);
+    if (!tmdbDetailsCache.has(cacheKey)) {
+      const request = buildTmdbDetailsRequest(mediaType, tmdbId);
+      const response = await fetch(request.url, request.options);
+      if (!response.ok) {
+        tmdbDetailsCache.set(cacheKey, null);
+      } else {
+        tmdbDetailsCache.set(cacheKey, await response.json());
+      }
+    }
+
+    const data = tmdbDetailsCache.get(cacheKey);
+    return data?.poster_path ? `${CONFIG.TMDB_IMAGE_BASE_URL}${data.poster_path}` : null;
+  } catch {
+    return null;
+  }
+}
+
+function getReleaseYearFromDate(value) {
+  const date = String(value || '');
+  const year = Number(date.slice(0, 4));
+  return Number.isFinite(year) && year > 0 ? year : 0;
+}
+
+async function resolveTmdbMovieMetadataById(movie) {
+  const tmdbId = getTmdbNumericId(movie);
+  if (!tmdbId || !hasTmdbCredentials()) return null;
+
+  const cacheKey = getTmdbDetailsCacheKey('movie', tmdbId);
+
+  try {
+    if (!tmdbDetailsCache.has(cacheKey)) {
+      const request = buildTmdbDetailsRequest('movie', tmdbId);
+      const response = await fetch(request.url, request.options);
+      if (!response.ok) {
+        tmdbDetailsCache.set(cacheKey, null);
+      } else {
+        tmdbDetailsCache.set(cacheKey, await response.json());
+      }
+    }
+
+    const data = tmdbDetailsCache.get(cacheKey);
+    if (!data || typeof data !== 'object') return null;
+
+    const title = String(data.title || data.original_title || '').trim();
+    const releaseDate = String(data.release_date || '').trim();
+    const releaseYear = getReleaseYearFromDate(releaseDate);
+
+    return {
+      title,
+      releaseDate,
+      year: releaseYear,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function hydrateMovieMetadataFromTmdb(movies) {
+  if (!Array.isArray(movies) || !movies.length) return 0;
+  if (!hasTmdbCredentials()) return 0;
+
+  let updatedCount = 0;
+  const workers = [];
+  const queue = [...movies];
+  const workerCount = Math.min(6, queue.length);
+
+  for (let i = 0; i < workerCount; i += 1) {
+    workers.push((async () => {
+      while (queue.length) {
+        const movie = queue.shift();
+        if (!movie) continue;
+        const metadata = await resolveTmdbMovieMetadataById(movie);
+        if (!metadata) continue;
+
+        let changed = false;
+
+        if (metadata.title) {
+          movie.title = metadata.title;
+          changed = true;
+        }
+        if (metadata.releaseDate) {
+          movie.releaseDate = metadata.releaseDate;
+          changed = true;
+        }
+        if (metadata.year) {
+          movie.year = metadata.year;
+          changed = true;
+        }
+
+        if (changed) updatedCount += 1;
+      }
+    })());
+  }
+
+  await Promise.all(workers);
+  return updatedCount;
+}
+
+async function resolveTmdbPosterForItem(item, mediaType = 'movie') {
+  const tmdbId = getTmdbNumericId(item);
+  if (!tmdbId || !hasTmdbCredentials()) return null;
+
+  const cacheKey = `${mediaType}::${tmdbId}`;
+  if (tmdbPosterCache.has(cacheKey)) return tmdbPosterCache.get(cacheKey);
+
+  try {
+    const posterById = await resolveTmdbPosterById(item, mediaType);
+    tmdbPosterCache.set(cacheKey, posterById || null);
+    return posterById || null;
+  } catch {
+    tmdbPosterCache.set(cacheKey, null);
+    return null;
+  }
+}
+
+async function hydratePostersFromTmdb(items, mediaType = 'movie') {
+  if (!Array.isArray(items) || !items.length) return 0;
+  if (!hasTmdbCredentials()) return 0;
+
+  let updatedCount = 0;
+  const workers = [];
+  const queue = [...items];
+  const workerCount = Math.min(6, queue.length);
+
+  for (let i = 0; i < workerCount; i += 1) {
+    workers.push((async () => {
+      while (queue.length) {
+        const item = queue.shift();
+        if (!item) continue;
+        const tmdbPoster = await resolveTmdbPosterForItem(item, mediaType);
+        if (!tmdbPoster) continue;
+        item.poster = tmdbPoster;
+        updatedCount += 1;
+      }
+    })());
+  }
+
+  await Promise.all(workers);
+
+  return updatedCount;
+}
+
+async function hydrateMoviePostersFromTmdb(movies) {
+  return hydratePostersFromTmdb(movies, 'movie');
+}
+
+async function hydrateSeriesPostersFromTmdb(series) {
+  return hydratePostersFromTmdb(series, 'tv');
+}
 
 function parseSignedUrlExpiry(url) {
   if (!url || !/^https?:\/\//i.test(url)) return null;
@@ -923,11 +1153,15 @@ function setupSeriesModal() {
 }
 
 function createCard(item, isTV = false, index = 0) {
+  const releaseLabel = !isTV && item.releaseDate
+    ? String(item.releaseDate)
+    : String(item.year || '');
+
   const card = document.createElement('article');
   card.className = 'card';
   card.tabIndex = 0;
   card.setAttribute('role', 'button');
-  card.setAttribute('aria-label', `${item.title} (${item.year})`);
+  card.setAttribute('aria-label', `${item.title} (${releaseLabel})`);
   card.dataset.year = String(item.year || '');
   const collectionLabel = getItemCollection(item);
   card.dataset.collection = normalizeCollection(collectionLabel);
@@ -951,7 +1185,7 @@ function createCard(item, isTV = false, index = 0) {
     <div class="card-overlay">
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
       <div class="card-meta">
-        <span class="card-year">${item.year || ''}</span>
+        <span class="card-year">${escapeHtml(releaseLabel)}</span>
         ${collectionBadge}
       </div>
     </div>
@@ -998,7 +1232,12 @@ function createCard(item, isTV = false, index = 0) {
       tryNextPoster();
     };
 
-    if (index < 8) {
+    const isTmdbPoster = typeof item.poster === 'string' && item.poster.includes('image.tmdb.org');
+    if (isTmdbPoster) {
+      // TMDB posters are few in this app: eager loading avoids browser lazy-loading stalls.
+      img.loading = 'eager';
+      img.fetchPriority = 'high';
+    } else if (index < 8) {
       img.loading = 'eager';
       img.fetchPriority = 'high';
     } else {
@@ -1202,6 +1441,8 @@ function setupRoadmapModal() {
 }
 
 async function init() {
+  await loadTmdbConfigFile();
+
   setupTabs();
   setupSearch();
   setupFilters();
@@ -1213,12 +1454,36 @@ async function init() {
   updateSearchPlaceholder();
 
   try {
-    const res = await fetch(CONFIG.DATA_FILE);
-    if (!res.ok) throw new Error(`Impossible de charger ${CONFIG.DATA_FILE} (HTTP ${res.status})`);
-    const data = await res.json();
+    const [moviesRes, seriesRes] = await Promise.all([
+      fetch(CONFIG.MOVIES_DATA_FILE),
+      fetch(CONFIG.SERIES_DATA_FILE),
+    ]);
 
-    state.series = sortByReleaseDate(Array.isArray(data.series) ? data.series : []);
-    state.movies = sortByReleaseDate(Array.isArray(data.movies) ? data.movies : []);
+    if (!moviesRes.ok) {
+      throw new Error(
+        `Impossible de charger ${CONFIG.MOVIES_DATA_FILE} (HTTP ${moviesRes.status})`
+      );
+    }
+    if (!seriesRes.ok) {
+      throw new Error(
+        `Impossible de charger ${CONFIG.SERIES_DATA_FILE} (HTTP ${seriesRes.status})`
+      );
+    }
+
+    const [moviesData, seriesData] = await Promise.all([moviesRes.json(), seriesRes.json()]);
+
+    const rawMovies = Array.isArray(moviesData.movies) ? moviesData.movies : [];
+    const rawSeries = Array.isArray(seriesData.series) ? seriesData.series : [];
+
+    const tmdbMoviesMetadataUpdated = await hydrateMovieMetadataFromTmdb(rawMovies);
+
+    state.movies = sortByReleaseDate(rawMovies);
+    state.series = sortByReleaseDate(rawSeries);
+
+    const [tmdbMoviePostersUpdated, tmdbSeriesPostersUpdated] = await Promise.all([
+      hydrateMoviePostersFromTmdb(state.movies),
+      hydrateSeriesPostersFromTmdb(state.series),
+    ]);
     buildTierItems();
     state.tierOrder = loadTierOrder();
 
@@ -1235,14 +1500,23 @@ async function init() {
     refreshFiltersForActiveSection();
     applyCurrentFilters();
 
+    if (
+      hasTmdbCredentials()
+      && tmdbMoviePostersUpdated === 0
+      && tmdbSeriesPostersUpdated === 0
+      && tmdbMoviesMetadataUpdated === 0
+    ) {
+      showNotice('TMDB est configure, mais aucune metadonnee/affiche n\'a ete recuperee. Verifie ta cle et les tmdbId dans les JSON.', 'warning');
+    }
+
     if (linkStats.expired > 0) {
       showNotice(
-        `${linkStats.expired} lien(s) video expire(s). Regenerer les URLs signees dans data.json.`,
+        `${linkStats.expired} lien(s) video expire(s). Regenerer les URLs signees dans data.movie.json et data.series.json.`,
         'error'
       );
     } else if (linkStats.expiringSoon > 0) {
       showNotice(
-        `${linkStats.expiringSoon} lien(s) video vont expirer bientot. Pense a regenerer data.json.`,
+        `${linkStats.expiringSoon} lien(s) video vont expirer bientot. Pense a regenerer data.movie.json et data.series.json.`,
         'warning'
       );
     }
