@@ -1585,27 +1585,57 @@ body {
 
 .episode-list {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.65rem;
+  padding: 0.8rem;
 }
 
-.episode-item {
-  display: flex;
+.episode-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 0.65rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.58rem 0.9rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.45rem;
 }
 
-.episode-item:first-child {
-  border-top: none;
+.episode-thumb-wrap {
+  width: 112px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(229, 160, 13, 0.18), rgba(255, 255, 255, 0.04));
+}
+
+.episode-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.episode-thumb-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 
 .episode-playable {
   cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
 }
 
 .episode-playable:hover {
-  background: var(--bg-elevated);
+  background: rgba(229, 160, 13, 0.08);
+  border-color: rgba(229, 160, 13, 0.35);
+  transform: translateY(-2px);
 }
 
 .episode-play {
@@ -1617,7 +1647,8 @@ body {
 .episode-main {
   display: flex;
   flex-direction: column;
-  gap: 0.06rem;
+  gap: 0.18rem;
+  min-width: 0;
 }
 
 .episode-code {
@@ -1628,12 +1659,16 @@ body {
 }
 
 .episode-title {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: #f4f4f5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .episode-year {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #9ea0a9;
 }
 
@@ -1654,5 +1689,18 @@ body {
 
   .series-modal-title {
     font-size: 1.2rem;
+  }
+
+  .episode-list {
+    grid-template-columns: 1fr;
+    padding: 0.65rem;
+  }
+
+  .episode-card {
+    grid-template-columns: 96px minmax(0, 1fr) auto;
+  }
+
+  .episode-thumb-wrap {
+    width: 96px;
   }
 }

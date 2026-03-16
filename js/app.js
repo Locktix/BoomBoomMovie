@@ -43,6 +43,7 @@ const MEDIA_PROBE_FAILURE_TTL_MS = 20 * 1000;
 const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
 const tmdbPosterCache = new Map();
 const tmdbDetailsCache = new Map();
+const tmdbSeasonDetailsCache = new Map();
 
 function hasTmdbCredentials() {
   return Boolean(CONFIG.TMDB_BEARER_TOKEN || CONFIG.TMDB_API_KEY);
@@ -106,6 +107,47 @@ function buildTmdbDetailsRequest(mediaType, tmdbId) {
     url: `${endpointRoot}/${tmdbId}?${params.toString()}`,
     options: { headers },
   };
+}
+
+function buildTmdbSeasonDetailsRequest(tmdbSeriesId, seasonNumber) {
+  const params = new URLSearchParams({
+    language: CONFIG.TMDB_LANG,
+  });
+
+  if (!CONFIG.TMDB_BEARER_TOKEN && CONFIG.TMDB_API_KEY) {
+    params.set('api_key', CONFIG.TMDB_API_KEY);
+  }
+
+  const headers = {};
+  if (CONFIG.TMDB_BEARER_TOKEN) headers.Authorization = `Bearer ${CONFIG.TMDB_BEARER_TOKEN}`;
+
+  return {
+    url: `${CONFIG.TMDB_TV_DETAILS_ENDPOINT}/${tmdbSeriesId}/season/${seasonNumber}?${params.toString()}`,
+    options: { headers },
+  };
+}
+
+async function resolveTmdbSeasonEpisodes(seriesItem, seasonNumber) {
+  const tmdbSeriesId = getTmdbNumericId(seriesItem);
+  if (!tmdbSeriesId || !Number.isFinite(Number(seasonNumber)) || !hasTmdbCredentials()) return [];
+
+  const cacheKey = `${tmdbSeriesId}::season-${seasonNumber}`;
+  if (!tmdbSeasonDetailsCache.has(cacheKey)) {
+    try {
+      const request = buildTmdbSeasonDetailsRequest(tmdbSeriesId, seasonNumber);
+      const response = await fetch(request.url, request.options);
+      if (!response.ok) {
+        tmdbSeasonDetailsCache.set(cacheKey, []);
+      } else {
+        const data = await response.json();
+        tmdbSeasonDetailsCache.set(cacheKey, Array.isArray(data?.episodes) ? data.episodes : []);
+      }
+    } catch {
+      tmdbSeasonDetailsCache.set(cacheKey, []);
+    }
+  }
+
+  return tmdbSeasonDetailsCache.get(cacheKey) || [];
 }
 
 async function resolveTmdbPosterById(item, mediaType) {
@@ -1006,11 +1048,14 @@ function hideLoading() {
   setTimeout(() => el.remove(), 450);
 }
 
-function showSeriesModal(seriesItem) {
+async function showSeriesModal(seriesItem) {
   const modal = document.getElementById('series-modal');
   const title = document.getElementById('series-modal-title');
   const meta = document.getElementById('series-modal-meta');
   const content = document.getElementById('series-modal-content');
+
+  const requestId = `${Date.now()}-${Math.random()}`;
+  modal.dataset.requestId = requestId;
 
   const seasons = Array.isArray(seriesItem.seasons) ? seriesItem.seasons : [];
   const totalEpisodes = seasons.reduce((acc, s) => {
@@ -1020,10 +1065,25 @@ function showSeriesModal(seriesItem) {
 
   title.textContent = seriesItem.title;
   meta.textContent = `${seriesItem.year || ''} | ${seasons.length} saison(s) | ${totalEpisodes} episode(s)`;
+  content.innerHTML = '<p class="series-empty">Chargement des episodes TMDB...</p>';
+
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  const seasonEpisodesMap = new Map();
+  await Promise.all(seasons.map(async (season) => {
+    const seasonNum = Number(season.season) || 1;
+    const tmdbEpisodes = await resolveTmdbSeasonEpisodes(seriesItem, seasonNum);
+    seasonEpisodesMap.set(seasonNum, tmdbEpisodes);
+  }));
+
+  if (modal.dataset.requestId !== requestId) return;
 
   let html = '';
   seasons.forEach((season) => {
     const seasonNum = Number(season.season) || 1;
+    const tmdbEpisodes = seasonEpisodesMap.get(seasonNum) || [];
     const epList = Array.isArray(season.episodes)
       ? season.episodes
       : Array.from({ length: Number(season.episodes) || 0 }, () => ({ url: '' }));
@@ -1040,18 +1100,30 @@ function showSeriesModal(seriesItem) {
     epList.forEach((ep, i) => {
       const epNum = i + 1;
       const code = `S${String(seasonNum).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
+      const tmdbEpisode = tmdbEpisodes.find((entry) => Number(entry?.episode_number) === epNum) || tmdbEpisodes[i] || null;
+      const tmdbEpisodeName = String(tmdbEpisode?.name || '').trim();
+      const tmdbAirDate = String(tmdbEpisode?.air_date || '').trim();
+      const tmdbStillPath = String(tmdbEpisode?.still_path || '').trim();
+
       const urlCandidates = Array.isArray(ep?._urlCandidates) ? ep._urlCandidates : getMediaUrlCandidates(ep);
       const hasUrl = urlCandidates.length > 0;
+
+      const thumbMarkup = tmdbStillPath
+        ? `<img class="episode-thumb" src="${escapeHtml(`${CONFIG.TMDB_IMAGE_BASE_URL}${tmdbStillPath}`)}" alt="${escapeHtml(tmdbEpisodeName || code)}" loading="lazy" />`
+        : `<div class="episode-thumb-fallback">${escapeHtml(code)}</div>`;
+
       html += `
-          <div class="episode-item${hasUrl ? ' episode-playable' : ''}"${hasUrl ? ` data-url-candidates="${escapeHtml(JSON.stringify(urlCandidates))}"` : ''}>
+          <article class="episode-card${hasUrl ? ' episode-playable' : ''}"${hasUrl ? ` data-url-candidates="${escapeHtml(JSON.stringify(urlCandidates))}"` : ''}>
+            <div class="episode-thumb-wrap">
+              ${thumbMarkup}
+            </div>
             <div class="episode-main">
               <p class="episode-code">${code}</p>
-              <p class="episode-title">Episode ${epNum}</p>
+              <p class="episode-title">${escapeHtml(tmdbEpisodeName || `Episode ${epNum}`)}</p>
+              <p class="episode-year">${escapeHtml(tmdbAirDate || String(season.year || ''))}</p>
             </div>
-            ${hasUrl
-              ? '<span class="episode-play">&#9654;</span>'
-              : `<p class="episode-year">${season.year || ''}</p>`}
-          </div>
+            ${hasUrl ? '<span class="episode-play">&#9654;</span>' : ''}
+          </article>
       `;
     });
 
@@ -1066,9 +1138,6 @@ function showSeriesModal(seriesItem) {
   }
 
   content.innerHTML = html;
-  modal.hidden = false;
-  modal.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
 }
 
 function closeSeriesModal() {
