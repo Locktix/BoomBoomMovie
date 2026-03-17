@@ -78,7 +78,7 @@ const MCU_ORDER = [
   { title: 'Captain America : Brave New World', tmdbId: 927490, type: 'movie' },
   { title: 'Thunderbolts*', tmdbId: 985617, type: 'movie' },
   { title: 'Fantastic Four: First Steps', tmdbId: 426063, type: 'movie' },
-  { title: 'The Punisher (spécial/série)', tmdbId: 67178, type: 'tv' },
+  /*{ title: 'The Punisher (spécial/série)', tmdbId: 67178, type: 'tv' },*/
   { title: 'Spider-Man: Brand New Day', tmdbId: 900667, type: 'movie' },
   { title: 'Vision', tmdbId: 254556, type: 'tv' },
   { title: 'Daredevil: Born Again – Saison 2', tmdbId: 204541, type: 'tv', season: 2 },
