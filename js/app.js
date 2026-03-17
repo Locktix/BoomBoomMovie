@@ -18,6 +18,72 @@ const CONFIG = {
 const TIER_LABELS = ['S', 'A', 'B', 'C', 'D', 'F'];
 const TIER_POOL = 'pool';
 
+// Ordre MCU complet (films + series)
+const MCU_ORDER = [
+  { title: 'Captain America: First Avenger', tmdbId: 1771, type: 'movie' },
+  { title: 'Captain Marvel', tmdbId: 299537, type: 'movie' },
+  { title: 'Iron Man', tmdbId: 1726, type: 'movie' },
+  { title: 'Iron Man 2', tmdbId: 10138, type: 'movie' },
+  { title: 'L’Incroyable Hulk', tmdbId: 1724, type: 'movie' },
+  { title: 'Thor', tmdbId: 10195, type: 'movie' },
+  { title: 'Avengers', tmdbId: 24428, type: 'movie' },
+  { title: 'Thor : Le Monde des Ténèbres', tmdbId: 76338, type: 'movie' },
+  { title: 'Iron Man 3', tmdbId: 68721, type: 'movie' },
+  { title: 'Captain America : Le Soldat de l’Hiver', tmdbId: 100402, type: 'movie' },
+  { title: 'Les Gardiens de la Galaxie', tmdbId: 118340, type: 'movie' },
+  { title: 'Les Gardiens de la Galaxie Vol. 2', tmdbId: 283995, type: 'movie' },
+  { title: 'Daredevil – Saison 1', tmdbId: 61889, type: 'tv', season: 1 },
+  { title: 'Avengers : L’Ère d’Ultron', tmdbId: 99861, type: 'movie' },
+  { title: 'Ant-Man', tmdbId: 102899, type: 'movie' },
+  { title: 'Captain America : Civil War', tmdbId: 271110, type: 'movie' },
+  { title: 'Black Widow', tmdbId: 497698, type: 'movie' },
+  { title: 'Black Panther', tmdbId: 284054, type: 'movie' },
+  { title: 'Spider-Man : Homecoming', tmdbId: 315635, type: 'movie' },
+  { title: 'Daredevil – Saison 2', tmdbId: 61889, type: 'tv', season: 2 },
+  { title: 'The Punisher – Saison 1', tmdbId: 67178, type: 'tv', season: 1 },
+  { title: 'Doctor Strange', tmdbId: 284052, type: 'movie' },
+  { title: 'Thor : Ragnarok', tmdbId: 284053, type: 'movie' },
+  { title: 'Ant-Man et la Guêpe', tmdbId: 363088, type: 'movie' },
+  { title: 'Avengers : Infinity War', tmdbId: 299536, type: 'movie' },
+  { title: 'Avengers : Endgame', tmdbId: 299534, type: 'movie' },
+  { title: 'Loki – Saisons 1 & 2', tmdbId: 84958, type: 'tv' },
+  { title: 'WandaVision', tmdbId: 85271, type: 'tv' },
+  { title: 'Shang-Chi et la Légende des Dix Anneaux', tmdbId: 566525, type: 'movie' },
+  { title: 'Falcon and the Winter Soldier', tmdbId: 88396, type: 'tv' },
+  { title: 'Les Éternels', tmdbId: 524434, type: 'movie' },
+  { title: 'Spider-Man : Far From Home', tmdbId: 429617, type: 'movie' },
+  { title: 'Spider-Man (2002)', tmdbId: 557, type: 'movie' },
+  { title: 'Spider-Man 2 (2004)', tmdbId: 558, type: 'movie' },
+  { title: 'Spider-Man 3 (2007)', tmdbId: 559, type: 'movie' },
+  { title: 'The Amazing Spider-Man', tmdbId: 1930, type: 'movie' },
+  { title: 'The Amazing Spider-Man 2 : Le Destin d\'un Héros', tmdbId: 102382, type: 'movie' },
+  { title: 'Spider-Man : No Way Home', tmdbId: 634649, type: 'movie' },
+  { title: 'Doctor Strange in the Multiverse of Madness', tmdbId: 453395, type: 'movie' },
+  { title: 'Hawkeye', tmdbId: 88329, type: 'tv' },
+  { title: 'Black Panther : Wakanda Forever', tmdbId: 505642, type: 'movie' },
+  { title: 'Ms. Marvel', tmdbId: 92782, type: 'tv' },
+  { title: 'Thor : Love and Thunder', tmdbId: 616037, type: 'movie' },
+  { title: 'Ant-Man 3 : Quantumania', tmdbId: 640146, type: 'movie' },
+  { title: 'Les Gardiens de la Galaxie Vol. 3', tmdbId: 447365, type: 'movie' },
+  { title: 'The Marvels', tmdbId: 609681, type: 'movie' },
+  { title: 'X-Men', tmdbId: 36657, type: 'movie' },
+  { title: 'X-Men 2', tmdbId: 36658, type: 'movie' },
+  { title: 'X-Men : L\'Affrontement Final', tmdbId: 36660, type: 'movie' },
+  { title: 'Logan', tmdbId: 263115, type: 'movie' },
+  { title: 'Deadpool', tmdbId: 293660, type: 'movie' },
+  { title: 'Deadpool 2', tmdbId: 383498, type: 'movie' },
+  { title: 'Deadpool & Wolverine', tmdbId: 533535, type: 'movie' },
+  { title: 'Agatha All Along', tmdbId: 134949, type: 'tv' },
+  { title: 'Daredevil: Born Again – Saison 1', tmdbId: 204541, type: 'tv', season: 1 },
+  { title: 'Captain America : Brave New World', tmdbId: 927490, type: 'movie' },
+  { title: 'Thunderbolts*', tmdbId: 985617, type: 'movie' },
+  { title: 'Fantastic Four: First Steps', tmdbId: 426063, type: 'movie' },
+  { title: 'The Punisher (spécial/série)', tmdbId: 67178, type: 'tv' },
+  { title: 'Spider-Man: Brand New Day', tmdbId: 900667, type: 'movie' },
+  { title: 'Vision', tmdbId: 254556, type: 'tv' },
+  { title: 'Daredevil: Born Again – Saison 2', tmdbId: 204541, type: 'tv', season: 2 },
+];
+
 const state = {
   movies: [],
   series: [],
@@ -934,6 +1000,8 @@ function refreshFiltersForActiveSection() {
     return;
   }
 
+  if (section.id === 'mcu') return;
+
   const cards = [...section.querySelectorAll('.card')];
 
   const collectionMap = new Map();
@@ -953,22 +1021,98 @@ function refreshFiltersForActiveSection() {
 function renderAllCollectionChips(collections) {
   const isSeries = document.querySelector('.section.active').id === 'series';
   const containerId = isSeries ? 'series-collection-filters' : 'movies-collection-filters';
-  renderCollectionChips(containerId, collections);
+  renderCollectionChips(containerId, collections, isSeries);
 }
 
-function renderCollectionChips(containerId, collections) {
+function getMcuCollectionValue(collections) {
+  const mcuEntry = collections.find(({ value, label }) => {
+    const normalizedValue = normalizeCollection(value);
+    const normalizedLabel = normalizeCollection(label);
+    return normalizedValue === 'mcu' || normalizedLabel === 'mcu';
+  });
+
+  return mcuEntry?.value || '';
+}
+
+function getMcuOrderRenderableItems() {
+  const moviesByTmdbId = new Map();
+  state.movies.forEach((movie, index) => {
+    const tmdbId = getTmdbNumericId(movie);
+    if (!tmdbId || moviesByTmdbId.has(tmdbId)) return;
+    moviesByTmdbId.set(tmdbId, { item: movie, isTV: false, index });
+  });
+
+  const seriesByTmdbId = new Map();
+  state.series.forEach((seriesItem, index) => {
+    const tmdbId = getTmdbNumericId(seriesItem);
+    if (!tmdbId || seriesByTmdbId.has(tmdbId)) return;
+    seriesByTmdbId.set(tmdbId, { item: seriesItem, isTV: true, index });
+  });
+
+  return MCU_ORDER.map((entry, idx) => {
+    const source = entry.type === 'tv'
+      ? seriesByTmdbId.get(entry.tmdbId)
+      : moviesByTmdbId.get(entry.tmdbId);
+    if (!source) return null;
+    return {
+      ...source,
+      orderIndex: idx + 1,
+    };
+  }).filter(Boolean);
+}
+
+function showMCUOrderList(query = '', gridId = 'mcu-grid', countId = 'mcu-count') {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  grid.classList.remove('grid-by-year');
+
+  const normalizedQuery = String(query || '').trim().toLowerCase();
+  const orderedItems = getMcuOrderRenderableItems().filter(({ item }) => {
+    const title = String(item?.title || '').toLowerCase();
+    return !normalizedQuery || title.includes(normalizedQuery);
+  });
+
+  const count = document.getElementById(countId);
+  if (count) count.textContent = String(orderedItems.length);
+
+  if (!orderedItems.length) return;
+
+  const fragment = document.createDocumentFragment();
+  orderedItems.forEach(({ item, isTV, index, orderIndex }) => {
+    const card = createCard(item, isTV, index);
+    const rank = document.createElement('span');
+    rank.className = 'mcu-order-rank';
+    rank.textContent = `#${orderIndex}`;
+    card.appendChild(rank);
+    fragment.appendChild(card);
+  });
+
+  grid.appendChild(fragment);
+}
+
+function renderCollectionChips(containerId, collections, isSeries = false) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = '';
   const fragment = document.createDocumentFragment();
+  const mcuCollectionValue = getMcuCollectionValue(collections);
 
   collections.forEach(({ value, label }) => {
+    const isMcuCollection = Boolean(mcuCollectionValue)
+      && normalizeCollection(value) === normalizeCollection(mcuCollectionValue);
+    if (isMcuCollection) return;
+
     const chip = document.createElement('button');
     chip.className = `filter-chip ${state.selectedCollection === value ? 'active' : ''}`;
     chip.textContent = label;
     chip.addEventListener('click', () => {
-      state.selectedCollection = state.selectedCollection === value ? 'all' : value;
+      const nextValue = state.selectedCollection === value ? 'all' : value;
+
+      state.selectedCollection = nextValue;
+
       refreshFiltersForActiveSection();
       applyCurrentFilters();
     });
@@ -1253,6 +1397,11 @@ function applyCurrentFilters() {
   const input = document.getElementById('search');
   if (!section || !input) return;
 
+  if (section.id === 'mcu') {
+    showMCUOrderList(input.value, 'mcu-grid', 'mcu-count');
+    return;
+  }
+
   if (section.id === 'tiers') {
     renderTierBoard();
     return;
@@ -1290,9 +1439,17 @@ function updateSearchPlaceholder() {
   const section = getActiveSection();
   if (!input || !section) return;
 
-  input.placeholder = section.id === 'tiers'
-    ? 'Rechercher dans la tier list…'
-    : 'Rechercher un titre…';
+  if (section.id === 'tiers') {
+    input.placeholder = 'Rechercher dans la tier list…';
+    return;
+  }
+
+  if (section.id === 'mcu') {
+    input.placeholder = 'Rechercher dans MCU…';
+    return;
+  }
+
+  input.placeholder = 'Rechercher un titre…';
 }
 
 function setupDisplayMode() {
@@ -1699,16 +1856,18 @@ function renderLibrary() {
 }
 
 function setupTabs() {
-  const tabs = document.querySelectorAll('.tab');
+  const tabs = document.querySelectorAll('.tab[data-target]');
   const sections = document.querySelectorAll('.section');
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.target;
+
       tabs.forEach((t) => {
         t.classList.toggle('active', t === tab);
         t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
       });
+
       sections.forEach((s) => s.classList.toggle('active', s.id === target));
       updateSearchPlaceholder();
       refreshFiltersForActiveSection();

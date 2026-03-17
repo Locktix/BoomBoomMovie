@@ -30,6 +30,9 @@
         <button class="tab" data-target="series" role="tab" aria-selected="false">
           📺 Séries
         </button>
+        <button class="tab" data-target="mcu" role="tab" aria-selected="false">
+          ✨ MCU
+        </button>
         <button class="tab" data-target="tiers" role="tab" aria-selected="false">
           🏆 Tier List
         </button>
@@ -79,6 +82,17 @@
       </div>
       </div>
       <div class="grid" id="series-grid"></div>
+    </section>
+
+    <!-- MCU -->
+    <section id="mcu" class="section" role="tabpanel">
+      <div class="section-header">
+        <div class="section-head-left">
+          <h2 class="section-title">MCU (Films + Séries)</h2>
+          <span class="count" id="mcu-count"></span>
+        </div>
+      </div>
+      <div class="grid" id="mcu-grid"></div>
     </section>
 
     <section id="tiers" class="section" role="tabpanel">
