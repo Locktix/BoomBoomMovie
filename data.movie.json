@@ -3,7 +3,6 @@
     {
       "title": "La Femme de ménage",
       "year": 2025,
-      "poster": "assets/poster/movie-la-femme-de-m-nage-2025.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/La%20Femme%20de%20menage%20-%202025.mp4",
       "tmdbId": 1368166
     },
@@ -11,7 +10,6 @@
       "title": "Avengers",
       "year": 2012,
       "collection": "MCU",
-      "poster": "assets/poster/movie-avengers-2012.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Avengers%20-%202012.mp4",
       "tmdbId": 24428
     },
@@ -19,7 +17,6 @@
       "title": "Thor",
       "year": 2011,
       "collection": "MCU",
-      "poster": "assets/poster/movie-thor-2011.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Thor%20-%202011.mp4",
       "tmdbId": 10195
     },
@@ -27,7 +24,6 @@
       "title": "L\u0027incroyable Hulk",
       "year": 2008,
       "collection": "MCU",
-      "poster": "assets/poster/movie-l-incroyable-hulk-2008.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/LIncroyable%20Hulk%20-%202008.mp4",
       "tmdbId": 1724
     },
@@ -35,7 +31,6 @@
       "title": "Iron Man",
       "year": 2008,
       "collection": "MCU",
-      "poster": "assets/poster/movie-iron-man-2008.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Iron%20Man%20-%202008.mp4",
       "tmdbId": 1726
     },
@@ -43,7 +38,6 @@
       "title": "Iron Man 2",
       "year": 2010,
       "collection": "MCU",
-      "poster": "assets/poster/movie-iron-man-2-2010.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Iron%20Man%202%20-%202010.mp4",
       "tmdbId": 10138
     },
@@ -51,7 +45,6 @@
       "title": "Captain Marvel",
       "year": 2019,
       "collection": "MCU",
-      "poster": "assets/poster/movie-captain-marvel-2019.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20Marvel%20-%202019.mp4",
       "tmdbId": 299537
     },
@@ -59,7 +52,6 @@
       "title": "Iron Man 3",
       "year": 2013,
       "collection": "MCU",
-      "poster": "assets/poster/movie-iron-man-3-2013.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Iron%20Man%203%20-%202013.mp4",
       "tmdbId": 68721
     },
@@ -67,7 +59,6 @@
       "title": "Thor: Le Monde des tenebres",
       "year": 2013,
       "collection": "MCU",
-      "poster": "assets/poster/movie-thor-le-monde-des-tenebres-2013.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Thor%20Le%20Monde%20des%20tnbres%20-%202013.mp4",
       "tmdbId": 76338
     },
@@ -75,7 +66,6 @@
       "title": "Captain America: Le Soldat de l\u0027hiver",
       "year": 2014,
       "collection": "MCU",
-      "poster": "assets/poster/movie-captain-america-le-soldat-de-l-hiver-2014.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20America%20Le%20Soldat%20de%20lhiver%20-%202014.mp4",
       "tmdbId": 100402
     },
@@ -83,7 +73,6 @@
       "title": "Les Gardiens de la Galaxie",
       "year": 2014,
       "collection": "MCU",
-      "poster": "assets/poster/movie-les-gardiens-de-la-galaxie-2014.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Les%20Gardiens%20de%20la%20Galaxie%20-%202014.mp4",
       "tmdbId": 118340
     },
@@ -91,42 +80,36 @@
       "title": "Les Gardiens de la Galaxie Vol. 2",
       "year": 2017,
       "collection": "MCU",
-      "poster": "assets/poster/movie-les-gardiens-de-la-galaxie-vol-2-2017.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Les%20Gardiens%20de%20la%20Galaxie%20Vol%202%20-%202017.mp4",
       "tmdbId": 283995
     },
     {
       "title": "Lucy",
       "year": 2014,
-      "poster": "assets/poster/movie-lucy-2014.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Lucy%20(2014).mp4",
       "tmdbId": 240832
     },
     {
       "title": "Minecraft, le film",
       "year": 2025,
-      "poster": "assets/poster/movie-minecraft-le-film-2025.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Minecraft_Le_Film.mp4",
       "tmdbId": 950387
     },
     {
       "title": "Spermageddon",
       "year": 2024,
-      "poster": "assets/poster/Spermageddon - 2024-poster.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spermageddon%20-%202024.mp4",
       "tmdbId": 1064307
     },
     {
       "title": "Barbie Au Bal Des Douze Princesses",
       "year": 2006,
-      "poster": "assets/poster/movie-barbie-au-bal-des-douze-princesses-2006.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Barbie%20Au%20Bal%20Des%20Douze%20Princesses%20-%202006.mp4",
       "tmdbId": 13002
     },
     {
       "title": "Barbie",
       "year": 2023,
-      "poster": "assets/poster/movie-barbie-2023.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Barbie%20-%202023.mp4",
       "tmdbId": 346698
     },
@@ -134,7 +117,6 @@
       "title": "Ant-Man",
       "year": 2015,
       "collection": "MCU",
-      "poster": "assets/poster/movie-ant-man-2015.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Ant-Man%20-%202015.mp4",
       "tmdbId": 102899
     },
@@ -142,9 +124,71 @@
       "title": "Avengers: L\u0027ere d\u0027Ultron",
       "year": 2015,
       "collection": "MCU",
-      "poster": "assets/poster/movie-avengers-l-ere-d-ultron-2015.jpg",
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Avengers%20L%20ere%20dUltron%20-%202015.mp4",
       "tmdbId": 99861
+    },
+    {
+      "title": "Captain America: Civil War",
+      "year": 2016,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Captain%20America%20%20Civil%20War%20-%202016.mp4",
+      "tmdbId": 271110
+    },
+    {
+      "title": "Doctor Strange",
+      "year": 2016,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Doctor%20Strange%20-%202016.mp4",
+      "tmdbId": 284052
+    },
+    {
+      "title": "Spider-Man: Homecoming",
+      "year": 2017,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20%20Homecoming%20-%202017.mp4",
+      "tmdbId": 315635
+    },
+    {
+      "title": "Thor: Ragnarok",
+      "year": 2017,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Thor%20%20Ragnarok%20-%202017.mp4",
+      "tmdbId": 284053
+    },
+    {
+      "title": "Black Panther",
+      "year": 2018,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Black%20Panther%20-%202018.mp4",
+      "tmdbId": 284054
+    },
+    {
+      "title": "Ant-Man et la Guêpe",
+      "year": 2018,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Ant-Man%20et%20la%20Gupe%20-%202018.mp4",
+      "tmdbId": 363088
+    },
+    {
+      "title": "Avengers: Infinity War",
+      "year": 2018,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Avengers%20%20Infinity%20War%20-%202018.mp4",
+      "tmdbId": 299536
+    },
+    {
+      "title": "Avengers: Endgame",
+      "year": 2019,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Avengers%20%20Endgame%20-%202019.mp4",
+      "tmdbId": 299534
+    },
+    {
+      "title": "Black Widow",
+      "year": 2021,
+      "collection": "MCU",
+      "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Black%20Widow%20-%202021.mp4",
+      "tmdbId": 497698
     }
   ]
 }
