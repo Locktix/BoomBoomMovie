@@ -1125,8 +1125,19 @@ function getMcuOrderRenderableItems() {
       ? seriesByTmdbId.get(entry.tmdbId)
       : moviesByTmdbId.get(entry.tmdbId);
     if (!source) return null;
+
+    const mappedTitle = String(entry?.title || '').trim();
+    const mappedItem = mappedTitle
+      ? { ...source.item, title: mappedTitle }
+      : source.item;
+
+    if (entry.type === 'tv' && Number.isFinite(Number(entry?.season))) {
+      mappedItem.season = Number(entry.season);
+    }
+
     return {
       ...source,
+      item: mappedItem,
       orderIndex: idx + 1,
     };
   }).filter(Boolean);
