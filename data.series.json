@@ -110,6 +110,45 @@
         }
       ],
       "tmdbId": 67178
+    },
+    {
+      "collection": "Dune",
+      "tmdbId": 90228,
+      "seasons": [
+        {
+          "season": 1,
+          "year": 2024,
+          "episodes": [
+            {"url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Dune%20Prophecy/saison%201/Dune%20%20Prophecy%201-1.mp4"},
+            {"url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Dune%20Prophecy/saison%201/Dune%20%20Prophecy%201-2.mp4"},
+            {"url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Dune%20Prophecy/saison%201/Dune%20%20Prophecy%201-3.mp4"},
+            {"url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Dune%20Prophecy/saison%201/Dune%20%20Prophecy%201-4.mp4"},
+            {"url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Dune%20Prophecy/saison%201/Dune%20%20Prophecy%201-5.mp4"},
+            {"url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/SERIES/Dune%20Prophecy/saison%201/Dune%20%20Prophecy%201-6.mp4"}
+          ]
+        }
+      ]
+    },
+    {
+      "tmdbId": 247849,
+      "seasons": [
+        {
+          "season": 1,
+          "year": 2024,
+          "episodes": [
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""},
+            {"url": ""}
+          ]
+        }
+      ]
     }
   ]
 }

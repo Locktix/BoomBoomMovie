@@ -323,6 +323,39 @@ async function resolveTmdbMovieMetadataById(movie) {
   }
 }
 
+async function resolveTmdbSeriesMetadataById(seriesItem) {
+  const tmdbId = getTmdbNumericId(seriesItem);
+  if (!tmdbId || !hasTmdbCredentials()) return null;
+
+  const cacheKey = getTmdbDetailsCacheKey('tv', tmdbId);
+
+  try {
+    if (!tmdbDetailsCache.has(cacheKey)) {
+      const request = buildTmdbDetailsRequest('tv', tmdbId);
+      const response = await fetch(request.url, request.options);
+      if (!response.ok) {
+        tmdbDetailsCache.set(cacheKey, null);
+      } else {
+        tmdbDetailsCache.set(cacheKey, await response.json());
+      }
+    }
+
+    const data = tmdbDetailsCache.get(cacheKey);
+    if (!data || typeof data !== 'object') return null;
+
+    const title = String(data.name || data.original_name || '').trim();
+    const firstAirDate = String(data.first_air_date || '').trim();
+    const releaseYear = getReleaseYearFromDate(firstAirDate);
+
+    return {
+      title,
+      year: releaseYear,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function formatRuntime(minutes) {
   const value = Number(minutes);
   if (!Number.isFinite(value) || value <= 0) return '';
@@ -566,6 +599,44 @@ async function hydrateMovieMetadataFromTmdb(movies) {
         }
         if (metadata.year) {
           movie.year = metadata.year;
+          changed = true;
+        }
+
+        if (changed) updatedCount += 1;
+      }
+    })());
+  }
+
+  await Promise.all(workers);
+  return updatedCount;
+}
+
+async function hydrateSeriesMetadataFromTmdb(seriesList) {
+  if (!Array.isArray(seriesList) || !seriesList.length) return 0;
+  if (!hasTmdbCredentials()) return 0;
+
+  let updatedCount = 0;
+  const workers = [];
+  const queue = [...seriesList];
+  const workerCount = Math.min(6, queue.length);
+
+  for (let i = 0; i < workerCount; i += 1) {
+    workers.push((async () => {
+      while (queue.length) {
+        const seriesItem = queue.shift();
+        if (!seriesItem) continue;
+        if (seriesItem.title && seriesItem.year) continue;
+        const metadata = await resolveTmdbSeriesMetadataById(seriesItem);
+        if (!metadata) continue;
+
+        let changed = false;
+
+        if (metadata.title && !seriesItem.title) {
+          seriesItem.title = metadata.title;
+          changed = true;
+        }
+        if (metadata.year && !seriesItem.year) {
+          seriesItem.year = metadata.year;
           changed = true;
         }
 
@@ -2061,6 +2132,7 @@ async function init() {
     const rawSeries = Array.isArray(seriesData.series) ? seriesData.series : [];
 
     const tmdbMoviesMetadataUpdated = await hydrateMovieMetadataFromTmdb(rawMovies);
+    const tmdbSeriesMetadataUpdated = await hydrateSeriesMetadataFromTmdb(rawSeries);
 
     state.movies = sortByReleaseDate(rawMovies);
     state.series = sortByReleaseDate(rawSeries);
@@ -2093,6 +2165,7 @@ async function init() {
       && tmdbMoviePostersUpdated === 0
       && tmdbSeriesPostersUpdated === 0
       && tmdbMoviesMetadataUpdated === 0
+      && tmdbSeriesMetadataUpdated === 0
     ) {
       showNotice('TMDB est configure, mais aucune metadonnee/affiche n\'a ete recuperee. Verifie ta cle et les tmdbId dans les JSON.', 'warning');
     }
