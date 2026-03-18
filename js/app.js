@@ -1163,7 +1163,11 @@ function showMCUOrderList(query = '', gridId = 'mcu-grid', countId = 'mcu-count'
 
   const fragment = document.createDocumentFragment();
   orderedItems.forEach(({ item, isTV, index, orderIndex }) => {
-    const card = createCard(item, isTV, index);
+    const seasonNumber = Number(item?.season);
+    const seasonLabel = isTV && Number.isFinite(seasonNumber) && seasonNumber > 0
+      ? `Saison ${seasonNumber}`
+      : '';
+    const card = createCard(item, isTV, index, { seasonLabel });
     const rank = document.createElement('span');
     rank.className = 'mcu-order-rank';
     rank.textContent = `#${orderIndex}`;
@@ -1747,7 +1751,7 @@ function setupSeriesModal() {
   });
 }
 
-function createCard(item, isTV = false, index = 0) {
+function createCard(item, isTV = false, index = 0, options = {}) {
   const releaseLabel = !isTV && item.releaseDate
     ? String(item.releaseDate)
     : String(item.year || '');
@@ -1761,9 +1765,13 @@ function createCard(item, isTV = false, index = 0) {
   const collectionLabel = getItemCollection(item);
   card.dataset.collection = normalizeCollection(collectionLabel);
   card.dataset.collectionLabel = collectionLabel;
+  const seasonLabel = String(options?.seasonLabel || '').trim();
   const urlCandidates = Array.isArray(item?._urlCandidates) ? item._urlCandidates : getMediaUrlCandidates(item);
   const collectionBadge = collectionLabel
     ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
+    : '';
+  const seasonBadge = seasonLabel
+    ? `<span class="card-season">${escapeHtml(seasonLabel)}</span>`
     : '';
 
   card.innerHTML = `
@@ -1781,6 +1789,7 @@ function createCard(item, isTV = false, index = 0) {
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
       <div class="card-meta">
         <span class="card-year">${escapeHtml(releaseLabel)}</span>
+        ${seasonBadge}
         ${collectionBadge}
       </div>
     </div>
