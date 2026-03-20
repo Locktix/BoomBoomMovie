@@ -23,19 +23,13 @@
         <button class="version-badge" id="open-roadmap" type="button" aria-haspopup="dialog" title="Voir le changelog">v...</button>
       </div>
 
-      <nav class="tabs" role="tablist">
-        <button class="tab active" data-target="movies" role="tab" aria-selected="true">
-          🎬 Films
-        </button>
-        <button class="tab" data-target="series" role="tab" aria-selected="false">
-          📺 Séries
-        </button>
-        <button class="tab" data-target="mcu" role="tab" aria-selected="false">
-          ✨ MCU
-        </button>
-        <button class="tab" data-target="tiers" role="tab" aria-selected="false">
-          🏆 Tier List
-        </button>
+      <nav class="nav-links" role="navigation" aria-label="Navigation principale">
+        <button class="nav-link active" data-view="view-home" type="button" aria-current="page">Accueil</button>
+        <button class="nav-link" data-view="view-films" type="button" aria-current="false">🎬 Films</button>
+        <button class="nav-link" data-view="view-series" type="button" aria-current="false">📺 Séries</button>
+        <button class="nav-link" data-view="view-collections" type="button" aria-current="false">🎭 Collections</button>
+        <button class="nav-link" data-view="view-mcu" type="button" aria-current="false">✨ MCU</button>
+        <button class="nav-link" data-view="view-tiers" type="button" aria-current="false">🏆 Tier List</button>
       </nav>
 
       <div class="search-wrap">
@@ -52,40 +46,48 @@
   <!-- ===== MAIN CONTENT ===== -->
   <main class="main">
 
+    <!-- Home View -->
+    <section id="view-home" class="view active">
+      <div id="home-rows" class="home-rows"></div>
+    </section>
 
-
-    <!-- Movies -->
-    <section id="movies" class="section active" role="tabpanel">
+    <!-- Films View -->
+    <section id="view-films" class="view">
       <div class="section-header">
         <div class="section-head-left">
           <h2 class="section-title">Films</h2>
           <span class="count" id="movies-count"></span>
         </div>
-      <div class="section-header-right">
-        <div class="filter-chips" id="movies-collection-filters"></div>
-        <button id="view-toggle-movies" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
-      </div>
+        <div class="section-header-right">
+          <div class="filter-chips" id="movies-collection-filters"></div>
+          <button id="view-toggle-movies" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
+        </div>
       </div>
       <div class="grid" id="movies-grid"></div>
     </section>
 
-    <!-- Series -->
-    <section id="series" class="section" role="tabpanel">
+    <!-- Séries View -->
+    <section id="view-series" class="view">
       <div class="section-header">
         <div class="section-head-left">
           <h2 class="section-title">Séries</h2>
           <span class="count" id="series-count"></span>
         </div>
-      <div class="section-header-right">
-        <div class="filter-chips" id="series-collection-filters"></div>
-        <button id="view-toggle-series" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
-      </div>
+        <div class="section-header-right">
+          <div class="filter-chips" id="series-collection-filters"></div>
+          <button id="view-toggle-series" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
+        </div>
       </div>
       <div class="grid" id="series-grid"></div>
     </section>
 
-    <!-- MCU -->
-    <section id="mcu" class="section" role="tabpanel">
+    <!-- Collections View -->
+    <section id="view-collections" class="view">
+      <div id="collections-rows" class="home-rows"></div>
+    </section>
+
+    <!-- MCU View -->
+    <section id="view-mcu" class="view">
       <div class="section-header">
         <div class="section-head-left">
           <h2 class="section-title">MCU (Films + Séries)</h2>
@@ -95,7 +97,8 @@
       <div class="grid" id="mcu-grid"></div>
     </section>
 
-    <section id="tiers" class="section" role="tabpanel">
+    <!-- Tier List View -->
+    <section id="view-tiers" class="view">
       <div class="section-header section-header-tier">
         <div class="section-head-left">
           <h2 class="section-title">Tier List</h2>

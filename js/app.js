@@ -6,6 +6,7 @@ const CONFIG = {
   MOVIES_DATA_FILE: 'data.movie.json',
   SERIES_DATA_FILE: 'data.series.json',
   TMDB_CONFIG_FILE: 'tmdb.config.json',
+  COLLECTIONS_FILE: 'collections.json',
   TIER_STORAGE_KEY: 'boomboom:tier-order:v1',
   TMDB_API_KEY: window.BOOMBOOM_TMDB_API_KEY || localStorage.getItem('boomboom:tmdb:api-key') || '',
   TMDB_BEARER_TOKEN: window.BOOMBOOM_TMDB_BEARER_TOKEN || localStorage.getItem('boomboom:tmdb:bearer-token') || '',
@@ -88,6 +89,7 @@ const MCU_ORDER = [
 const state = {
   movies: [],
   series: [],
+  collections: [],
   displayMode: 'grid',
   selectedCollection: 'all',
   tierItems: [],
@@ -1016,7 +1018,23 @@ function getTierCollectionKey(item) {
 }
 
 function getActiveSection() {
-  return document.querySelector('.section.active');
+  return document.querySelector('.view.active');
+}
+
+function navigateTo(viewId) {
+  const navLinks = document.querySelectorAll('.nav-link[data-view]');
+  const views = document.querySelectorAll('.view');
+
+  navLinks.forEach((l) => {
+    const isActive = l.dataset.view === viewId;
+    l.classList.toggle('active', isActive);
+    l.setAttribute('aria-current', isActive ? 'page' : 'false');
+  });
+
+  views.forEach((v) => v.classList.toggle('active', v.id === viewId));
+  updateSearchPlaceholder();
+  refreshFiltersForActiveSection();
+  applyCurrentFilters();
 }
 
 function getDisplayMode() {
@@ -1079,12 +1097,14 @@ function refreshFiltersForActiveSection() {
   const section = getActiveSection();
   if (!section) return;
 
-  if (section.id === 'tiers') {
+  if (section.id === 'view-tiers') {
     renderTierFilterChips();
     return;
   }
 
-  if (section.id === 'mcu') return;
+  if (section.id === 'view-mcu') return;
+  if (section.id === 'view-home') return;
+  if (section.id === 'view-collections') return;
 
   const cards = [...section.querySelectorAll('.card')];
 
@@ -1103,7 +1123,7 @@ function refreshFiltersForActiveSection() {
 }
 
 function renderAllCollectionChips(collections) {
-  const isSeries = document.querySelector('.section.active').id === 'series';
+  const isSeries = document.querySelector('.view.active')?.id === 'view-series';
   const containerId = isSeries ? 'series-collection-filters' : 'movies-collection-filters';
   renderCollectionChips(containerId, collections, isSeries);
 }
@@ -1496,13 +1516,17 @@ function applyCurrentFilters() {
   const input = document.getElementById('search');
   if (!section || !input) return;
 
-  if (section.id === 'mcu') {
+  if (section.id === 'view-mcu') {
     showMCUOrderList(input.value, 'mcu-grid', 'mcu-count');
     return;
   }
 
-  if (section.id === 'tiers') {
+  if (section.id === 'view-tiers') {
     renderTierBoard();
+    return;
+  }
+
+  if (section.id === 'view-home' || section.id === 'view-collections') {
     return;
   }
 
@@ -1538,17 +1562,17 @@ function updateSearchPlaceholder() {
   const section = getActiveSection();
   if (!input || !section) return;
 
-  if (section.id === 'tiers') {
-    input.placeholder = 'Rechercher dans la tier listâ€¦';
+  if (section.id === 'view-tiers') {
+    input.placeholder = 'Rechercher dans la tier list…';
     return;
   }
 
-  if (section.id === 'mcu') {
-    input.placeholder = 'Rechercher dans MCUâ€¦';
+  if (section.id === 'view-mcu') {
+    input.placeholder = 'Rechercher dans MCU…';
     return;
   }
 
-  input.placeholder = 'Rechercher un titreâ€¦';
+  input.placeholder = 'Rechercher un titre…';
 }
 
 function setupDisplayMode() {
@@ -1907,6 +1931,155 @@ function createCard(item, isTV = false, index = 0, options = {}) {
   return card;
 }
 
+// ── Collections & home rows ──────────────────────────────────────────────────
+
+async function loadCollections() {
+  try {
+    const res = await fetch(CONFIG.COLLECTIONS_FILE);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Array.isArray(data)) state.collections = data;
+  } catch {
+    state.collections = [];
+  }
+}
+
+function getRecentlyAdded(limit = 14) {
+  const allItems = [
+    ...state.movies.map((item) => ({ item, isTV: false })),
+    ...state.series.map((item) => ({ item, isTV: true })),
+  ];
+  allItems.sort((a, b) => (Number(b.item.year) || 0) - (Number(a.item.year) || 0));
+  return allItems.slice(0, limit).map(({ item, isTV }, i) => ({ item, isTV, index: i }));
+}
+
+function getCollectionItems(collection) {
+  const ids = new Set((collection.tmdbIds || []).map(Number));
+  if (!ids.size) return [];
+
+  const result = [];
+  const colType = String(collection.type || '').toLowerCase();
+
+  if (colType === 'movie' || !colType) {
+    state.movies.forEach((item, index) => {
+      const tmdbId = getTmdbNumericId(item);
+      if (tmdbId && ids.has(tmdbId)) result.push({ item, isTV: false, index });
+    });
+  }
+
+  if (colType === 'series' || !colType) {
+    state.series.forEach((item, index) => {
+      const tmdbId = getTmdbNumericId(item);
+      if (tmdbId && ids.has(tmdbId)) result.push({ item, isTV: true, index });
+    });
+  }
+
+  if (collection.ordered && collection.tmdbIds) {
+    result.sort((a, b) => {
+      const idxA = collection.tmdbIds.indexOf(getTmdbNumericId(a.item));
+      const idxB = collection.tmdbIds.indexOf(getTmdbNumericId(b.item));
+      return idxA - idxB;
+    });
+  }
+
+  return result;
+}
+
+function renderRow(containerEl, title, items, options = {}) {
+  const { showIndex = false, viewAllTarget = null } = options;
+  if (!items || !items.length) return;
+
+  const row = document.createElement('div');
+  row.className = 'content-row';
+
+  const header = document.createElement('div');
+  header.className = 'row-header';
+
+  const titleEl = document.createElement('h3');
+  titleEl.className = 'row-title';
+  titleEl.textContent = title;
+  header.appendChild(titleEl);
+
+  if (viewAllTarget) {
+    const seeAllBtn = document.createElement('button');
+    seeAllBtn.className = 'row-see-all';
+    seeAllBtn.type = 'button';
+    seeAllBtn.textContent = 'Voir tout';
+    seeAllBtn.addEventListener('click', () => navigateTo(viewAllTarget));
+    header.appendChild(seeAllBtn);
+  }
+
+  const track = document.createElement('div');
+  track.className = 'row-track';
+
+  items.forEach(({ item, isTV, index, orderIndex }, i) => {
+    const card = createCard(item, isTV, index ?? i);
+    if (showIndex && orderIndex != null) {
+      const rank = document.createElement('span');
+      rank.className = 'mcu-order-rank';
+      rank.textContent = `#${orderIndex}`;
+      card.appendChild(rank);
+    }
+    track.appendChild(card);
+  });
+
+  row.appendChild(header);
+  row.appendChild(track);
+  containerEl.appendChild(row);
+}
+
+function renderHomeRows() {
+  const container = document.getElementById('home-rows');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Recently added
+  const recentItems = getRecentlyAdded(16);
+  if (recentItems.length) {
+    renderRow(container, '🕐 Récemment ajoutés', recentItems, { viewAllTarget: 'view-films' });
+  }
+
+  // Series row
+  if (state.series.length) {
+    const seriesItems = state.series.map((item, i) => ({ item, isTV: true, index: i }));
+    renderRow(container, '📺 Séries', seriesItems, { viewAllTarget: 'view-series' });
+  }
+
+  // MCU row
+  const mcuItems = getMcuOrderRenderableItems().slice(0, 20);
+  if (mcuItems.length) {
+    renderRow(container, '✨ MCU', mcuItems, { showIndex: true, viewAllTarget: 'view-mcu' });
+  }
+
+  // Collections from collections.json
+  state.collections.forEach((collection) => {
+    const items = getCollectionItems(collection);
+    if (!items.length) return;
+    const label = [collection.icon, collection.label].filter(Boolean).join(' ');
+    renderRow(container, label, items);
+  });
+}
+
+function renderCollectionRows() {
+  const container = document.getElementById('collections-rows');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // MCU
+  const mcuItems = getMcuOrderRenderableItems();
+  if (mcuItems.length) {
+    renderRow(container, '✨ MCU', mcuItems, { showIndex: true, viewAllTarget: 'view-mcu' });
+  }
+
+  // User-defined collections
+  state.collections.forEach((collection) => {
+    const items = getCollectionItems(collection);
+    if (!items.length) return;
+    const label = [collection.icon, collection.label].filter(Boolean).join(' ');
+    renderRow(container, label, items);
+  });
+}
+
 function renderGrid(items, gridId, countId, isTV) {
   const grid = document.getElementById(gridId);
   const count = document.getElementById(countId);
@@ -1957,22 +2130,25 @@ function renderLibrary() {
   renderGrid(state.movies, 'movies-grid', 'movies-count', false);
   renderGrid(state.series, 'series-grid', 'series-count', true);
   renderTierBoard();
+  renderHomeRows();
+  renderCollectionRows();
 }
 
-function setupTabs() {
-  const tabs = document.querySelectorAll('.tab[data-target]');
-  const sections = document.querySelectorAll('.section');
+function setupNav() {
+  const navLinks = document.querySelectorAll('.nav-link[data-view]');
+  const views = document.querySelectorAll('.view');
 
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const target = tab.dataset.target;
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      const target = link.dataset.view;
 
-      tabs.forEach((t) => {
-        t.classList.toggle('active', t === tab);
-        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      navLinks.forEach((l) => {
+        const isActive = l === link;
+        l.classList.toggle('active', isActive);
+        l.setAttribute('aria-current', isActive ? 'page' : 'false');
       });
 
-      sections.forEach((s) => s.classList.toggle('active', s.id === target));
+      views.forEach((v) => v.classList.toggle('active', v.id === target));
       updateSearchPlaceholder();
       refreshFiltersForActiveSection();
       applyCurrentFilters();
@@ -2443,9 +2619,12 @@ async function init() {
   const initStartTime = performance.now();
   console.log('%c🚀 BoomBoomMovie init() started', 'color: #00ff00; font-weight: bold');
 
-  await loadTmdbConfigFile();
+  await Promise.all([
+    loadTmdbConfigFile(),
+    loadCollections(),
+  ]);
 
-  setupTabs();
+  setupNav();
   setupSearch();
   setupFilters();
   setupDisplayMode();

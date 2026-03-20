@@ -1,0 +1,18 @@
+[
+  {
+    "id": "harry-potter",
+    "label": "Harry Potter",
+    "icon": "⚡",
+    "tmdbIds": [671, 672, 673, 674, 675, 767, 12444, 12445],
+    "type": "movie",
+    "ordered": true
+  },
+  {
+    "id": "scream",
+    "label": "Saga Scream",
+    "icon": "😱",
+    "tmdbIds": [4232, 4233, 4234, 41446, 646385, 934433],
+    "type": "movie",
+    "ordered": true
+  }
+]
