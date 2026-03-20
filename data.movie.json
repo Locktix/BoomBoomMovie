@@ -194,15 +194,24 @@
       "url": "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Blade%20Runner%202049%20-%202017.mp4",
       "tmdbId": 335984
     },
-    {"tmdbId": 566525, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Shang-Chi%20et%20la%20Lgende%20des%20Dix%20Anneaux%20-%202021.mp4"},
-    {"tmdbId": 524434, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Les%20ternels%20-%202021.mp4"},
-    {"tmdbId": 429617, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20%20Far%20From%20Home%20-%202019.mp4"},
-    {"tmdbId": 557, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20-%202002.mp4"},
-    {"tmdbId": 558, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%202%20-%202004.mp4"},
-    {"tmdbId": 559, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%203%20-%202007.mp4"},
-    {"tmdbId": 1930, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/The%20Amazing%20Spider-Man%20-%202012.mp4"},
-    {"tmdbId": 102382, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/The%20Amazing%20Spider-Man%20%20Le%20Destin%20dun%20hros%20-%202014.mp4"},
-    {"tmdbId": 634649, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20%20No%20Way%20Home%20-%202021.mp4"}
+    {"title": "Shang-Chi et la Légende des Dix Anneaux", "collection": "MCU", "tmdbId": 566525, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Shang-Chi%20et%20la%20Lgende%20des%20Dix%20Anneaux%20-%202021.mp4"},
+    {"title": "Les Éternels", "collection": "MCU", "tmdbId": 524434, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Les%20ternels%20-%202021.mp4"},
+    {"title": "Spider-Man: Far From Home", "collection": "MCU", "tmdbId": 429617, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20%20Far%20From%20Home%20-%202019.mp4"},
+    {"title": "Spider-Man", "collection": "MCU", "tmdbId": 557, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20-%202002.mp4"},
+    {"title": "Spider-Man 2", "collection": "MCU", "tmdbId": 558, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%202%20-%202004.mp4"},
+    {"title": "Spider-Man 3", "collection": "MCU", "tmdbId": 559, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%203%20-%202007.mp4"},
+    {"title": "The Amazing Spider-Man", "collection": "MCU", "tmdbId": 1930, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/The%20Amazing%20Spider-Man%20-%202012.mp4"},
+    {"title": "The Amazing Spider-Man 2", "collection": "MCU", "tmdbId": 102382, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/The%20Amazing%20Spider-Man%20%20Le%20Destin%20dun%20hros%20-%202014.mp4"},
+    {"title": "Spider-Man: No Way Home", "collection": "MCU", "tmdbId": 634649, "url" : "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/MOVIES/Spider-Man%20%20No%20Way%20Home%20-%202021.mp4"},
 
+
+    {"title": "Scream 1", "collection": "Scream", "tmdbId": 4232, "url" : ""},
+    {"title": "Scream 2", "collection": "Scream", "tmdbId": 4233, "url" : ""},
+    {"title": "Scream 3", "collection": "Scream", "tmdbId": 4234, "url" : ""},
+    {"title": "Scream 4", "collection": "Scream", "tmdbId": 41446, "url" : ""},
+    {"title": "Scream 5", "collection": "Scream", "tmdbId": 646385, "url" : ""},
+    {"title": "Scream 6", "collection": "Scream", "tmdbId": 934433, "url" : ""},
+
+    {"title": "Robots", "collection": "", "tmdbId": 9928, "url" : ""}
   ]
 }
