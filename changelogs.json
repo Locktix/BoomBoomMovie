@@ -1,5 +1,40 @@
 [
   {
+    "version": "1.5",
+    "date": "2026-03-20",
+    "label": "Refonte Netflix et collections",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Refonte de la navigation avec vues Accueil, Films, Series, Collections et MCU"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout du systeme collections.json pour gerer les sagas (Harry Potter, Scream, etc.)"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout de rows horizontales style Netflix sur l'accueil et la vue Collections"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout d'un hero banner avec actions Regarder/Infos et fond TMDB backdrop"
+      },
+      {
+        "type": "improvement",
+        "description": "Ajout de badges de saga sur les cartes de collections (ex: HP #3)"
+      },
+      {
+        "type": "improvement",
+        "description": "Hero de la page d'accueil rendu aleatoire a chaque rechargement"
+      },
+      {
+        "type": "fix",
+        "description": "Suppression complete de la Tier List de l'interface et du code actif"
+      }
+    ]
+  },
+  {
     "version": "1.4",
     "date": "2026-03-16",
     "label": "Fiche detail et UX cinema",

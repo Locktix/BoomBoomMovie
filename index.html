@@ -29,7 +29,6 @@
         <button class="nav-link" data-view="view-series" type="button" aria-current="false">📺 Séries</button>
         <button class="nav-link" data-view="view-collections" type="button" aria-current="false">🎭 Collections</button>
         <button class="nav-link" data-view="view-mcu" type="button" aria-current="false">✨ MCU</button>
-        <button class="nav-link" data-view="view-tiers" type="button" aria-current="false">🏆 Tier List</button>
       </nav>
 
       <div class="search-wrap">
@@ -48,6 +47,7 @@
 
     <!-- Home View -->
     <section id="view-home" class="view active">
+      <div id="home-hero" class="home-hero" aria-live="polite"></div>
       <div id="home-rows" class="home-rows"></div>
     </section>
 
@@ -95,34 +95,6 @@
         </div>
       </div>
       <div class="grid" id="mcu-grid"></div>
-    </section>
-
-    <!-- Tier List View -->
-    <section id="view-tiers" class="view">
-      <div class="section-header section-header-tier">
-        <div class="section-head-left">
-          <h2 class="section-title">Tier List</h2>
-          <span class="count" id="tiers-count"></span>
-        </div>
-        <div class="section-header-right tier-header-actions">
-          <span class="tier-local-badge">Sauvegarde locale</span>
-          <button id="tier-reset" class="tier-reset" type="button">Réinitialiser</button>
-        </div>
-      </div>
-
-      <div class="tier-toolbar">
-        <div class="tier-toolbar-block">
-          <span class="tier-toolbar-label">Type</span>
-          <div class="filter-chips" id="tier-type-filters"></div>
-        </div>
-        <div class="tier-toolbar-block">
-          <span class="tier-toolbar-label">Collection</span>
-          <div class="filter-chips" id="tier-collection-filters"></div>
-        </div>
-      </div>
-
-      <p class="tier-board-intro">Glisse les affiches dans les rangs pour enregistrer ton classement sur cet appareil.</p>
-      <div id="tier-board" class="tier-board"></div>
     </section>
 
   </main>

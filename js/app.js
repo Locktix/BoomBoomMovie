@@ -7,7 +7,6 @@ const CONFIG = {
   SERIES_DATA_FILE: 'data.series.json',
   TMDB_CONFIG_FILE: 'tmdb.config.json',
   COLLECTIONS_FILE: 'collections.json',
-  TIER_STORAGE_KEY: 'boomboom:tier-order:v1',
   TMDB_API_KEY: window.BOOMBOOM_TMDB_API_KEY || localStorage.getItem('boomboom:tmdb:api-key') || '',
   TMDB_BEARER_TOKEN: window.BOOMBOOM_TMDB_BEARER_TOKEN || localStorage.getItem('boomboom:tmdb:bearer-token') || '',
   TMDB_LANG: 'fr-FR',
@@ -16,9 +15,6 @@ const CONFIG = {
   TMDB_TV_DETAILS_ENDPOINT: 'https://api.themoviedb.org/3/tv',
   R2_CATALOG_API: 'https://liste-films-api.alanplokain.workers.dev/',
 };
-
-const TIER_LABELS = ['S', 'A', 'B', 'C', 'D', 'F'];
-const TIER_POOL = 'pool';
 
 // Ordre MCU complet (films + series)
 const MCU_ORDER = [
@@ -92,12 +88,6 @@ const state = {
   collections: [],
   displayMode: 'grid',
   selectedCollection: 'all',
-  tierItems: [],
-  tierItemMap: new Map(),
-  tierOrder: null,
-  tierTypeFilter: 'all',
-  tierCollectionFilter: 'all',
-  draggedTierItemId: '',
 };
 
 const playerState = {
@@ -311,11 +301,14 @@ async function resolveTmdbMovieMetadataById(movie) {
     const title = String(data.title || data.original_title || '').trim();
     const releaseDate = String(data.release_date || '').trim();
     const releaseYear = getReleaseYearFromDate(releaseDate);
+    const backdropPath = String(data.backdrop_path || '').trim();
+    const backdrop = backdropPath ? `https://image.tmdb.org/t/p/w1280${backdropPath}` : '';
 
     return {
       title,
       releaseDate,
       year: releaseYear,
+      backdrop,
     };
   } catch {
     return null;
@@ -345,10 +338,13 @@ async function resolveTmdbSeriesMetadataById(seriesItem) {
     const title = String(data.name || data.original_name || '').trim();
     const firstAirDate = String(data.first_air_date || '').trim();
     const releaseYear = getReleaseYearFromDate(firstAirDate);
+    const backdropPath = String(data.backdrop_path || '').trim();
+    const backdrop = backdropPath ? `https://image.tmdb.org/t/p/w1280${backdropPath}` : '';
 
     return {
       title,
       year: releaseYear,
+      backdrop,
     };
   } catch {
     return null;
@@ -478,7 +474,7 @@ function renderDetailsModalContent(item, mediaType, bundle) {
           ? `<img class="details-poster" src="${escapeHtml(posterUrl)}" alt="${escapeHtml(title)}" loading="lazy" />`
           : `<div class="details-poster-fallback">${escapeHtml(getMediaDisplayType(mediaType))}</div>`}
         <button type="button" class="details-poster-play" data-details-action="play" ${hasPlaybackTarget ? '' : 'disabled'} aria-label="Lecture ${escapeHtml(title)}">
-          <span>â–¶</span>
+          <span>&#9654;</span>
         </button>
       </div>
       <div class="details-head">
@@ -620,7 +616,7 @@ async function resolveTmdbMovieMetadataByIdWithCache(movie) {
 
   // Try cache first
   const cached = getTmdbMetadataFromCache('movie', tmdbId);
-  if (cached) {
+  if (cached && Object.prototype.hasOwnProperty.call(cached, 'backdrop')) {
     console.log(`[BoomBoom] Cache HIT: movie ${tmdbId}`);
     return cached;
   }
@@ -640,7 +636,7 @@ async function resolveTmdbSeriesMetadataByIdWithCache(series) {
 
   // Try cache first
   const cached = getTmdbMetadataFromCache('tv', tmdbId);
-  if (cached) {
+  if (cached && Object.prototype.hasOwnProperty.call(cached, 'backdrop')) {
     console.log(`[BoomBoom] Cache HIT: series ${tmdbId}`);
     return cached;
   }
@@ -706,6 +702,10 @@ async function hydrateMovieMetadataFromTmdb(movies) {
           movie.year = metadata.year;
           changed = true;
         }
+        if (metadata.backdrop) {
+          movie.backdrop = metadata.backdrop;
+          changed = true;
+        }
 
         if (changed) updatedCount += 1;
       }
@@ -744,6 +744,10 @@ async function hydrateSeriesMetadataFromTmdb(seriesList) {
         }
         if (metadata.year && !seriesItem.year) {
           seriesItem.year = metadata.year;
+          changed = true;
+        }
+        if (metadata.backdrop) {
+          seriesItem.backdrop = metadata.backdrop;
           changed = true;
         }
 
@@ -973,15 +977,6 @@ function sortByReleaseDate(items) {
   });
 }
 
-function slugifyValue(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -1011,10 +1006,6 @@ function normalizeCollection(value) {
 
 function getItemCollection(item) {
   return String(item?.collection || '').trim();
-}
-
-function getTierCollectionKey(item) {
-  return normalizeCollection(getItemCollection(item)) || 'none';
 }
 
 function getActiveSection() {
@@ -1061,46 +1052,9 @@ function updateViewToggleButtons() {
   });
 }
 
-function setSelectOptions(select, options, fallbackValue) {
-  select.innerHTML = '';
-  options.forEach((option) => {
-    const el = document.createElement('option');
-    el.value = option.value;
-    el.textContent = option.label;
-    select.appendChild(el);
-  });
-
-  const hasFallback = options.some((option) => option.value === fallbackValue);
-  select.value = hasFallback ? fallbackValue : 'all';
-}
-
-function renderChoiceChips(containerId, options, activeValue, onSelect) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  container.innerHTML = '';
-  const fragment = document.createDocumentFragment();
-
-  options.forEach(({ value, label }) => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = `filter-chip ${activeValue === value ? 'active' : ''}`;
-    chip.textContent = label;
-    chip.addEventListener('click', () => onSelect(value));
-    fragment.appendChild(chip);
-  });
-
-  container.appendChild(fragment);
-}
-
 function refreshFiltersForActiveSection() {
   const section = getActiveSection();
   if (!section) return;
-
-  if (section.id === 'view-tiers') {
-    renderTierFilterChips();
-    return;
-  }
 
   if (section.id === 'view-mcu') return;
   if (section.id === 'view-home') return;
@@ -1241,276 +1195,6 @@ function renderCollectionChips(containerId, collections, isSeries = false) {
   container.appendChild(fragment);
 }
 
-function createTierItem(item, mediaType) {
-  const collection = getItemCollection(item);
-  return {
-    id: `${mediaType}-${slugifyValue(item.title)}-${item.year || 'na'}`,
-    title: item.title,
-    year: item.year,
-    poster: item.poster || '',
-    collection,
-    collectionKey: getTierCollectionKey(item),
-    mediaType,
-  };
-}
-
-function buildTierItems() {
-  const items = [
-    ...state.movies.map((item) => createTierItem(item, 'movie')),
-    ...state.series.map((item) => createTierItem(item, 'series')),
-  ].sort((a, b) => {
-    const titleCompare = String(a.title || '').localeCompare(String(b.title || ''), 'fr', { sensitivity: 'base' });
-    if (titleCompare !== 0) return titleCompare;
-    return (Number(b.year) || 0) - (Number(a.year) || 0);
-  });
-
-  state.tierItems = items;
-  state.tierItemMap = new Map(items.map((item) => [item.id, item]));
-}
-
-function getTierZones() {
-  return [TIER_POOL, ...TIER_LABELS];
-}
-
-function getDefaultTierOrder() {
-  const order = { [TIER_POOL]: state.tierItems.map((item) => item.id) };
-  TIER_LABELS.forEach((label) => {
-    order[label] = [];
-  });
-  return order;
-}
-
-function sanitizeTierOrder(rawOrder) {
-  const knownIds = new Set(state.tierItems.map((item) => item.id));
-  const seen = new Set();
-  const sanitized = {};
-
-  getTierZones().forEach((zone) => {
-    const ids = Array.isArray(rawOrder?.[zone]) ? rawOrder[zone] : [];
-    sanitized[zone] = ids.filter((id) => {
-      if (!knownIds.has(id) || seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-  });
-
-  state.tierItems.forEach((item) => {
-    if (!seen.has(item.id)) sanitized[TIER_POOL].push(item.id);
-  });
-
-  return sanitized;
-}
-
-function loadTierOrder() {
-  const fallback = getDefaultTierOrder();
-
-  try {
-    const raw = localStorage.getItem(CONFIG.TIER_STORAGE_KEY);
-    if (!raw) return fallback;
-    return sanitizeTierOrder(JSON.parse(raw));
-  } catch {
-    return fallback;
-  }
-}
-
-function saveTierOrder() {
-  try {
-    localStorage.setItem(CONFIG.TIER_STORAGE_KEY, JSON.stringify(state.tierOrder));
-  } catch {
-    showNotice('Impossible d\'enregistrer la tier list localement.', 'error');
-  }
-}
-
-function getTierCollectionOptions() {
-  const options = new Map([['all', 'Toutes']]);
-
-  state.tierItems.forEach((item) => {
-    const label = item.collection || 'Sans collection';
-    if (!options.has(item.collectionKey)) options.set(item.collectionKey, label);
-  });
-
-  return [...options.entries()].map(([value, label]) => ({ value, label }));
-}
-
-function renderTierFilterChips() {
-  renderChoiceChips(
-    'tier-type-filters',
-    [
-      { value: 'all', label: 'Tout' },
-      { value: 'movie', label: 'Films' },
-      { value: 'series', label: 'SÃ©ries' },
-    ],
-    state.tierTypeFilter,
-    (value) => {
-      state.tierTypeFilter = value;
-      renderTierFilterChips();
-      renderTierBoard();
-    }
-  );
-
-  renderChoiceChips(
-    'tier-collection-filters',
-    getTierCollectionOptions(),
-    state.tierCollectionFilter,
-    (value) => {
-      state.tierCollectionFilter = value;
-      renderTierFilterChips();
-      renderTierBoard();
-    }
-  );
-}
-
-function matchesTierFilters(item, query) {
-  const title = String(item?.title || '').toLowerCase();
-  const matchesSearch = !query || title.includes(query);
-  const matchesType = state.tierTypeFilter === 'all' || item.mediaType === state.tierTypeFilter;
-  const matchesCollection = state.tierCollectionFilter === 'all' || item.collectionKey === state.tierCollectionFilter;
-  return matchesSearch && matchesType && matchesCollection;
-}
-
-function createTierTile(item) {
-  const tile = document.createElement('article');
-  tile.className = 'tier-item';
-  tile.draggable = true;
-  tile.dataset.itemId = item.id;
-  tile.setAttribute('aria-label', `${item.title} (${item.year || ''})`);
-
-  const collectionBadge = item.collection
-    ? `<span class="tier-item-badge">${escapeHtml(item.collection)}</span>`
-    : '<span class="tier-item-badge tier-item-badge-muted">Sans collection</span>';
-
-  tile.innerHTML = `
-    <div class="tier-item-poster-wrap">
-      ${item.poster
-        ? `<img class="tier-item-poster" src="${escapeHtml(item.poster)}" alt="${escapeHtml(item.title)}" loading="lazy" />`
-        : `<div class="tier-item-fallback">${item.mediaType === 'series' ? 'SERIE' : 'FILM'}</div>`}
-    </div>
-    <div class="tier-item-copy">
-      <h3 class="tier-item-title">${escapeHtml(item.title)}</h3>
-      <p class="tier-item-meta">${item.mediaType === 'series' ? 'SÃ©rie' : 'Film'} Â· ${item.year || 'N/A'}</p>
-      <div class="tier-item-tags">${collectionBadge}</div>
-    </div>
-  `;
-
-  tile.addEventListener('dragstart', (event) => {
-    state.draggedTierItemId = item.id;
-    tile.classList.add('tier-item-dragging');
-    event.dataTransfer?.setData('text/plain', item.id);
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-  });
-
-  tile.addEventListener('dragend', () => {
-    tile.classList.remove('tier-item-dragging');
-    state.draggedTierItemId = '';
-    document.querySelectorAll('.tier-dropzone-active').forEach((zone) => zone.classList.remove('tier-dropzone-active'));
-  });
-
-  return tile;
-}
-
-function moveTierItem(itemId, targetZone) {
-  if (!itemId || !state.tierItemMap.has(itemId) || !getTierZones().includes(targetZone)) return;
-
-  getTierZones().forEach((zone) => {
-    state.tierOrder[zone] = state.tierOrder[zone].filter((id) => id !== itemId);
-  });
-
-  state.tierOrder[targetZone].push(itemId);
-  saveTierOrder();
-  renderTierBoard();
-}
-
-function createTierDropzone(zone, items, emptyLabel) {
-  const dropzone = document.createElement('div');
-  dropzone.className = `tier-dropzone ${zone === TIER_POOL ? 'tier-dropzone-pool' : ''}`;
-  dropzone.dataset.zone = zone;
-
-  dropzone.addEventListener('dragover', (event) => {
-    event.preventDefault();
-    dropzone.classList.add('tier-dropzone-active');
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-  });
-
-  dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('tier-dropzone-active');
-  });
-
-  dropzone.addEventListener('drop', (event) => {
-    event.preventDefault();
-    dropzone.classList.remove('tier-dropzone-active');
-    const itemId = event.dataTransfer?.getData('text/plain') || state.draggedTierItemId;
-    moveTierItem(itemId, zone);
-  });
-
-  if (!items.length) {
-    const empty = document.createElement('p');
-    empty.className = 'tier-empty';
-    empty.textContent = emptyLabel;
-    dropzone.appendChild(empty);
-    return dropzone;
-  }
-
-  items.forEach((item) => dropzone.appendChild(createTierTile(item)));
-  return dropzone;
-}
-
-function renderTierBoard() {
-  const board = document.getElementById('tier-board');
-  const count = document.getElementById('tiers-count');
-  if (!board || !count || !state.tierOrder) return;
-
-  const query = document.getElementById('search')?.value.trim().toLowerCase() || '';
-  const total = state.tierItems.length;
-  const rankedTotal = TIER_LABELS.reduce((sum, label) => sum + state.tierOrder[label].length, 0);
-  count.textContent = `${rankedTotal}/${total} classÃ©s`;
-
-  board.innerHTML = '';
-  const fragment = document.createDocumentFragment();
-
-  TIER_LABELS.forEach((label) => {
-    const items = state.tierOrder[label]
-      .map((id) => state.tierItemMap.get(id))
-      .filter((item) => item && matchesTierFilters(item, query));
-
-    const row = document.createElement('section');
-    row.className = 'tier-row';
-    row.innerHTML = `
-      <div class="tier-rank tier-rank-${label.toLowerCase()}">${label}</div>
-      <div class="tier-row-body">
-        <div class="tier-row-head">
-          <h3>${label} Tier</h3>
-          <span>${items.length} visible(s)</span>
-        </div>
-      </div>
-    `;
-
-    row.querySelector('.tier-row-body').appendChild(
-      createTierDropzone(label, items, 'DÃ©pose un film ou une sÃ©rie ici')
-    );
-    fragment.appendChild(row);
-  });
-
-  const poolItems = state.tierOrder[TIER_POOL]
-    .map((id) => state.tierItemMap.get(id))
-    .filter((item) => item && matchesTierFilters(item, query));
-
-  const pool = document.createElement('section');
-  pool.className = 'tier-pool';
-  pool.innerHTML = `
-    <div class="tier-pool-head">
-      <div>
-        <p class="tier-pool-kicker">BibliothÃ¨que</p>
-        <h3>Ã€ classer</h3>
-      </div>
-      <span>${poolItems.length} visible(s)</span>
-    </div>
-  `;
-  pool.appendChild(createTierDropzone(TIER_POOL, poolItems, 'Aucun rÃ©sultat avec les filtres actuels'));
-  fragment.appendChild(pool);
-
-  board.appendChild(fragment);
-}
-
 function applyCurrentFilters() {
   const section = getActiveSection();
   const input = document.getElementById('search');
@@ -1518,11 +1202,6 @@ function applyCurrentFilters() {
 
   if (section.id === 'view-mcu') {
     showMCUOrderList(input.value, 'mcu-grid', 'mcu-count');
-    return;
-  }
-
-  if (section.id === 'view-tiers') {
-    renderTierBoard();
     return;
   }
 
@@ -1561,11 +1240,6 @@ function updateSearchPlaceholder() {
   const input = document.getElementById('search');
   const section = getActiveSection();
   if (!input || !section) return;
-
-  if (section.id === 'view-tiers') {
-    input.placeholder = 'Rechercher dans la tier list…';
-    return;
-  }
 
   if (section.id === 'view-mcu') {
     input.placeholder = 'Rechercher dans MCU…';
@@ -1803,12 +1477,16 @@ function createCard(item, isTV = false, index = 0, options = {}) {
   card.dataset.collection = normalizeCollection(collectionLabel);
   card.dataset.collectionLabel = collectionLabel;
   const seasonLabel = String(options?.seasonLabel || '').trim();
+  const sagaBadgeLabel = String(options?.sagaBadge || '').trim();
   const urlCandidates = Array.isArray(item?._urlCandidates) ? item._urlCandidates : getMediaUrlCandidates(item);
   const collectionBadge = collectionLabel
     ? `<span class="card-collection">${escapeHtml(collectionLabel)}</span>`
     : '';
   const seasonBadge = seasonLabel
     ? `<span class="card-season">${escapeHtml(seasonLabel)}</span>`
+    : '';
+  const sagaBadge = sagaBadgeLabel
+    ? `<span class="card-saga-badge">${escapeHtml(sagaBadgeLabel)}</span>`
     : '';
 
   card.innerHTML = `
@@ -1817,6 +1495,7 @@ function createCard(item, isTV = false, index = 0, options = {}) {
       <span class="placeholder-title">${escapeHtml(item.title)}</span>
     </div>
     <img class="card-img" alt="${escapeHtml(item.title)}" loading="lazy" />
+    ${sagaBadge}
     <div class="card-play" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="#000" width="22" height="22">
         <path d="M8 5v14l11-7z"/>
@@ -1933,6 +1612,76 @@ function createCard(item, isTV = false, index = 0, options = {}) {
 
 // ── Collections & home rows ──────────────────────────────────────────────────
 
+function getHeroCandidate() {
+  const candidates = [
+    ...state.movies.map((item) => ({ item, isTV: false })),
+    ...state.series.map((item) => ({ item, isTV: true })),
+  ].filter(({ item }) => {
+    const title = String(item?.title || '').trim();
+    if (!title) return false;
+    return Boolean(item?.backdrop || item?.poster);
+  });
+
+  if (!candidates.length) return null;
+
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  return candidates[randomIndex] || null;
+}
+
+function renderHomeHero() {
+  const hero = document.getElementById('home-hero');
+  if (!hero) return;
+
+  const candidate = getHeroCandidate();
+  if (!candidate?.item) {
+    hero.innerHTML = '';
+    hero.style.removeProperty('--hero-bg');
+    return;
+  }
+
+  const { item, isTV } = candidate;
+  const releaseLabel = !isTV && item.releaseDate
+    ? String(item.releaseDate)
+    : String(item.year || '');
+  const overview = String(item.overview || 'Un film a voir absolument ce soir.').trim();
+  const heroImageUrl = String(item.backdrop || item.poster || '').trim();
+
+  if (heroImageUrl) {
+    hero.style.setProperty('--hero-bg', `url("${heroImageUrl.replace(/"/g, '\\"')}")`);
+  } else {
+    hero.style.removeProperty('--hero-bg');
+  }
+
+  hero.innerHTML = `
+    <div class="home-hero-content">
+      <p class="home-hero-kicker">Selection BoomBoom</p>
+      <h2 class="home-hero-title">${escapeHtml(item.title)}</h2>
+      <p class="home-hero-meta">${escapeHtml(releaseLabel)}</p>
+      <p class="home-hero-overview">${escapeHtml(overview)}</p>
+      <div class="home-hero-actions">
+        <button type="button" class="hero-watch-btn" id="hero-watch-btn">▶ Regarder</button>
+        <button type="button" class="hero-details-btn" id="hero-details-btn">Infos</button>
+      </div>
+    </div>
+  `;
+
+  const watchBtn = document.getElementById('hero-watch-btn');
+  const detailsBtn = document.getElementById('hero-details-btn');
+
+  watchBtn?.addEventListener('click', () => {
+    const urlCandidates = Array.isArray(item?._urlCandidates) ? item._urlCandidates : getMediaUrlCandidates(item);
+    if (urlCandidates.length > 0) {
+      openVideoPlayer(urlCandidates, item.title);
+      return;
+    }
+    showDetailsModal(item, isTV ? 'tv' : 'movie');
+  });
+
+  detailsBtn?.addEventListener('click', () => {
+    showDetailsModal(item, isTV ? 'tv' : 'movie');
+  });
+}
+
 async function loadCollections() {
   try {
     const res = await fetch(CONFIG.COLLECTIONS_FILE);
@@ -1986,7 +1735,7 @@ function getCollectionItems(collection) {
 }
 
 function renderRow(containerEl, title, items, options = {}) {
-  const { showIndex = false, viewAllTarget = null } = options;
+  const { showIndex = false, viewAllTarget = null, sagaPrefix = '', sagaOrdered = false } = options;
   if (!items || !items.length) return;
 
   const row = document.createElement('div');
@@ -2013,7 +1762,10 @@ function renderRow(containerEl, title, items, options = {}) {
   track.className = 'row-track';
 
   items.forEach(({ item, isTV, index, orderIndex }, i) => {
-    const card = createCard(item, isTV, index ?? i);
+    const sagaBadge = sagaOrdered
+      ? `${sagaPrefix || getNameInitials(title)} #${i + 1}`
+      : '';
+    const card = createCard(item, isTV, index ?? i, { sagaBadge });
     if (showIndex && orderIndex != null) {
       const rank = document.createElement('span');
       rank.className = 'mcu-order-rank';
@@ -2032,6 +1784,8 @@ function renderHomeRows() {
   const container = document.getElementById('home-rows');
   if (!container) return;
   container.innerHTML = '';
+
+  renderHomeHero();
 
   // Recently added
   const recentItems = getRecentlyAdded(16);
@@ -2056,7 +1810,11 @@ function renderHomeRows() {
     const items = getCollectionItems(collection);
     if (!items.length) return;
     const label = [collection.icon, collection.label].filter(Boolean).join(' ');
-    renderRow(container, label, items);
+    const sagaPrefix = String(collection.badgePrefix || '').trim() || getNameInitials(collection.label);
+    renderRow(container, label, items, {
+      sagaPrefix,
+      sagaOrdered: Boolean(collection.ordered),
+    });
   });
 }
 
@@ -2076,7 +1834,11 @@ function renderCollectionRows() {
     const items = getCollectionItems(collection);
     if (!items.length) return;
     const label = [collection.icon, collection.label].filter(Boolean).join(' ');
-    renderRow(container, label, items);
+    const sagaPrefix = String(collection.badgePrefix || '').trim() || getNameInitials(collection.label);
+    renderRow(container, label, items, {
+      sagaPrefix,
+      sagaOrdered: Boolean(collection.ordered),
+    });
   });
 }
 
@@ -2129,7 +1891,6 @@ function renderGrid(items, gridId, countId, isTV) {
 function renderLibrary() {
   renderGrid(state.movies, 'movies-grid', 'movies-count', false);
   renderGrid(state.series, 'series-grid', 'series-count', true);
-  renderTierBoard();
   renderHomeRows();
   renderCollectionRows();
 }
@@ -2161,18 +1922,6 @@ function setupSearch() {
 
   input.addEventListener('input', () => {
     applyCurrentFilters();
-  });
-}
-
-function setupTierListControls() {
-  const resetButton = document.getElementById('tier-reset');
-  if (!resetButton) return;
-
-  resetButton.addEventListener('click', () => {
-    state.tierOrder = getDefaultTierOrder();
-    saveTierOrder();
-    renderTierBoard();
-    showNotice('La tier list a Ã©tÃ© rÃ©initialisÃ©e sur cet appareil.', 'warning');
   });
 }
 
@@ -2273,9 +2022,9 @@ function renderChangelogContent() {
         ${(Array.isArray(release.changes) ? release.changes : []).map((change) =>
           `<li>
             <span class="roadmap-change-type roadmap-change-${escapeHtml(change.type)}">${
-              change.type === 'feature' ? 'NouveautÃ©' :
+              change.type === 'feature' ? 'Nouveaute' :
               change.type === 'fix' ? 'Correctif' :
-              change.type === 'improvement' ? 'AmÃ©lioration' :
+              change.type === 'improvement' ? 'Amelioration' :
               escapeHtml(change.type)
             }</span>
             ${escapeHtml(change.description)}
@@ -2631,7 +2380,6 @@ async function init() {
   setupVideoModal();
   setupDetailsModal();
   setupSeriesModal();
-  setupTierListControls();
   setupRoadmapModal();
   updateSearchPlaceholder();
 
@@ -2670,9 +2418,6 @@ async function init() {
 
     state.movies = sortByReleaseDate(rawMovies);
     state.series = sortByReleaseDate(rawSeries);
-
-    buildTierItems();
-    state.tierOrder = loadTierOrder();
 
     const linkStats = annotateLibraryLinks();
 
