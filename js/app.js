@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BoomBoom - app.js
  * Movies metadata and posters can be resolved from TMDB when configured.
  */
@@ -13,6 +13,7 @@ const CONFIG = {
   TMDB_IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
   TMDB_MOVIE_DETAILS_ENDPOINT: 'https://api.themoviedb.org/3/movie',
   TMDB_TV_DETAILS_ENDPOINT: 'https://api.themoviedb.org/3/tv',
+  R2_CATALOG_API: 'https://liste-films-api.alanplokain.workers.dev/',
 };
 
 const TIER_LABELS = ['S', 'A', 'B', 'C', 'D', 'F'];
@@ -24,39 +25,39 @@ const MCU_ORDER = [
   { title: 'Captain Marvel', tmdbId: 299537, type: 'movie' },
   { title: 'Iron Man', tmdbId: 1726, type: 'movie' },
   { title: 'Iron Man 2', tmdbId: 10138, type: 'movie' },
-  { title: 'L’Incroyable Hulk', tmdbId: 1724, type: 'movie' },
+  { title: 'Lâ€™Incroyable Hulk', tmdbId: 1724, type: 'movie' },
   { title: 'Thor', tmdbId: 10195, type: 'movie' },
   { title: 'Avengers', tmdbId: 24428, type: 'movie' },
-  { title: 'Thor : Le Monde des Ténèbres', tmdbId: 76338, type: 'movie' },
+  { title: 'Thor : Le Monde des TÃ©nÃ¨bres', tmdbId: 76338, type: 'movie' },
   { title: 'Iron Man 3', tmdbId: 68721, type: 'movie' },
-  { title: 'Captain America : Le Soldat de l’Hiver', tmdbId: 100402, type: 'movie' },
+  { title: 'Captain America : Le Soldat de lâ€™Hiver', tmdbId: 100402, type: 'movie' },
   { title: 'Les Gardiens de la Galaxie', tmdbId: 118340, type: 'movie' },
   { title: 'Les Gardiens de la Galaxie Vol. 2', tmdbId: 283995, type: 'movie' },
-  { title: 'Daredevil – Saison 1', tmdbId: 61889, type: 'tv', season: 1 },
-  { title: 'Avengers : L’Ère d’Ultron', tmdbId: 99861, type: 'movie' },
+  { title: 'Daredevil â€“ Saison 1', tmdbId: 61889, type: 'tv', season: 1 },
+  { title: 'Avengers : Lâ€™Ãˆre dâ€™Ultron', tmdbId: 99861, type: 'movie' },
   { title: 'Ant-Man', tmdbId: 102899, type: 'movie' },
   { title: 'Captain America : Civil War', tmdbId: 271110, type: 'movie' },
   { title: 'Black Widow', tmdbId: 497698, type: 'movie' },
   { title: 'Black Panther', tmdbId: 284054, type: 'movie' },
   { title: 'Spider-Man : Homecoming', tmdbId: 315635, type: 'movie' },
-  { title: 'Daredevil – Saison 2', tmdbId: 61889, type: 'tv', season: 2 },
-  { title: 'The Punisher – Saison 1', tmdbId: 67178, type: 'tv', season: 1 },
+  { title: 'Daredevil â€“ Saison 2', tmdbId: 61889, type: 'tv', season: 2 },
+  { title: 'The Punisher â€“ Saison 1', tmdbId: 67178, type: 'tv', season: 1 },
   { title: 'Doctor Strange', tmdbId: 284052, type: 'movie' },
   { title: 'Thor : Ragnarok', tmdbId: 284053, type: 'movie' },
-  { title: 'Ant-Man et la Guêpe', tmdbId: 363088, type: 'movie' },
+  { title: 'Ant-Man et la GuÃªpe', tmdbId: 363088, type: 'movie' },
   { title: 'Avengers : Infinity War', tmdbId: 299536, type: 'movie' },
   { title: 'Avengers : Endgame', tmdbId: 299534, type: 'movie' },
-  { title: 'Loki – Saisons 1 & 2', tmdbId: 84958, type: 'tv' },
+  { title: 'Loki â€“ Saisons 1 & 2', tmdbId: 84958, type: 'tv' },
   { title: 'WandaVision', tmdbId: 85271, type: 'tv' },
-  { title: 'Shang-Chi et la Légende des Dix Anneaux', tmdbId: 566525, type: 'movie' },
+  { title: 'Shang-Chi et la LÃ©gende des Dix Anneaux', tmdbId: 566525, type: 'movie' },
   { title: 'Falcon and the Winter Soldier', tmdbId: 88396, type: 'tv' },
-  { title: 'Les Éternels', tmdbId: 524434, type: 'movie' },
+  { title: 'Les Ã‰ternels', tmdbId: 524434, type: 'movie' },
   { title: 'Spider-Man : Far From Home', tmdbId: 429617, type: 'movie' },
   { title: 'Spider-Man (2002)', tmdbId: 557, type: 'movie' },
   { title: 'Spider-Man 2 (2004)', tmdbId: 558, type: 'movie' },
   { title: 'Spider-Man 3 (2007)', tmdbId: 559, type: 'movie' },
   { title: 'The Amazing Spider-Man', tmdbId: 1930, type: 'movie' },
-  { title: 'The Amazing Spider-Man 2 : Le Destin d\'un Héros', tmdbId: 102382, type: 'movie' },
+  { title: 'The Amazing Spider-Man 2 : Le Destin d\'un HÃ©ros', tmdbId: 102382, type: 'movie' },
   { title: 'Spider-Man : No Way Home', tmdbId: 634649, type: 'movie' },
   { title: 'Doctor Strange in the Multiverse of Madness', tmdbId: 453395, type: 'movie' },
   { title: 'Hawkeye', tmdbId: 88329, type: 'tv' },
@@ -74,14 +75,14 @@ const MCU_ORDER = [
   { title: 'Deadpool 2', tmdbId: 383498, type: 'movie' },
   { title: 'Deadpool & Wolverine', tmdbId: 533535, type: 'movie' },
   { title: 'Agatha All Along', tmdbId: 134949, type: 'tv' },
-  { title: 'Daredevil: Born Again – Saison 1', tmdbId: 204541, type: 'tv', season: 1 },
+  { title: 'Daredevil: Born Again â€“ Saison 1', tmdbId: 204541, type: 'tv', season: 1 },
   { title: 'Captain America : Brave New World', tmdbId: 927490, type: 'movie' },
   { title: 'Thunderbolts*', tmdbId: 985617, type: 'movie' },
   { title: 'Fantastic Four: First Steps', tmdbId: 426063, type: 'movie' },
-  /*{ title: 'The Punisher (spécial/série)', tmdbId: 67178, type: 'tv' },*/
+  /*{ title: 'The Punisher (spÃ©cial/sÃ©rie)', tmdbId: 67178, type: 'tv' },*/
   { title: 'Spider-Man: Brand New Day', tmdbId: 900667, type: 'movie' },
   { title: 'Vision', tmdbId: 254556, type: 'tv' },
-  { title: 'Daredevil: Born Again – Saison 2', tmdbId: 204541, type: 'tv', season: 2 },
+  { title: 'Daredevil: Born Again â€“ Saison 2', tmdbId: 204541, type: 'tv', season: 2 },
 ];
 
 const state = {
@@ -101,10 +102,6 @@ const playerState = {
   urlCandidates: [],
   currentIndex: 0,
 };
-
-const mediaProbeCache = new Map();
-const MEDIA_PROBE_SUCCESS_TTL_MS = 30 * 60 * 1000;
-const MEDIA_PROBE_FAILURE_TTL_MS = 20 * 1000;
 
 const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
 const tmdbPosterCache = new Map();
@@ -366,7 +363,7 @@ function formatRuntime(minutes) {
 }
 
 function getMediaDisplayType(mediaType) {
-  return mediaType === 'tv' ? 'Série' : 'Film';
+  return mediaType === 'tv' ? 'SÃ©rie' : 'Film';
 }
 
 function openDetailsModal() {
@@ -479,12 +476,12 @@ function renderDetailsModalContent(item, mediaType, bundle) {
           ? `<img class="details-poster" src="${escapeHtml(posterUrl)}" alt="${escapeHtml(title)}" loading="lazy" />`
           : `<div class="details-poster-fallback">${escapeHtml(getMediaDisplayType(mediaType))}</div>`}
         <button type="button" class="details-poster-play" data-details-action="play" ${hasPlaybackTarget ? '' : 'disabled'} aria-label="Lecture ${escapeHtml(title)}">
-          <span>▶</span>
+          <span>â–¶</span>
         </button>
       </div>
       <div class="details-head">
         <h3 id="details-modal-title" class="details-title">${escapeHtml(title)}</h3>
-        <p class="details-subtitle">${escapeHtml(getMediaDisplayType(mediaType))} · ${escapeHtml(String(releaseDate))}</p>
+        <p class="details-subtitle">${escapeHtml(getMediaDisplayType(mediaType))} Â· ${escapeHtml(String(releaseDate))}</p>
         <div class="details-stats">
           ${runtimeLabel ? `<span class="details-stat">${escapeHtml(runtimeLabel)}</span>` : ''}
           ${Number.isFinite(voteAverage) ? `<span class="details-stat">Note TMDB: ${escapeHtml(voteAverage.toFixed(1))}/10</span>` : ''}
@@ -551,6 +548,110 @@ function renderDetailsModalContent(item, mediaType, bundle) {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// TMDB Metadata Caching System
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TMDB_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour (updated hourly for frequent content updates)
+const TMDB_METADATA_STORE_KEY = 'tmdb_metadata_cache';
+
+function getTmdbCacheKey(mediaType, tmdbId) {
+  return `${mediaType}::${tmdbId}`;
+}
+
+function getTmdbMetadataFromCache(mediaType, tmdbId) {
+  if (!tmdbId) return null;
+  try {
+    const store = JSON.parse(localStorage.getItem(TMDB_METADATA_STORE_KEY) || '{}');
+    const cacheKey = getTmdbCacheKey(mediaType, tmdbId);
+    const cached = store[cacheKey];
+    
+    if (!cached || typeof cached !== 'object') return null;
+    
+    const age = Date.now() - (cached.cachedAt || 0);
+    if (age > TMDB_CACHE_TTL_MS) {
+      delete store[cacheKey];
+      localStorage.setItem(TMDB_METADATA_STORE_KEY, JSON.stringify(store));
+      return null;
+    }
+    
+    return cached.data || null;
+  } catch {
+    return null;
+  }
+}
+
+function setTmdbMetadataCache(mediaType, tmdbId, metadata) {
+  if (!tmdbId || !metadata) return;
+  try {
+    const store = JSON.parse(localStorage.getItem(TMDB_METADATA_STORE_KEY) || '{}');
+    const cacheKey = getTmdbCacheKey(mediaType, tmdbId);
+    store[cacheKey] = {
+      data: metadata,
+      cachedAt: Date.now(),
+    };
+    localStorage.setItem(TMDB_METADATA_STORE_KEY, JSON.stringify(store));
+  } catch {
+    // Fail silently
+  }
+}
+
+function clearTmdbMetadataCache() {
+  try {
+    localStorage.removeItem(TMDB_METADATA_STORE_KEY);
+    console.log('[BoomBoom] TMDB metadata cache cleared - page will refresh new data on next load');
+  } catch {
+    // Fail silently
+  }
+}
+
+// Manual cache refresh command for console: window.refreshTmdbCache()
+window.refreshTmdbCache = function() {
+  clearTmdbMetadataCache();
+  location.reload();
+};
+
+// Wrapper for TMDB API calls with caching
+async function resolveTmdbMovieMetadataByIdWithCache(movie) {
+  const tmdbId = getTmdbNumericId(movie);
+  if (!tmdbId) return null;
+
+  // Try cache first
+  const cached = getTmdbMetadataFromCache('movie', tmdbId);
+  if (cached) {
+    console.log(`[BoomBoom] Cache HIT: movie ${tmdbId}`);
+    return cached;
+  }
+
+  // Cache miss - fetch from API
+  const metadata = await resolveTmdbMovieMetadataById(movie);
+  if (metadata) {
+    setTmdbMetadataCache('movie', tmdbId, metadata);
+    console.log(`[BoomBoom] Cache MISS: movie ${tmdbId} (fetched from API)`);
+  }
+  return metadata;
+}
+
+async function resolveTmdbSeriesMetadataByIdWithCache(series) {
+  const tmdbId = getTmdbNumericId(series);
+  if (!tmdbId) return null;
+
+  // Try cache first
+  const cached = getTmdbMetadataFromCache('tv', tmdbId);
+  if (cached) {
+    console.log(`[BoomBoom] Cache HIT: series ${tmdbId}`);
+    return cached;
+  }
+
+  // Cache miss - fetch from API
+  const metadata = await resolveTmdbSeriesMetadataById(series);
+  if (metadata) {
+    setTmdbMetadataCache('tv', tmdbId, metadata);
+    console.log(`[BoomBoom] Cache MISS: series ${tmdbId} (fetched from API)`);
+  }
+  return metadata;
+}
+
 async function showDetailsModal(item, mediaType = 'movie') {
   const content = document.getElementById('details-modal-content');
   if (!content) return;
@@ -579,12 +680,14 @@ async function hydrateMovieMetadataFromTmdb(movies) {
   const queue = [...movies];
   const workerCount = Math.min(6, queue.length);
 
+  console.log(`[BoomBoom] Starting movie metadata hydration with ${workerCount} workers...`);
+
   for (let i = 0; i < workerCount; i += 1) {
     workers.push((async () => {
       while (queue.length) {
         const movie = queue.shift();
         if (!movie) continue;
-        const metadata = await resolveTmdbMovieMetadataById(movie);
+        const metadata = await resolveTmdbMovieMetadataByIdWithCache(movie);
         if (!metadata) continue;
 
         let changed = false;
@@ -620,13 +723,15 @@ async function hydrateSeriesMetadataFromTmdb(seriesList) {
   const queue = [...seriesList];
   const workerCount = Math.min(6, queue.length);
 
+  console.log(`[BoomBoom] Starting series metadata hydration with ${workerCount} workers...`);
+
   for (let i = 0; i < workerCount; i += 1) {
     workers.push((async () => {
       while (queue.length) {
         const seriesItem = queue.shift();
         if (!seriesItem) continue;
         if (seriesItem.title && seriesItem.year) continue;
-        const metadata = await resolveTmdbSeriesMetadataById(seriesItem);
+        const metadata = await resolveTmdbSeriesMetadataByIdWithCache(seriesItem);
         if (!metadata) continue;
 
         let changed = false;
@@ -760,7 +865,7 @@ function showNotice(message, type = 'warning') {
   notice.className = `notice notice-${type}`;
   notice.innerHTML = `
     <span>${escapeHtml(message)}</span>
-    <button class="notice-close" type="button" aria-label="Fermer">✕</button>
+    <button class="notice-close" type="button" aria-label="Fermer">âœ•</button>
   `;
 
   const closeBtn = notice.querySelector('.notice-close');
@@ -788,88 +893,6 @@ function hasPlayableCandidate(candidates) {
   return candidates.some((url) => !getUrlAvailability(url).isExpired);
 }
 
-function clearProbeCache(url) {
-  if (!url) return;
-  mediaProbeCache.delete(url);
-}
-
-function setProbeCache(url, ok) {
-  if (!url) return;
-  mediaProbeCache.set(url, {
-    ok,
-    checkedAt: Date.now(),
-  });
-}
-
-function getFreshProbeCache(url) {
-  if (!url) return null;
-  const cached = mediaProbeCache.get(url);
-  if (!cached || typeof cached !== 'object' || !('checkedAt' in cached)) return null;
-
-  const age = Date.now() - Number(cached.checkedAt || 0);
-  const maxAge = cached.ok ? MEDIA_PROBE_SUCCESS_TTL_MS : MEDIA_PROBE_FAILURE_TTL_MS;
-  if (age > maxAge) {
-    mediaProbeCache.delete(url);
-    return null;
-  }
-
-  return cached;
-}
-
-function probeVideoUrl(url, timeoutMs = 9000) {
-  if (!url) return Promise.resolve(false);
-
-  const freshCached = getFreshProbeCache(url);
-  if (freshCached) return Promise.resolve(Boolean(freshCached.ok));
-
-  const inFlightKey = `${url}::inflight`;
-  if (mediaProbeCache.has(inFlightKey)) return mediaProbeCache.get(inFlightKey);
-
-  const probePromise = new Promise((resolve) => {
-    const probe = document.createElement('video');
-    let settled = false;
-
-    const finalize = (isReachable) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      probe.removeEventListener('loadedmetadata', onSuccess);
-      probe.removeEventListener('canplay', onSuccess);
-      probe.removeEventListener('error', onError);
-      probe.src = '';
-      probe.load();
-      resolve(isReachable);
-    };
-
-    const onSuccess = () => finalize(true);
-    const onError = () => {
-      setProbeCache(url, false);
-      finalize(false);
-    };
-
-    const timer = setTimeout(() => {
-      setProbeCache(url, false);
-      finalize(false);
-    }, timeoutMs);
-
-    probe.preload = 'metadata';
-    probe.muted = true;
-    probe.playsInline = true;
-    probe.addEventListener('loadedmetadata', onSuccess, { once: true });
-    probe.addEventListener('canplay', onSuccess, { once: true });
-    probe.addEventListener('error', onError, { once: true });
-    probe.src = url;
-    probe.load();
-  }).then((ok) => {
-    setProbeCache(url, ok);
-    mediaProbeCache.delete(inFlightKey);
-    return ok;
-  });
-
-  mediaProbeCache.set(inFlightKey, probePromise);
-  return probePromise;
-}
-
 function openVideoModalWithUrl(url, index, movieTitle, candidates) {
   const modal = document.getElementById('video-modal');
   const source = document.getElementById('video-source');
@@ -887,20 +910,10 @@ function openVideoModalWithUrl(url, index, movieTitle, candidates) {
   modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 
+  // Auto-play video (browsers allow if started by user action)
   video.play().catch(() => {
-    console.warn('Autoplay was prevented. User interaction required.');
+    // Silently ignore if autoplay fails - user can click play button
   });
-}
-
-async function findReachableCandidate(candidates, startIndex = 0) {
-  for (let i = Math.max(0, startIndex); i < candidates.length; i += 1) {
-    const candidate = candidates[i];
-    if (!candidate || getUrlAvailability(candidate).isExpired) continue;
-    // Verify the stream can actually load before attempting playback in modal.
-    const isReachable = await probeVideoUrl(candidate);
-    if (isReachable) return { url: candidate, index: i };
-  }
-  return null;
 }
 
 function annotateLibraryLinks() {
@@ -1305,7 +1318,7 @@ function renderTierFilterChips() {
     [
       { value: 'all', label: 'Tout' },
       { value: 'movie', label: 'Films' },
-      { value: 'series', label: 'Séries' },
+      { value: 'series', label: 'SÃ©ries' },
     ],
     state.tierTypeFilter,
     (value) => {
@@ -1354,7 +1367,7 @@ function createTierTile(item) {
     </div>
     <div class="tier-item-copy">
       <h3 class="tier-item-title">${escapeHtml(item.title)}</h3>
-      <p class="tier-item-meta">${item.mediaType === 'series' ? 'Série' : 'Film'} · ${item.year || 'N/A'}</p>
+      <p class="tier-item-meta">${item.mediaType === 'series' ? 'SÃ©rie' : 'Film'} Â· ${item.year || 'N/A'}</p>
       <div class="tier-item-tags">${collectionBadge}</div>
     </div>
   `;
@@ -1429,7 +1442,7 @@ function renderTierBoard() {
   const query = document.getElementById('search')?.value.trim().toLowerCase() || '';
   const total = state.tierItems.length;
   const rankedTotal = TIER_LABELS.reduce((sum, label) => sum + state.tierOrder[label].length, 0);
-  count.textContent = `${rankedTotal}/${total} classés`;
+  count.textContent = `${rankedTotal}/${total} classÃ©s`;
 
   board.innerHTML = '';
   const fragment = document.createDocumentFragment();
@@ -1452,7 +1465,7 @@ function renderTierBoard() {
     `;
 
     row.querySelector('.tier-row-body').appendChild(
-      createTierDropzone(label, items, 'Dépose un film ou une série ici')
+      createTierDropzone(label, items, 'DÃ©pose un film ou une sÃ©rie ici')
     );
     fragment.appendChild(row);
   });
@@ -1466,13 +1479,13 @@ function renderTierBoard() {
   pool.innerHTML = `
     <div class="tier-pool-head">
       <div>
-        <p class="tier-pool-kicker">Bibliothèque</p>
-        <h3>À classer</h3>
+        <p class="tier-pool-kicker">BibliothÃ¨que</p>
+        <h3>Ã€ classer</h3>
       </div>
       <span>${poolItems.length} visible(s)</span>
     </div>
   `;
-  pool.appendChild(createTierDropzone(TIER_POOL, poolItems, 'Aucun résultat avec les filtres actuels'));
+  pool.appendChild(createTierDropzone(TIER_POOL, poolItems, 'Aucun rÃ©sultat avec les filtres actuels'));
   fragment.appendChild(pool);
 
   board.appendChild(fragment);
@@ -1526,16 +1539,16 @@ function updateSearchPlaceholder() {
   if (!input || !section) return;
 
   if (section.id === 'tiers') {
-    input.placeholder = 'Rechercher dans la tier list…';
+    input.placeholder = 'Rechercher dans la tier listâ€¦';
     return;
   }
 
   if (section.id === 'mcu') {
-    input.placeholder = 'Rechercher dans MCU…';
+    input.placeholder = 'Rechercher dans MCUâ€¦';
     return;
   }
 
-  input.placeholder = 'Rechercher un titre…';
+  input.placeholder = 'Rechercher un titreâ€¦';
 }
 
 function setupDisplayMode() {
@@ -1734,7 +1747,7 @@ function setupSeriesModal() {
     const epItem = e.target instanceof HTMLElement && e.target.closest('.episode-playable');
     if (epItem && epItem.dataset.urlCandidates) {
       const epCode = epItem.querySelector('.episode-code')?.textContent || '';
-      const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Épisode';
+      const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Ã‰pisode';
       const episodeTitle = `${seriesTitle} - ${epCode}`;
       let urlCandidates = [];
       try {
@@ -1983,7 +1996,7 @@ function setupTierListControls() {
     state.tierOrder = getDefaultTierOrder();
     saveTierOrder();
     renderTierBoard();
-    showNotice('La tier list a été réinitialisée sur cet appareil.', 'warning');
+    showNotice('La tier list a Ã©tÃ© rÃ©initialisÃ©e sur cet appareil.', 'warning');
   });
 }
 
@@ -2084,9 +2097,9 @@ function renderChangelogContent() {
         ${(Array.isArray(release.changes) ? release.changes : []).map((change) =>
           `<li>
             <span class="roadmap-change-type roadmap-change-${escapeHtml(change.type)}">${
-              change.type === 'feature' ? 'Nouveauté' :
+              change.type === 'feature' ? 'NouveautÃ©' :
               change.type === 'fix' ? 'Correctif' :
-              change.type === 'improvement' ? 'Amélioration' :
+              change.type === 'improvement' ? 'AmÃ©lioration' :
               escapeHtml(change.type)
             }</span>
             ${escapeHtml(change.description)}
@@ -2115,7 +2128,321 @@ function setupRoadmapModal() {
   });
 }
 
+// â”€â”€ R2 Catalog helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function filenameFromUrl(url) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) {
+    try {
+      const parts = new URL(url).pathname.split('/');
+      return decodeURIComponent(parts[parts.length - 1] || '');
+    } catch {
+      return '';
+    }
+  }
+  // bare filename
+  return String(url).split('/').pop() || '';
+}
+
+function normalizeForFuzzyMatch(str) {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function tokenOverlap(normalizedA, normalizedB) {
+  const setA = new Set(normalizedA.split(' ').filter((t) => t.length > 2));
+  let count = 0;
+  normalizedB.split(' ').forEach((t) => { if (t.length > 2 && setA.has(t)) count += 1; });
+  return count;
+}
+
+async function fetchR2Catalog() {
+  if (!CONFIG.R2_CATALOG_API) return null;
+  try {
+    console.log(`[BoomBoom] Fetching R2 catalog from: ${CONFIG.R2_CATALOG_API}`);
+    const fetchStart = performance.now();
+    
+    const res = await fetch(CONFIG.R2_CATALOG_API);
+    const fetchDuration = performance.now() - fetchStart;
+    console.log(`[BoomBoom] Network fetch took: ${fetchDuration.toFixed(0)}ms`);
+    
+    if (!res.ok) return null;
+    
+    const jsonStart = performance.now();
+    const data = await res.json();
+    const jsonDuration = performance.now() - jsonStart;
+    console.log(`[BoomBoom] JSON parsing took: ${jsonDuration.toFixed(0)}ms (${data.length} entries)`);
+    
+    if (!Array.isArray(data)) return null;
+    const byFilename = new Map();
+    const entries = [];
+    
+    const parseStart = performance.now();
+    data.forEach((entry) => {
+      const filename = String(entry?.title || '').trim();
+      const url = String(entry?.url || '').trim();
+      const key = String(entry?.key || '').trim();
+      const normalizedKey = key.toLowerCase();
+      const category = String(entry?.category || '').toLowerCase();
+      const parsedTmdb = Number(entry?.tmdbID ?? entry?.tmdbId ?? 0);
+      const tmdbId = Number.isFinite(parsedTmdb) && parsedTmdb > 0 ? parsedTmdb : 0;
+      const parsedSeason = Number(entry?.seasonNumber ?? 0);
+      const seasonNumber = Number.isFinite(parsedSeason) && parsedSeason > 0 ? parsedSeason : 0;
+      const parsedEpisode = Number(entry?.episodeNumber ?? 0);
+      const episodeNumber = Number.isFinite(parsedEpisode) && parsedEpisode > 0 ? parsedEpisode : 0;
+      const seriesTitle = String(entry?.seriesTitle || '').trim();
+      if (filename && url) byFilename.set(filename.toLowerCase(), url);
+      if (url) {
+        entries.push({
+          filename: filename.toLowerCase(),
+          key,
+          keyLower: normalizedKey,
+          category,
+          tmdbId,
+          seasonNumber,
+          episodeNumber,
+          seriesTitle,
+          url,
+        });
+      }
+    });
+    const parseDuration = performance.now() - parseStart;
+    console.log(`[BoomBoom] Entry parsing took: ${parseDuration.toFixed(0)}ms (${entries.length} processed)`);
+    
+    return { byFilename, entries };
+  } catch (err) {
+    console.error('[BoomBoom] fetchR2Catalog error:', err);
+    return null;
+  }
+}
+
+function resolveMovieUrlFromCatalog(movie, catalog) {
+  if (!catalog?.byFilename || !Array.isArray(catalog?.entries)) return null;
+
+  // 0. Strict match by tmdbId from catalog metadata.
+  const movieTmdbId = getTmdbNumericId(movie);
+  if (movieTmdbId) {
+    const strictEntry = catalog.entries.find((entry) => entry.category === 'movie' && entry.tmdbId === movieTmdbId);
+    if (strictEntry?.url) return strictEntry.url;
+  }
+
+  // 1. Exact filename match from stored URL
+  if (movie.url) {
+    const filename = filenameFromUrl(movie.url);
+    if (filename) {
+      const found = catalog.byFilename.get(filename.toLowerCase());
+      if (found) return found;
+    }
+  }
+
+  // 2. Fuzzy title+year match (helps when url is empty)
+  const title = String(movie.title || '').trim();
+  if (!title) return null;
+
+  const normalizedTitle = normalizeForFuzzyMatch(title);
+  const titleTokens = normalizedTitle.split(' ').filter((t) => t.length > 2);
+  if (!titleTokens.length) return null;
+
+  const year = String(movie.year || '').trim();
+  let bestUrl = null;
+  let bestScore = -1;
+
+  catalog.entries.forEach((entry) => {
+    const apiUrl = entry.url;
+    const filename = entry.filename;
+    // Only match against movie files (not series episode files)
+    if (entry.keyLower && !entry.keyLower.startsWith('movies/')) return;
+    const filenameNoYearExt = filename.replace(/\.mp4$/i, '').replace(/ - \d{4}$/, '').trim();
+    const normalizedFilename = normalizeForFuzzyMatch(filenameNoYearExt);
+    const overlap = tokenOverlap(normalizedTitle, normalizedFilename);
+    const threshold = Math.max(1, Math.ceil(titleTokens.length * 0.5));
+    if (overlap < threshold) return;
+    let score = overlap;
+    if (year && filename.includes(year)) score += 2;
+    if (score > bestScore) {
+      bestScore = score;
+      bestUrl = apiUrl;
+    }
+  });
+
+  return bestUrl;
+}
+
+function resolveEpisodeUrlFromCatalog(seriesItem, seasonNum, epNum, catalog) {
+  if (!catalog?.byFilename || !Array.isArray(catalog?.entries)) return null;
+
+  const seriesTitle = String(seriesItem?.title || '').trim();
+  const normalizedTitle = normalizeForFuzzyMatch(seriesTitle);
+
+  const tmdbId = getTmdbNumericId(seriesItem);
+  const seasonCode = String(seasonNum).padStart(2, '0');
+  const epCode = String(epNum).padStart(2, '0');
+
+  // 0. Strict match from worker metadata.
+  if (tmdbId) {
+    const strictMeta = catalog.entries.find((entry) =>
+      entry.category === 'series'
+      && entry.tmdbId === tmdbId
+      && entry.seasonNumber === Number(seasonNum)
+      && entry.episodeNumber === Number(epNum)
+    );
+    if (strictMeta?.url) return strictMeta.url;
+  }
+
+  // New normalized structure: SERIES/<Name - tmdbId>/Sxx/Exx.mp4
+  if (tmdbId) {
+    const tmdbMarker = `- ${tmdbId}/`;
+    const epMarker = `/s${seasonCode}/e${epCode}.mp4`;
+    const strict = catalog.entries.find((entry) => entry.keyLower.includes(tmdbMarker) && entry.keyLower.endsWith(epMarker));
+    if (strict?.url) return strict.url;
+  }
+
+  // Fuzzy fallback â€” useful for mixed naming styles or incomplete metadata.
+  const epSuffix1 = `${seasonNum}-${epNum}`;
+  const epSuffix2 = `s${seasonNum}e${String(epNum).padStart(2, '0')}`;
+  const epSuffix3 = `s${String(seasonNum).padStart(2, '0')}e${String(epNum).padStart(2, '0')}`;
+  const titleTokens = normalizedTitle.split(' ').filter((t) => t.length > 2);
+  const threshold = Math.max(1, Math.ceil(titleTokens.length * 0.5));
+
+  let bestUrl = null;
+  let bestScore = -1;
+
+  catalog.entries.forEach((entry) => {
+    const filename = entry.filename;
+    const url = entry.url;
+    const normalizedFilename = normalizeForFuzzyMatch(filename.replace(/\.mp4$/i, ''));
+    const hasEpSuffix =
+      normalizedFilename.endsWith(epSuffix1) ||
+      normalizedFilename.includes(epSuffix2) ||
+      normalizedFilename.includes(epSuffix3);
+    if (!hasEpSuffix) return;
+
+    const overlap = tokenOverlap(normalizedTitle, normalizedFilename);
+    if (overlap < threshold) return;
+    if (overlap > bestScore) {
+      bestScore = overlap;
+      bestUrl = url;
+    }
+  });
+
+  return bestUrl;
+}
+
+function hydrateUrlsFromR2Catalog(movies, series, catalog) {
+  if (!catalog?.byFilename || !Array.isArray(catalog?.entries)) return;
+
+  movies.forEach((movie) => {
+    const resolved = resolveMovieUrlFromCatalog(movie, catalog);
+    if (resolved) movie.url = resolved;
+  });
+
+  series.forEach((show) => {
+    const seriesTitle = String(show.title || '').trim();
+    const seasons = Array.isArray(show.seasons) ? show.seasons : [];
+    seasons.forEach((season) => {
+      const seasonNum = Number(season.season) || 1;
+      const episodes = Array.isArray(season.episodes) ? season.episodes : [];
+      episodes.forEach((ep, i) => {
+        const epNum = i + 1;
+        // If a url hint is stored (old format), try exact filename match first
+        if (ep.url) {
+          const filename = filenameFromUrl(ep.url);
+          if (filename) {
+            const apiUrl = catalog.byFilename.get(filename.toLowerCase());
+            if (apiUrl) { ep.url = apiUrl; return; }
+          }
+        }
+        // Fuzzy resolution by series title + season + episode
+        {
+          const resolved = resolveEpisodeUrlFromCatalog(show, seasonNum, epNum, catalog);
+          if (resolved) ep.url = resolved;
+        }
+      });
+    });
+  });
+}
+
+function prettifySeriesTitle(title) {
+  const value = String(title || '').trim();
+  if (!value) return '';
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildLibraryFromR2Catalog(catalog) {
+  const movies = [];
+  const moviesSeen = new Set();
+  const seriesGroupMap = new Map();
+
+  const entries = Array.isArray(catalog?.entries) ? catalog.entries : [];
+  entries.forEach((entry) => {
+    if (!entry?.url) return;
+
+    if (entry.category === 'movie') {
+      const tmdbId = Number(entry.tmdbId) || 0;
+      const dedupeKey = tmdbId > 0 ? `tmdb:${tmdbId}` : `key:${entry.keyLower || entry.filename}`;
+      if (moviesSeen.has(dedupeKey)) return;
+      moviesSeen.add(dedupeKey);
+
+      const movie = {
+        title: String(entry.filename || '').replace(/\.mp4$/i, '').trim() || 'Film',
+        url: entry.url,
+      };
+      if (tmdbId > 0) movie.tmdbId = tmdbId;
+      movies.push(movie);
+      return;
+    }
+
+    if (entry.category !== 'series') return;
+
+    const tmdbId = Number(entry.tmdbId) || 0;
+    const seasonNumber = Number(entry.seasonNumber) || 0;
+    const episodeNumber = Number(entry.episodeNumber) || 0;
+    if (seasonNumber <= 0 || episodeNumber <= 0) return;
+
+    const rawSeriesTitle = String(entry.seriesTitle || '').trim();
+    const seriesTitle = prettifySeriesTitle(rawSeriesTitle) || 'Serie';
+    const groupKey = `${tmdbId}:${seriesTitle.toLowerCase()}`;
+
+    if (!seriesGroupMap.has(groupKey)) {
+      const show = { title: seriesTitle, seasons: [] };
+      if (tmdbId > 0) show.tmdbId = tmdbId;
+      seriesGroupMap.set(groupKey, { show, seasons: new Map() });
+    }
+
+    const group = seriesGroupMap.get(groupKey);
+    if (!group.seasons.has(seasonNumber)) {
+      group.seasons.set(seasonNumber, { season: seasonNumber, episodes: [] });
+    }
+
+    const season = group.seasons.get(seasonNumber);
+    while (season.episodes.length < episodeNumber) season.episodes.push({});
+    season.episodes[episodeNumber - 1] = {
+      ...(season.episodes[episodeNumber - 1] || {}),
+      url: entry.url,
+    };
+  });
+
+  const series = Array.from(seriesGroupMap.values()).map(({ show, seasons }) => ({
+    ...show,
+    seasons: Array.from(seasons.values()).sort((a, b) => Number(a.season) - Number(b.season)),
+  }));
+
+  return { movies, series };
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 async function init() {
+  const initStartTime = performance.now();
+  console.log('%c🚀 BoomBoomMovie init() started', 'color: #00ff00; font-weight: bold');
+
   await loadTmdbConfigFile();
 
   setupTabs();
@@ -2130,37 +2457,41 @@ async function init() {
   updateSearchPlaceholder();
 
   try {
-    const [moviesRes, seriesRes] = await Promise.all([
-      fetch(CONFIG.MOVIES_DATA_FILE),
-      fetch(CONFIG.SERIES_DATA_FILE),
+    console.time('[BoomBoom] R2 Catalog fetch');
+    const r2Catalog = await fetchR2Catalog();
+    console.timeEnd('[BoomBoom] R2 Catalog fetch');
+    
+    if (!r2Catalog?.entries?.length) {
+      throw new Error('Impossible de charger le catalogue R2 depuis le Worker.');
+    }
+
+    console.log(`%c✓ R2 Catalog loaded: ${r2Catalog.entries.length} entries`, 'color: #00ff00');
+
+    console.time('[BoomBoom] Build library from catalog');
+    const built = buildLibraryFromR2Catalog(r2Catalog);
+    console.timeEnd('[BoomBoom] Build library from catalog');
+    
+    const rawMovies = Array.isArray(built.movies) ? built.movies : [];
+    const rawSeries = Array.isArray(built.series) ? built.series : [];
+    console.log(`%c✓ Library built: ${rawMovies.length} movies, ${rawSeries.length} series`, 'color: #00ff00');
+
+    // Parallelize TMDB metadata hydration for faster startup
+    console.time('[BoomBoom] TMDB metadata hydration');
+    const [tmdbMoviesMetadataUpdated, tmdbSeriesMetadataUpdated] = await Promise.all([
+      hydrateMovieMetadataFromTmdb(rawMovies),
+      hydrateSeriesMetadataFromTmdb(rawSeries),
     ]);
+    console.timeEnd('[BoomBoom] TMDB metadata hydration');
+    console.log(`%c✓ TMDB metadata: ${tmdbMoviesMetadataUpdated} movies, ${tmdbSeriesMetadataUpdated} series updated`, 'color: #00ff00');
 
-    if (!moviesRes.ok) {
-      throw new Error(
-        `Impossible de charger ${CONFIG.MOVIES_DATA_FILE} (HTTP ${moviesRes.status})`
-      );
-    }
-    if (!seriesRes.ok) {
-      throw new Error(
-        `Impossible de charger ${CONFIG.SERIES_DATA_FILE} (HTTP ${seriesRes.status})`
-      );
-    }
-
-    const [moviesData, seriesData] = await Promise.all([moviesRes.json(), seriesRes.json()]);
-
-    const rawMovies = Array.isArray(moviesData.movies) ? moviesData.movies : [];
-    const rawSeries = Array.isArray(seriesData.series) ? seriesData.series : [];
-
-    const tmdbMoviesMetadataUpdated = await hydrateMovieMetadataFromTmdb(rawMovies);
-    const tmdbSeriesMetadataUpdated = await hydrateSeriesMetadataFromTmdb(rawSeries);
+    // Keep URL hydration as safety fallback for any partially-built items.
+    console.time('[BoomBoom] URL hydration fallback');
+    hydrateUrlsFromR2Catalog(rawMovies, rawSeries, r2Catalog);
+    console.timeEnd('[BoomBoom] URL hydration fallback');
 
     state.movies = sortByReleaseDate(rawMovies);
     state.series = sortByReleaseDate(rawSeries);
 
-    const [tmdbMoviePostersUpdated, tmdbSeriesPostersUpdated] = await Promise.all([
-      hydrateMoviePostersFromTmdb(state.movies),
-      hydrateSeriesPostersFromTmdb(state.series),
-    ]);
     buildTierItems();
     state.tierOrder = loadTierOrder();
 
@@ -2176,31 +2507,54 @@ async function init() {
       changelogState.data = null;
     }
 
+    const preRenderTime = performance.now();
+    console.log(`%c⏱️  Time before render: ${(preRenderTime - initStartTime).toFixed(0)}ms`, 'color: #ffff00');
+
+    // Render library immediately, don't wait for TMDB posters
+    console.time('[BoomBoom] Render library');
     renderLibrary();
+    console.timeEnd('[BoomBoom] Render library');
+    
     refreshFiltersForActiveSection();
     applyCurrentFilters();
 
     if (
       hasTmdbCredentials()
-      && tmdbMoviePostersUpdated === 0
-      && tmdbSeriesPostersUpdated === 0
       && tmdbMoviesMetadataUpdated === 0
       && tmdbSeriesMetadataUpdated === 0
     ) {
-      showNotice('TMDB est configure, mais aucune metadonnee/affiche n\'a ete recuperee. Verifie ta cle et les tmdbId dans les JSON.', 'warning');
+      showNotice('TMDB est configure, mais aucune metadonnee n\'a ete recuperee. Verifie ta cle et les tmdbId dans le Worker.', 'warning');
     }
+
+    // Load TMDB posters in background (non-blocking)
+    console.time('[BoomBoom] Background poster loading');
+    Promise.all([
+      hydrateMoviePostersFromTmdb(state.movies),
+      hydrateSeriesPostersFromTmdb(state.series),
+    ]).then(([tmdbMoviePostersUpdated, tmdbSeriesPostersUpdated]) => {
+      console.timeEnd('[BoomBoom] Background poster loading');
+      console.log(`%c✓ TMDB posters: ${tmdbMoviePostersUpdated} movies, ${tmdbSeriesPostersUpdated} series loaded`, 'color: #00ff00');
+      if (tmdbMoviePostersUpdated > 0 || tmdbSeriesPostersUpdated > 0) {
+        renderLibrary(); // Refresh to show loaded posters
+      }
+    }).catch(() => {
+      // Ignore TMDB poster errors - UI already rendered
+    });
 
     if (linkStats.expired > 0) {
       showNotice(
-        `${linkStats.expired} lien(s) video expire(s). Regenerer les URLs signees dans data.movie.json et data.series.json.`,
+        `${linkStats.expired} lien(s) video expire(s) dans le catalogue Worker.`,
         'error'
       );
     } else if (linkStats.expiringSoon > 0) {
       showNotice(
-        `${linkStats.expiringSoon} lien(s) video vont expirer bientot. Pense a regenerer data.movie.json et data.series.json.`,
+        `${linkStats.expiringSoon} lien(s) video vont expirer bientot dans le catalogue Worker.`,
         'warning'
       );
     }
+
+    const totalTime = performance.now() - initStartTime;
+    console.log(`%c✅ BoomBoomMovie init() complete in ${totalTime.toFixed(0)}ms`, 'color: #00ff00; font-weight: bold; font-size: 14px');
   } catch (err) {
     console.error('[BoomBoom]', err.message);
     if (location.protocol === 'file:') {
@@ -2218,3 +2572,4 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
