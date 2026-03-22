@@ -1,4 +1,4 @@
-﻿/**
+/**
  * BoomBoom - app.js
  * Movies metadata and posters can be resolved from TMDB when configured.
  */
@@ -22,39 +22,39 @@ const MCU_ORDER = [
   { title: 'Captain Marvel', tmdbId: 299537, type: 'movie' },
   { title: 'Iron Man', tmdbId: 1726, type: 'movie' },
   { title: 'Iron Man 2', tmdbId: 10138, type: 'movie' },
-  { title: 'Lâ€™Incroyable Hulk', tmdbId: 1724, type: 'movie' },
+  { title: 'L’Incroyable Hulk', tmdbId: 1724, type: 'movie' },
   { title: 'Thor', tmdbId: 10195, type: 'movie' },
   { title: 'Avengers', tmdbId: 24428, type: 'movie' },
-  { title: 'Thor : Le Monde des TÃ©nÃ¨bres', tmdbId: 76338, type: 'movie' },
+  { title: 'Thor : Le Monde des Ténèbres', tmdbId: 76338, type: 'movie' },
   { title: 'Iron Man 3', tmdbId: 68721, type: 'movie' },
-  { title: 'Captain America : Le Soldat de lâ€™Hiver', tmdbId: 100402, type: 'movie' },
+  { title: 'Captain America : Le Soldat de l’Hiver', tmdbId: 100402, type: 'movie' },
   { title: 'Les Gardiens de la Galaxie', tmdbId: 118340, type: 'movie' },
   { title: 'Les Gardiens de la Galaxie Vol. 2', tmdbId: 283995, type: 'movie' },
-  { title: 'Daredevil â€“ Saison 1', tmdbId: 61889, type: 'tv', season: 1 },
-  { title: 'Avengers : Lâ€™Ãˆre dâ€™Ultron', tmdbId: 99861, type: 'movie' },
+  { title: 'Daredevil – Saison 1', tmdbId: 61889, type: 'tv', season: 1 },
+  { title: 'Avengers : L’Ère d’Ultron', tmdbId: 99861, type: 'movie' },
   { title: 'Ant-Man', tmdbId: 102899, type: 'movie' },
   { title: 'Captain America : Civil War', tmdbId: 271110, type: 'movie' },
   { title: 'Black Widow', tmdbId: 497698, type: 'movie' },
   { title: 'Black Panther', tmdbId: 284054, type: 'movie' },
   { title: 'Spider-Man : Homecoming', tmdbId: 315635, type: 'movie' },
-  { title: 'Daredevil â€“ Saison 2', tmdbId: 61889, type: 'tv', season: 2 },
-  { title: 'The Punisher â€“ Saison 1', tmdbId: 67178, type: 'tv', season: 1 },
+  { title: 'Daredevil – Saison 2', tmdbId: 61889, type: 'tv', season: 2 },
+  { title: 'The Punisher – Saison 1', tmdbId: 67178, type: 'tv', season: 1 },
   { title: 'Doctor Strange', tmdbId: 284052, type: 'movie' },
   { title: 'Thor : Ragnarok', tmdbId: 284053, type: 'movie' },
-  { title: 'Ant-Man et la GuÃªpe', tmdbId: 363088, type: 'movie' },
+  { title: 'Ant-Man et la Guêpe', tmdbId: 363088, type: 'movie' },
   { title: 'Avengers : Infinity War', tmdbId: 299536, type: 'movie' },
   { title: 'Avengers : Endgame', tmdbId: 299534, type: 'movie' },
-  { title: 'Loki â€“ Saisons 1 & 2', tmdbId: 84958, type: 'tv' },
+  { title: 'Loki – Saisons 1 & 2', tmdbId: 84958, type: 'tv' },
   { title: 'WandaVision', tmdbId: 85271, type: 'tv' },
-  { title: 'Shang-Chi et la LÃ©gende des Dix Anneaux', tmdbId: 566525, type: 'movie' },
+  { title: 'Shang-Chi et la Légende des Dix Anneaux', tmdbId: 566525, type: 'movie' },
   { title: 'Falcon and the Winter Soldier', tmdbId: 88396, type: 'tv' },
-  { title: 'Les Ã‰ternels', tmdbId: 524434, type: 'movie' },
+  { title: 'Les Éternels', tmdbId: 524434, type: 'movie' },
   { title: 'Spider-Man : Far From Home', tmdbId: 429617, type: 'movie' },
   { title: 'Spider-Man (2002)', tmdbId: 557, type: 'movie' },
   { title: 'Spider-Man 2 (2004)', tmdbId: 558, type: 'movie' },
   { title: 'Spider-Man 3 (2007)', tmdbId: 559, type: 'movie' },
   { title: 'The Amazing Spider-Man', tmdbId: 1930, type: 'movie' },
-  { title: 'The Amazing Spider-Man 2 : Le Destin d\'un HÃ©ros', tmdbId: 102382, type: 'movie' },
+  { title: 'The Amazing Spider-Man 2 : Le Destin d\'un Héros', tmdbId: 102382, type: 'movie' },
   { title: 'Spider-Man : No Way Home', tmdbId: 634649, type: 'movie' },
   { title: 'Doctor Strange in the Multiverse of Madness', tmdbId: 453395, type: 'movie' },
   { title: 'Hawkeye', tmdbId: 88329, type: 'tv' },
@@ -72,14 +72,14 @@ const MCU_ORDER = [
   { title: 'Deadpool 2', tmdbId: 383498, type: 'movie' },
   { title: 'Deadpool & Wolverine', tmdbId: 533535, type: 'movie' },
   { title: 'Agatha All Along', tmdbId: 134949, type: 'tv' },
-  { title: 'Daredevil: Born Again â€“ Saison 1', tmdbId: 204541, type: 'tv', season: 1 },
+  { title: 'Daredevil: Born Again – Saison 1', tmdbId: 204541, type: 'tv', season: 1 },
   { title: 'Captain America : Brave New World', tmdbId: 927490, type: 'movie' },
   { title: 'Thunderbolts*', tmdbId: 985617, type: 'movie' },
   { title: 'Fantastic Four: First Steps', tmdbId: 426063, type: 'movie' },
-  /*{ title: 'The Punisher (spÃ©cial/sÃ©rie)', tmdbId: 67178, type: 'tv' },*/
+  /*{ title: 'The Punisher (spécial/série)', tmdbId: 67178, type: 'tv' },*/
   { title: 'Spider-Man: Brand New Day', tmdbId: 900667, type: 'movie' },
   { title: 'Vision', tmdbId: 254556, type: 'tv' },
-  { title: 'Daredevil: Born Again â€“ Saison 2', tmdbId: 204541, type: 'tv', season: 2 },
+  { title: 'Daredevil: Born Again – Saison 2', tmdbId: 204541, type: 'tv', season: 2 },
 ];
 
 const state = {
@@ -361,7 +361,7 @@ function formatRuntime(minutes) {
 }
 
 function getMediaDisplayType(mediaType) {
-  return mediaType === 'tv' ? 'SÃ©rie' : 'Film';
+  return mediaType === 'tv' ? 'Série' : 'Film';
 }
 
 function openDetailsModal() {
@@ -479,7 +479,7 @@ function renderDetailsModalContent(item, mediaType, bundle) {
       </div>
       <div class="details-head">
         <h3 id="details-modal-title" class="details-title">${escapeHtml(title)}</h3>
-        <p class="details-subtitle">${escapeHtml(getMediaDisplayType(mediaType))} Â· ${escapeHtml(String(releaseDate))}</p>
+        <p class="details-subtitle">${escapeHtml(getMediaDisplayType(mediaType))} · ${escapeHtml(String(releaseDate))}</p>
         <div class="details-stats">
           ${runtimeLabel ? `<span class="details-stat">${escapeHtml(runtimeLabel)}</span>` : ''}
           ${Number.isFinite(voteAverage) ? `<span class="details-stat">Note TMDB: ${escapeHtml(voteAverage.toFixed(1))}/10</span>` : ''}
@@ -871,7 +871,7 @@ function showNotice(message, type = 'warning') {
   notice.className = `notice notice-${type}`;
   notice.innerHTML = `
     <span>${escapeHtml(message)}</span>
-    <button class="notice-close" type="button" aria-label="Fermer">âœ•</button>
+    <button class="notice-close" type="button" aria-label="Fermer">✕</button>
   `;
 
   const closeBtn = notice.querySelector('.notice-close');
@@ -1445,7 +1445,7 @@ function setupSeriesModal() {
     const epItem = e.target instanceof HTMLElement && e.target.closest('.episode-playable');
     if (epItem && epItem.dataset.urlCandidates) {
       const epCode = epItem.querySelector('.episode-code')?.textContent || '';
-      const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Ã‰pisode';
+      const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Épisode';
       const episodeTitle = `${seriesTitle} - ${epCode}`;
       let urlCandidates = [];
       try {
@@ -2053,7 +2053,7 @@ function setupRoadmapModal() {
   });
 }
 
-// â”€â”€ R2 Catalog helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── R2 Catalog helpers ─────────────────────────────────────────────────────
 
 function filenameFromUrl(url) {
   if (!url) return '';
@@ -2226,7 +2226,7 @@ function resolveEpisodeUrlFromCatalog(seriesItem, seasonNum, epNum, catalog) {
     if (strict?.url) return strict.url;
   }
 
-  // Fuzzy fallback â€” useful for mixed naming styles or incomplete metadata.
+  // Fuzzy fallback — useful for mixed naming styles or incomplete metadata.
   const epSuffix1 = `${seasonNum}-${epNum}`;
   const epSuffix2 = `s${seasonNum}e${String(epNum).padStart(2, '0')}`;
   const epSuffix3 = `s${String(seasonNum).padStart(2, '0')}e${String(epNum).padStart(2, '0')}`;
@@ -2362,7 +2362,7 @@ function buildLibraryFromR2Catalog(catalog) {
   return { movies, series };
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──────────────────────────────────────────────────────────────────────────
 
 async function init() {
   const initStartTime = performance.now();
