@@ -16,5 +16,14 @@
     "tmdbIds": [4232, 4233, 4234, 41446, 646385, 934433],
     "type": "movie",
     "ordered": true
+  }, 
+  {
+    "id": "star-wars",
+    "label": "Star Wars",
+    "icon": "⭐",
+    "badgePrefix": "SW",
+    "tmdbIds": [11, 1891, 1892, 1893, 1894 ,1895, 140607, 181808, 181812],
+    "type": "movie",
+    "ordered": true
   }
 ]
