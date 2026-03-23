@@ -25,5 +25,14 @@
     "tmdbIds": [11, 1891, 1892, 1893, 1894 ,1895, 140607, 181808, 181812],
     "type": "movie",
     "ordered": true
+  },
+  {
+    "id": "age-de-glace",
+    "label": "Saga Age de Glace",
+    "icon": "🧊",
+    "badgePrefix": "ADG",
+    "tmdbIds": [425, 950, 10681, 57800, 277834, 1381735],
+    "type": "movie",
+    "ordered": true
   }
 ]

@@ -1415,6 +1415,7 @@ function setupVideoModal() {
   const modal = document.getElementById('video-modal');
   const closeBtn = document.getElementById('video-modal-close');
   const video = document.getElementById('video-player');
+  const SEEK_STEP_SECONDS = 10;
 
   closeBtn.addEventListener('click', closeVideoPlayer);
   modal.addEventListener('click', (e) => {
@@ -1424,7 +1425,25 @@ function setupVideoModal() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal.hidden) closeVideoPlayer();
+    if (modal.hidden) return;
+
+    if (e.key === 'Escape') {
+      closeVideoPlayer();
+      return;
+    }
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextTime = Math.min((Number(video.duration) || 0), Math.max(0, Number(video.currentTime) + SEEK_STEP_SECONDS));
+      video.currentTime = nextTime;
+      return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevTime = Math.max(0, Number(video.currentTime) - SEEK_STEP_SECONDS);
+      video.currentTime = prevTime;
+    }
   });
 
 
