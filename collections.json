@@ -34,5 +34,23 @@
     "tmdbIds": [425, 950, 8355, 57800, 278154, 1381735],
     "type": "movie",
     "ordered": true
+  },
+  {
+    "id": "seigneur-des-anneaux",
+    "label": "Le Seigneur des Anneaux",
+    "icon": "💍",
+    "badgePrefix": "SDA",
+    "tmdbIds": [120, 121, 122],
+    "type": "movie",
+    "ordered": true
+  },
+  {
+    "id" : "le-hobbit",
+    "label": "Le Hobbit",
+    "icon": "🧙‍♂️",
+    "badgePrefix": "HOB",
+    "tmdbIds": [49051, 57158, 122917],
+    "type": "movie",
+    "ordered": true
   }
 ]
