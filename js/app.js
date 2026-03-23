@@ -1215,12 +1215,33 @@ function applyCurrentFilters() {
   const input = document.getElementById('search');
   if (!section || !input) return;
 
+
   if (section.id === 'view-mcu') {
     showMCUOrderList(input.value, 'mcu-grid', 'mcu-count');
     return;
   }
 
-  if (section.id === 'view-home' || section.id === 'view-collections') {
+  // Recherche sur la page d'accueil
+  if (section.id === 'view-home') {
+    const q = input.value.trim().toLowerCase();
+    let visibleCount = 0;
+    // On cible tous les cards dans #home-rows
+    const homeRows = document.getElementById('home-rows');
+    if (homeRows) {
+      homeRows.querySelectorAll('.card').forEach((card) => {
+        const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+        const isVisible = !q || title.includes(q);
+        card.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount += 1;
+      });
+    }
+    // Optionnel : afficher le nombre de résultats si un compteur existe
+    const count = section.querySelector('.count');
+    if (count) count.textContent = String(visibleCount);
+    return;
+  }
+
+  if (section.id === 'view-collections') {
     return;
   }
 
