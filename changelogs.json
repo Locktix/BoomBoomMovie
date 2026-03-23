@@ -1,5 +1,40 @@
 [
   {
+    "version": "1.6",
+    "date": "2026-03-23",
+    "label": "Progression locale et reprise de lecture",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Ajout d'une sauvegarde locale de progression pour les films et les episodes avec reprise automatique au dernier timecode"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout des badges et barres de progression sur les cartes, y compris dans la vue MCU chronologique"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout d'une row Reprendre la lecture sur l'accueil pour retrouver rapidement les contenus en cours"
+      },
+      {
+        "type": "feature",
+        "description": "Ajout des filtres de statut Non vus, En cours et Termines dans les vues Films et Series"
+      },
+      {
+        "type": "improvement",
+        "description": "Ajout du bouton Marquer comme vu / Retirer comme vu dans la fiche detail avec mise a jour instantanee de l'interface"
+      },
+      {
+        "type": "improvement",
+        "description": "Lecture des series amelioree avec bouton Continuer et enchainement automatique vers l'episode suivant"
+      },
+      {
+        "type": "fix",
+        "description": "Correction du hover des cartes dans les rows de l'accueil pour eviter que les affiches soient coupees par le slider"
+      }
+    ]
+  },
+  {
     "version": "1.5",
     "date": "2026-03-20",
     "label": "Refonte Netflix et collections",
