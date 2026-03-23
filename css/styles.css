@@ -623,6 +623,64 @@ body {
   background: #8dd6ff;
 }
 
+.watch-state-badge {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 7;
+  padding: 0.2rem 0.48rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(12, 14, 20, 0.78);
+  color: #f4f4f5;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.watch-state-badge[hidden] {
+  display: none;
+}
+
+.watch-state-badge.watch-state-resume {
+  color: #061f2a;
+  background: rgba(141, 214, 255, 0.92);
+  border-color: rgba(141, 214, 255, 0.45);
+}
+
+.watch-state-badge.watch-state-complete {
+  color: #0f2e16;
+  background: rgba(122, 223, 143, 0.94);
+  border-color: rgba(122, 223, 143, 0.5);
+}
+
+.watch-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  z-index: 6;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.watch-progress.watch-progress-visible {
+  opacity: 1;
+}
+
+.watch-progress-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #f2b538 0%, #ffd98a 100%);
+  transition: width 0.2s linear;
+}
+
 /* ============ EMPTY STATE ============ */
 
 .empty-state {
@@ -1856,6 +1914,10 @@ body {
   color: #b0b0b8;
 }
 
+.series-continue-btn {
+  margin-top: 0.65rem;
+}
+
 .series-modal-content {
   display: grid;
   gap: 0.8rem;
@@ -1895,6 +1957,7 @@ body {
 }
 
 .episode-card {
+  position: relative;
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr) auto;
   gap: 0.65rem;
@@ -1903,6 +1966,21 @@ body {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   padding: 0.45rem;
+}
+
+.watch-state-badge-episode {
+  top: 0.35rem;
+  right: 0.35rem;
+  font-size: 0.54rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.watch-progress-episode {
+  left: 0.45rem;
+  right: 0.45rem;
+  bottom: 0.4rem;
+  height: 3px;
+  border-radius: 999px;
 }
 
 .episode-thumb-wrap {
