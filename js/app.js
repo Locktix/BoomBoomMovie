@@ -1224,24 +1224,51 @@ function applyCurrentFilters() {
   // Recherche sur la page d'accueil
   if (section.id === 'view-home') {
     const q = input.value.trim().toLowerCase();
-    let visibleCount = 0;
-    // On cible tous les cards dans #home-rows
     const homeRows = document.getElementById('home-rows');
-    if (homeRows) {
-      homeRows.querySelectorAll('.card').forEach((card) => {
-        const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
-        const isVisible = !q || title.includes(q);
-        card.style.display = isVisible ? '' : 'none';
-        if (isVisible) visibleCount += 1;
-      });
+    // Si recherche vide, affichage classique
+    if (!q) {
+      if (homeRows) homeRows.style.display = '';
+      // Optionnel : réafficher le contenu d'accueil si masqué
+      return;
     }
-    // Optionnel : afficher le nombre de résultats si un compteur existe
-    const count = section.querySelector('.count');
-    if (count) count.textContent = String(visibleCount);
+    // Sinon, afficher une grille filtrée de tous les films et séries
+    if (homeRows) homeRows.style.display = 'none';
+    let results = [
+      ...state.movies.map((item, i) => ({ item, isTV: false, index: i })),
+      ...state.series.map((item, i) => ({ item, isTV: true, index: i }))
+    ];
+    results = results.filter(({ item }) => String(item.title || '').toLowerCase().includes(q));
+
+    // Créer ou cibler un conteneur de résultats
+    let searchGrid = document.getElementById('home-search-grid');
+    if (!searchGrid) {
+      searchGrid = document.createElement('div');
+      searchGrid.id = 'home-search-grid';
+      searchGrid.className = 'grid';
+      section.appendChild(searchGrid);
+    }
+    searchGrid.innerHTML = '';
+    results.forEach(({ item, isTV, index }) => {
+      searchGrid.appendChild(createCard(item, isTV, index));
+    });
+    searchGrid.style.display = '';
+
+    // Afficher le compteur de résultats si besoin
+    let count = section.querySelector('.count');
+    if (!count) {
+      count = document.createElement('span');
+      count.className = 'count';
+      section.querySelector('.section-title')?.appendChild(count);
+    }
+    count.textContent = String(results.length);
+    count.style.display = '';
     return;
   }
 
   if (section.id === 'view-collections') {
+    // Nettoyer la grille de recherche si elle existe
+    const searchGrid = document.getElementById('home-search-grid');
+    if (searchGrid) searchGrid.style.display = 'none';
     return;
   }
 
