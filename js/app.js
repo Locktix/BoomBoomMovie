@@ -114,6 +114,7 @@ const playerState = {
   currentIndex: 0,
   playbackContext: null,
   lastProgressSavedAt: 0,
+  pendingResumeTime: 0,
 };
 
 const EXPIRING_SOON_MS = 6 * 60 * 60 * 1000;
@@ -312,14 +313,18 @@ function getMovieWatchStatus(item) {
   return getWatchStatusFromEntry(getWatchProgressEntry(key));
 }
 
-function getSeriesEpisodeProgressStats(seriesItem) {
+function getSeriesEpisodeProgressStats(seriesItem, options = {}) {
   const seasons = Array.isArray(seriesItem?.seasons) ? seriesItem.seasons : [];
+  const onlySeasonNumber = Number(options?.seasonNumber) || 0;
   let playableEpisodes = 0;
   let completedEpisodes = 0;
   let startedEpisodes = 0;
+  let progressUnits = 0;
 
   seasons.forEach((season) => {
     const seasonNum = Number(season?.season) || 1;
+    if (onlySeasonNumber > 0 && seasonNum !== onlySeasonNumber) return;
+
     const episodes = Array.isArray(season?.episodes) ? season.episodes : [];
     episodes.forEach((ep, idx) => {
       const epNum = idx + 1;
@@ -330,9 +335,16 @@ function getSeriesEpisodeProgressStats(seriesItem) {
       const key = getEpisodeProgressKey(seriesItem, seasonNum, epNum);
       const entry = getWatchProgressEntry(key);
       const status = getWatchStatusFromEntry(entry);
+      const ratio = getProgressRatio(entry);
 
       if (status === 'completed') completedEpisodes += 1;
       if (status === 'in-progress' || status === 'completed') startedEpisodes += 1;
+
+      if (status === 'completed') {
+        progressUnits += 1;
+      } else if (status === 'in-progress') {
+        progressUnits += Math.max(0, Math.min(1, ratio));
+      }
     });
   });
 
@@ -340,6 +352,7 @@ function getSeriesEpisodeProgressStats(seriesItem) {
     playableEpisodes,
     completedEpisodes,
     startedEpisodes,
+    progressUnits,
   };
 }
 
@@ -354,10 +367,13 @@ function getSeriesNextEpisodeCandidate(seriesItem, options = {}) {
   const seasons = Array.isArray(seriesItem?.seasons) ? seriesItem.seasons : [];
   const preferredSeason = Number(options?.preferredSeason) || 0;
   const preferredEpisode = Number(options?.preferredEpisode) || 0;
+  const onlySeasonNumber = Number(options?.seasonNumber) || 0;
 
   const flattened = [];
   seasons.forEach((season) => {
     const seasonNum = Number(season?.season) || 1;
+    if (onlySeasonNumber > 0 && seasonNum !== onlySeasonNumber) return;
+
     const episodes = Array.isArray(season?.episodes) ? season.episodes : [];
     episodes.forEach((ep, idx) => {
       const epNum = idx + 1;
@@ -1336,6 +1352,7 @@ function openVideoModalWithUrl(url, index, movieTitle, candidates, playbackConte
   const progressKey = playerState.playbackContext?.progressKey || '';
   const progressEntry = getWatchProgressEntry(progressKey);
   const resumeAt = getResumeTimeSeconds(progressEntry);
+  playerState.pendingResumeTime = resumeAt;
   if (resumeAt > 0) {
     title.textContent = `${movieTitle} · Reprendre ${formatTimeLabel(resumeAt)}`;
   }
@@ -1632,6 +1649,14 @@ function showMCUOrderList(query = '', gridId = 'mcu-grid', countId = 'mcu-count'
   });
 
   grid.appendChild(fragment);
+  refreshProgressDecorations();
+}
+
+function refreshMcuViewIfActive() {
+  const section = getActiveSection();
+  if (!section || section.id !== 'view-mcu') return;
+  const input = document.getElementById('search');
+  showMCUOrderList(input?.value || '', 'mcu-grid', 'mcu-count');
 }
 
 function renderCollectionChips(containerId, collections, isSeries = false) {
@@ -1973,10 +1998,16 @@ function closeVideoPlayer() {
   playerState.currentIndex = 0;
   playerState.playbackContext = null;
   playerState.lastProgressSavedAt = 0;
+  playerState.pendingResumeTime = 0;
 
   modal.hidden = true;
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
+
+  // Refresh cards (including MCU TV entries) after saving progress state.
+  renderLibrary();
+  refreshFiltersForActiveSection();
+  applyCurrentFilters();
 }
 
 function setupVideoModal() {
@@ -1984,6 +2015,37 @@ function setupVideoModal() {
   const closeBtn = document.getElementById('video-modal-close');
   const video = document.getElementById('video-player');
   const SEEK_STEP_SECONDS = 10;
+
+  function persistCurrentPlaybackProgress() {
+    const context = playerState.playbackContext;
+    const progressKey = context?.progressKey || '';
+    if (!progressKey) return;
+
+    setPlaybackProgress(
+      progressKey,
+      context?.title || document.getElementById('video-modal-title')?.textContent || '',
+      Number(video.currentTime) || 0,
+      Number(video.duration) || 0
+    );
+    refreshProgressDecorations();
+    refreshMcuViewIfActive();
+  }
+
+  function applyPendingResumeTime() {
+    const resumeAt = Number(playerState.pendingResumeTime) || 0;
+    if (!resumeAt) return;
+
+    const safeTarget = Math.min(
+      Math.max(0, Number(video.duration) - 2),
+      resumeAt
+    );
+
+    if (Number.isFinite(safeTarget) && safeTarget > 0) {
+      video.currentTime = safeTarget;
+    }
+
+    playerState.pendingResumeTime = 0;
+  }
 
   closeBtn.addEventListener('click', closeVideoPlayer);
   modal.addEventListener('click', (e) => {
@@ -2015,21 +2077,16 @@ function setupVideoModal() {
   });
 
   video.addEventListener('loadedmetadata', () => {
-    const context = playerState.playbackContext;
-    const progressKey = context?.progressKey || '';
-    if (!progressKey) return;
+    applyPendingResumeTime();
+  });
 
-    const entry = getWatchProgressEntry(progressKey);
-    const resumeAt = getResumeTimeSeconds(entry);
-    if (!resumeAt) return;
+  video.addEventListener('canplay', () => {
+    applyPendingResumeTime();
+  });
 
-    const safeTarget = Math.min(
-      Math.max(0, Number(video.duration) - 2),
-      resumeAt
-    );
-    if (Number.isFinite(safeTarget) && safeTarget > 0) {
-      video.currentTime = safeTarget;
-    }
+  video.addEventListener('pause', () => {
+    if (modal.hidden) return;
+    persistCurrentPlaybackProgress();
   });
 
   video.addEventListener('timeupdate', () => {
@@ -2041,13 +2098,7 @@ function setupVideoModal() {
     if (now - playerState.lastProgressSavedAt < WATCH_PROGRESS_SAVE_INTERVAL_MS) return;
     playerState.lastProgressSavedAt = now;
 
-    setPlaybackProgress(
-      progressKey,
-      context?.title || document.getElementById('video-modal-title')?.textContent || '',
-      Number(video.currentTime) || 0,
-      Number(video.duration) || 0
-    );
-    refreshProgressDecorations();
+    persistCurrentPlaybackProgress();
   });
 
   video.addEventListener('ended', () => {
@@ -2199,6 +2250,40 @@ function createCard(item, isTV = false, index = 0, options = {}) {
     : '';
   const progressKey = !isTV ? getMovieProgressKey(item) : '';
 
+  let cardWatchStatus = 'not-started';
+  let progressBadgeMarkup = '';
+  let progressBarMarkup = '';
+
+  if (!isTV) {
+    cardWatchStatus = getMovieWatchStatus(item);
+    progressBadgeMarkup = `<span class="watch-state-badge" data-progress-badge-for="${escapeHtml(progressKey)}" hidden></span>`;
+    progressBarMarkup = `<div class="watch-progress" data-progress-key="${escapeHtml(progressKey)}"><span class="watch-progress-fill"></span></div>`;
+  } else {
+    const seasonScope = Number(item?.season) || 0;
+    const stats = getSeriesEpisodeProgressStats(item, { seasonNumber: seasonScope });
+    const total = Number(stats.playableEpisodes) || 0;
+    const progressUnits = Math.max(0, Number(stats.progressUnits) || 0);
+    const ratio = total > 0 ? Math.max(0, Math.min(1, progressUnits / total)) : 0;
+    const isCompleted = total > 0 && Number(stats.completedEpisodes) >= total;
+    cardWatchStatus = isCompleted
+      ? 'completed'
+      : Number(stats.startedEpisodes) > 0
+        ? 'in-progress'
+        : 'not-started';
+
+    const percent = isCompleted ? 100 : Math.round(ratio * 100);
+    const showBar = ratio > 0 || isCompleted;
+    const barClass = showBar ? 'watch-progress watch-progress-visible' : 'watch-progress';
+    progressBarMarkup = `<div class="${barClass}"><span class="watch-progress-fill" style="width: ${percent}%"></span></div>`;
+
+    if (cardWatchStatus === 'completed') {
+      progressBadgeMarkup = '<span class="watch-state-badge watch-state-complete">Terminé</span>';
+    } else if (cardWatchStatus === 'in-progress') {
+      const nextEpisode = getSeriesNextEpisodeCandidate(item, { seasonNumber: seasonScope });
+      progressBadgeMarkup = `<span class="watch-state-badge watch-state-resume">${escapeHtml(nextEpisode?.code ? `Continuer ${nextEpisode.code}` : 'En cours')}</span>`;
+    }
+  }
+
   card.innerHTML = `
     <div class="card-placeholder">
       <span class="placeholder-icon">${isTV ? 'TV' : 'FILM'}</span>
@@ -2206,13 +2291,13 @@ function createCard(item, isTV = false, index = 0, options = {}) {
     </div>
     <img class="card-img" alt="${escapeHtml(item.title)}" loading="lazy" />
     ${sagaBadge}
-    ${progressKey ? `<span class="watch-state-badge" data-progress-badge-for="${escapeHtml(progressKey)}" hidden></span>` : ''}
+    ${progressBadgeMarkup}
     <div class="card-play" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="#000" width="22" height="22">
         <path d="M8 5v14l11-7z"/>
       </svg>
     </div>
-    ${progressKey ? `<div class="watch-progress" data-progress-key="${escapeHtml(progressKey)}"><span class="watch-progress-fill"></span></div>` : ''}
+    ${progressBarMarkup}
     <div class="card-overlay">
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
       <div class="card-meta">
@@ -2325,28 +2410,9 @@ function createCard(item, isTV = false, index = 0, options = {}) {
 
   if (progressKey) {
     card.dataset.progressKey = progressKey;
-    card.dataset.watchStatus = getMovieWatchStatus(item);
-  } else if (isTV) {
-    const seriesStatus = getSeriesWatchStatus(item);
-    card.dataset.watchStatus = seriesStatus;
-
-    if (seriesStatus === 'completed') {
-      const badge = document.createElement('span');
-      badge.className = 'watch-state-badge watch-state-complete';
-      badge.textContent = 'Terminé';
-      card.appendChild(badge);
-    } else if (seriesStatus === 'in-progress') {
-      const nextEpisode = getSeriesNextEpisodeCandidate(item);
-      if (nextEpisode?.code) {
-        const badge = document.createElement('span');
-        badge.className = 'watch-state-badge watch-state-resume';
-        badge.textContent = `Continuer ${nextEpisode.code}`;
-        card.appendChild(badge);
-      }
-    }
-  } else {
-    card.dataset.watchStatus = 'not-started';
   }
+
+  card.dataset.watchStatus = cardWatchStatus;
 
   return card;
 }
