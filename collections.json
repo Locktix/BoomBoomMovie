@@ -16,7 +16,7 @@
     "tmdbIds": [4232, 4233, 4234, 41446, 646385, 934433],
     "type": "movie",
     "ordered": true
-  },
+  }, 
   {
     "id" : "scarry-movie",
     "label": "Scary Movie",
