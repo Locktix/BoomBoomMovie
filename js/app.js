@@ -1333,6 +1333,12 @@ function hasPlayableCandidate(candidates) {
   return candidates.some((url) => !getUrlAvailability(url).isExpired);
 }
 
+function getVideoMimeType(url) {
+  const normalizedUrl = String(url || '').split('?')[0].toLowerCase();
+  if (normalizedUrl.endsWith('.mkv')) return 'video/x-matroska';
+  return 'video/mp4';
+}
+
 function openVideoModalWithUrl(url, index, movieTitle, candidates, playbackContext = null) {
   const modal = document.getElementById('video-modal');
   const source = document.getElementById('video-source');
@@ -1347,6 +1353,7 @@ function openVideoModalWithUrl(url, index, movieTitle, candidates, playbackConte
   playerState.lastProgressSavedAt = 0;
 
   source.src = url;
+  source.type = getVideoMimeType(url);
   title.textContent = movieTitle;
 
   const progressKey = playerState.playbackContext?.progressKey || '';
@@ -1994,6 +2001,7 @@ function closeVideoPlayer() {
   video.pause();
   video.currentTime = 0;
   source.src = '';
+  source.type = 'video/mp4';
   playerState.urlCandidates = [];
   playerState.currentIndex = 0;
   playerState.playbackContext = null;
