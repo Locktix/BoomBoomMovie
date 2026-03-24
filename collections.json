@@ -16,7 +16,16 @@
     "tmdbIds": [4232, 4233, 4234, 41446, 646385, 934433],
     "type": "movie",
     "ordered": true
-  }, 
+  },
+  {
+    "id" : "scarry-movie",
+    "label": "Scary Movie",
+    "icon": "👻",
+    "badgePrefix": "SM",
+    "tmdbIds": [4247, 4248, 4256, 4257, 4258],
+    "type": "movie",
+    "ordered": true
+  },
   {
     "id": "star-wars",
     "label": "Star Wars",
