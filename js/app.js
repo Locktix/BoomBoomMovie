@@ -75,7 +75,7 @@ const MCU_ORDER = [
   { title: 'Echo', tmdbId: 108978, type: 'tv' },
   { title: 'X-Men 1', tmdbId: 36657, type: 'movie' },
   { title: 'X-Men 2', tmdbId: 36658, type: 'movie' },
-  { title: 'X-Men 3 : L\'Affrontement Final', tmdbId: 36660, type: 'movie' },
+  { title: 'X-Men 3 : L\'Affrontement Final', tmdbId: 36668, type: 'movie' },
   { title: 'X-Men : Le Commencement', tmdbId: 49538, type: 'movie' },
   { title: 'X-Men : Days of Future Past', tmdbId: 127585, type: 'movie' },
   { title: 'Logan', tmdbId: 263115, type: 'movie' },
