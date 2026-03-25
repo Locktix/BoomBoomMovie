@@ -83,7 +83,7 @@ const MCU_ORDER = [
   { title: 'Deadpool 2', tmdbId: 383498, type: 'movie' },
   { title: 'Deadpool & Wolverine', tmdbId: 533535, type: 'movie' },
   { title: 'Agatha All Along', tmdbId: 134949, type: 'tv' },
-  { title: 'Captain America : Brave New World', tmdbId: 927490, type: 'movie' },
+  { title: 'Captain America : Brave New World', tmdbId: 822119, type: 'movie' },
   { title: 'Daredevil: Born Again – Saison 1', tmdbId: 204541, type: 'tv', season: 1 },
   { title: 'Thunderbolts', tmdbId: 985617, type: 'movie' },
   { title: 'The Fantastic Four: First Steps', tmdbId: 426063, type: 'movie' },
