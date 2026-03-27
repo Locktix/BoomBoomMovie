@@ -744,12 +744,16 @@ async function resolveTmdbMovieMetadataById(movie) {
     const releaseYear = getReleaseYearFromDate(releaseDate);
     const backdropPath = String(data.backdrop_path || '').trim();
     const backdrop = backdropPath ? `https://image.tmdb.org/t/p/w1280${backdropPath}` : '';
+    const genres = Array.isArray(data.genres)
+      ? data.genres.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+      : [];
 
     return {
       title,
       releaseDate,
       year: releaseYear,
       backdrop,
+      genres,
     };
   } catch {
     return null;
@@ -781,11 +785,15 @@ async function resolveTmdbSeriesMetadataById(seriesItem) {
     const releaseYear = getReleaseYearFromDate(firstAirDate);
     const backdropPath = String(data.backdrop_path || '').trim();
     const backdrop = backdropPath ? `https://image.tmdb.org/t/p/w1280${backdropPath}` : '';
+    const genres = Array.isArray(data.genres)
+      ? data.genres.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+      : [];
 
     return {
       title,
       year: releaseYear,
       backdrop,
+      genres,
     };
   } catch {
     return null;
@@ -1090,7 +1098,11 @@ async function resolveTmdbMovieMetadataByIdWithCache(movie) {
 
   // Try cache first
   const cached = getTmdbMetadataFromCache('movie', tmdbId);
-  if (cached && Object.prototype.hasOwnProperty.call(cached, 'backdrop')) {
+  if (
+    cached
+    && Object.prototype.hasOwnProperty.call(cached, 'backdrop')
+    && Object.prototype.hasOwnProperty.call(cached, 'genres')
+  ) {
     console.log(`[BoomBoom] Cache HIT: movie ${tmdbId}`);
     return cached;
   }
@@ -1110,7 +1122,11 @@ async function resolveTmdbSeriesMetadataByIdWithCache(series) {
 
   // Try cache first
   const cached = getTmdbMetadataFromCache('tv', tmdbId);
-  if (cached && Object.prototype.hasOwnProperty.call(cached, 'backdrop')) {
+  if (
+    cached
+    && Object.prototype.hasOwnProperty.call(cached, 'backdrop')
+    && Object.prototype.hasOwnProperty.call(cached, 'genres')
+  ) {
     console.log(`[BoomBoom] Cache HIT: series ${tmdbId}`);
     return cached;
   }
@@ -1180,6 +1196,10 @@ async function hydrateMovieMetadataFromTmdb(movies) {
           movie.backdrop = metadata.backdrop;
           changed = true;
         }
+        if (Array.isArray(metadata.genres)) {
+          movie.genres = metadata.genres;
+          changed = true;
+        }
 
         if (changed) updatedCount += 1;
       }
@@ -1206,7 +1226,8 @@ async function hydrateSeriesMetadataFromTmdb(seriesList) {
       while (queue.length) {
         const seriesItem = queue.shift();
         if (!seriesItem) continue;
-        if (seriesItem.title && seriesItem.year) continue;
+        const hasExistingGenres = Array.isArray(seriesItem.genres) && seriesItem.genres.length > 0;
+        if (seriesItem.title && seriesItem.year && hasExistingGenres) continue;
         const metadata = await resolveTmdbSeriesMetadataByIdWithCache(seriesItem);
         if (!metadata) continue;
 
@@ -1222,6 +1243,10 @@ async function hydrateSeriesMetadataFromTmdb(seriesList) {
         }
         if (metadata.backdrop) {
           seriesItem.backdrop = metadata.backdrop;
+          changed = true;
+        }
+        if (Array.isArray(metadata.genres)) {
+          seriesItem.genres = metadata.genres;
           changed = true;
         }
 
@@ -1521,6 +1546,13 @@ function getItemCollection(item) {
   return String(item?.collection || '').trim();
 }
 
+function getItemGenres(item) {
+  const rawGenres = Array.isArray(item?.genres) ? item.genres : [];
+  return rawGenres
+    .map((entry) => String(entry || '').trim())
+    .filter(Boolean);
+}
+
 function getActiveSection() {
   return document.querySelector('.view.active');
 }
@@ -1572,6 +1604,7 @@ function refreshFiltersForActiveSection() {
   if (section.id === 'view-mcu') return;
   if (section.id === 'view-home') return;
   if (section.id === 'view-collections') return;
+  if (section.id === 'view-genres') return;
 
   const cards = [...section.querySelectorAll('.card')];
 
@@ -1812,6 +1845,12 @@ function applyCurrentFilters() {
 
   if (section.id === 'view-collections') {
     // Nettoyer la grille de recherche si elle existe
+    const searchGrid = document.getElementById('home-search-grid');
+    if (searchGrid) searchGrid.style.display = 'none';
+    return;
+  }
+
+  if (section.id === 'view-genres') {
     const searchGrid = document.getElementById('home-search-grid');
     if (searchGrid) searchGrid.style.display = 'none';
     return;
@@ -2695,6 +2734,45 @@ function renderCollectionRows() {
   });
 }
 
+function getGenreItems() {
+  const map = new Map();
+
+  state.movies.forEach((item, index) => {
+    const genres = getItemGenres(item);
+    genres.forEach((genre) => {
+      if (!map.has(genre)) map.set(genre, []);
+      map.get(genre).push({ item, isTV: false, index });
+    });
+  });
+
+  state.series.forEach((item, index) => {
+    const genres = getItemGenres(item);
+    genres.forEach((genre) => {
+      if (!map.has(genre)) map.set(genre, []);
+      map.get(genre).push({ item, isTV: true, index });
+    });
+  });
+
+  return [...map.entries()]
+    .map(([genre, items]) => ({ genre, items }))
+    .filter((entry) => Array.isArray(entry.items) && entry.items.length > 0)
+    .sort((a, b) => {
+      if (b.items.length !== a.items.length) return b.items.length - a.items.length;
+      return a.genre.localeCompare(b.genre, 'fr', { sensitivity: 'base' });
+    });
+}
+
+function renderGenreRows() {
+  const container = document.getElementById('genres-rows');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const genreRows = getGenreItems();
+  genreRows.forEach(({ genre, items }) => {
+    renderRow(container, `🎞️ ${genre}`, items);
+  });
+}
+
 function renderGrid(items, gridId, countId, isTV) {
   const grid = document.getElementById(gridId);
   const count = document.getElementById(countId);
@@ -2746,6 +2824,7 @@ function renderLibrary() {
   renderGrid(state.series, 'series-grid', 'series-count', true);
   renderHomeRows();
   renderCollectionRows();
+  renderGenreRows();
   refreshProgressDecorations();
 }
 
