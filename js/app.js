@@ -412,6 +412,7 @@ function getSeriesNextEpisodeCandidate(seriesItem, options = {}) {
 }
 
 function buildEpisodePlaybackEntry(seriesTitle, episodeCode, episodeName, candidates, progressKey) {
+  const safeSeriesTitle = String(seriesTitle || 'Episode').trim();
   const safeCode = String(episodeCode || '').trim();
   const safeEpisodeName = String(episodeName || '').trim();
   const displayTitle = [safeSeriesTitle, safeCode].filter(Boolean).join(' - ');
