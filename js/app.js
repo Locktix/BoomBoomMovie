@@ -411,6 +411,45 @@ function getSeriesNextEpisodeCandidate(seriesItem, options = {}) {
   return firstNotCompleted || null;
 }
 
+function buildEpisodePlaybackEntry(seriesTitle, episodeCode, episodeName, candidates, progressKey) {
+  const safeCode = String(episodeCode || '').trim();
+  const safeEpisodeName = String(episodeName || '').trim();
+  const displayTitle = [safeSeriesTitle, safeCode].filter(Boolean).join(' - ');
+
+  return {
+    candidates: Array.isArray(candidates) ? candidates : [],
+    progressKey: String(progressKey || ''),
+    displayTitle,
+    subtitle: safeEpisodeName,
+    title: safeEpisodeName ? `${displayTitle} - ${safeEpisodeName}` : displayTitle,
+  };
+}
+
+function createEpisodePlaybackContext(episodeList, episodeIndex) {
+  const list = Array.isArray(episodeList) ? episodeList : [];
+  const index = Number(episodeIndex);
+  const currentEpisode = list[index];
+  if (!currentEpisode) return null;
+
+  return {
+    progressKey: currentEpisode.progressKey,
+    title: currentEpisode.title,
+    displayTitle: currentEpisode.displayTitle,
+    subtitle: currentEpisode.subtitle,
+    mediaType: 'episode',
+    episodeList: list,
+    episodeIndex: index,
+  };
+}
+
+function getEpisodeContextEntry(playbackContext, offset = 0) {
+  const episodeList = Array.isArray(playbackContext?.episodeList) ? playbackContext.episodeList : [];
+  const episodeIndex = Number(playbackContext?.episodeIndex);
+  if (!Number.isInteger(episodeIndex)) return null;
+
+  return episodeList[episodeIndex + Number(offset || 0)] || null;
+}
+
 function getContinueWatchingItems(limit = 14) {
   const candidates = [];
 
@@ -1333,17 +1372,40 @@ function hasPlayableCandidate(candidates) {
   return candidates.some((url) => !getUrlAvailability(url).isExpired);
 }
 
-function getVideoMimeType(url) {
-  const normalizedUrl = String(url || '').split('?')[0].toLowerCase();
-  if (normalizedUrl.endsWith('.mkv')) return 'video/x-matroska';
-  return 'video/mp4';
+function updateVideoModalFooter(fallbackTitle = '') {
+  const title = document.getElementById('video-modal-title');
+  const meta = document.getElementById('video-modal-meta');
+  const nav = document.getElementById('video-modal-episode-nav');
+  const prevBtn = document.getElementById('video-prev-episode');
+  const nextBtn = document.getElementById('video-next-episode');
+  const context = playerState.playbackContext;
+
+  if (!title || !meta || !nav || !prevBtn || !nextBtn) return;
+
+  title.textContent = String(context?.displayTitle || fallbackTitle || context?.title || '').trim();
+
+  const subtitle = String(context?.subtitle || '').trim();
+  if (subtitle) {
+    meta.textContent = subtitle;
+    meta.hidden = false;
+  } else {
+    meta.textContent = '';
+    meta.hidden = true;
+  }
+
+  const prevEpisode = getEpisodeContextEntry(context, -1);
+  const nextEpisode = getEpisodeContextEntry(context, 1);
+  const showNav = context?.mediaType === 'episode' && (prevEpisode || nextEpisode);
+
+  nav.hidden = !showNav;
+  prevBtn.disabled = !prevEpisode;
+  nextBtn.disabled = !nextEpisode;
 }
 
 function openVideoModalWithUrl(url, index, movieTitle, candidates, playbackContext = null) {
   const modal = document.getElementById('video-modal');
   const source = document.getElementById('video-source');
   const video = document.getElementById('video-player');
-  const title = document.getElementById('video-modal-title');
 
   playerState.urlCandidates = candidates;
   playerState.currentIndex = index;
@@ -1353,16 +1415,12 @@ function openVideoModalWithUrl(url, index, movieTitle, candidates, playbackConte
   playerState.lastProgressSavedAt = 0;
 
   source.src = url;
-  source.type = getVideoMimeType(url);
-  title.textContent = movieTitle;
 
   const progressKey = playerState.playbackContext?.progressKey || '';
   const progressEntry = getWatchProgressEntry(progressKey);
   const resumeAt = getResumeTimeSeconds(progressEntry);
   playerState.pendingResumeTime = resumeAt;
-  if (resumeAt > 0) {
-    title.textContent = `${movieTitle} · Reprendre ${formatTimeLabel(resumeAt)}`;
-  }
+  updateVideoModalFooter(movieTitle);
 
   video.load();
 
@@ -1847,46 +1905,6 @@ async function showSeriesModal(seriesItem) {
   const existingContinueBtn = head?.querySelector('.series-continue-btn');
   existingContinueBtn?.remove();
 
-  const nextEpisode = getSeriesNextEpisodeCandidate(seriesItem);
-  if (head && nextEpisode?.candidates?.length) {
-    const continueBtn = document.createElement('button');
-    continueBtn.type = 'button';
-    continueBtn.className = 'details-btn series-continue-btn';
-    continueBtn.textContent = `Continuer ${nextEpisode.code}`;
-    continueBtn.addEventListener('click', () => {
-      const nextAfter = getSeriesNextEpisodeCandidate(seriesItem, {
-        preferredSeason: nextEpisode.seasonNum,
-        preferredEpisode: nextEpisode.epNum,
-      });
-      const nextAfterAfter = nextAfter
-        ? getSeriesNextEpisodeCandidate(seriesItem, {
-            preferredSeason: nextAfter.seasonNum,
-            preferredEpisode: nextAfter.epNum,
-          })
-        : null;
-      openVideoPlayer(nextEpisode.candidates, `${seriesItem.title} - ${nextEpisode.code}`, {
-        progressKey: nextEpisode.progressKey,
-        title: `${seriesItem.title} - ${nextEpisode.code}`,
-        mediaType: 'episode',
-        nextEpisode: nextAfter
-          ? {
-              candidates: nextAfter.candidates,
-              progressKey: nextAfter.progressKey,
-              title: `${seriesItem.title} - ${nextAfter.code}`,
-              nextEpisode: nextAfterAfter
-                ? {
-                    candidates: nextAfterAfter.candidates,
-                    progressKey: nextAfterAfter.progressKey,
-                    title: `${seriesItem.title} - ${nextAfterAfter.code}`,
-                  }
-                : null,
-            }
-          : null,
-      });
-    });
-    head.appendChild(continueBtn);
-  }
-
   content.innerHTML = '<p class="series-empty">Chargement des episodes TMDB...</p>';
 
   modal.hidden = false;
@@ -1903,6 +1921,7 @@ async function showSeriesModal(seriesItem) {
   if (modal.dataset.requestId !== requestId) return;
 
   let html = '';
+  const playableEpisodes = [];
   seasons.forEach((season) => {
     const seasonNum = Number(season.season) || 1;
     const tmdbEpisodes = seasonEpisodesMap.get(seasonNum) || [];
@@ -1931,12 +1950,22 @@ async function showSeriesModal(seriesItem) {
       const urlCandidates = Array.isArray(ep?._urlCandidates) ? ep._urlCandidates : getMediaUrlCandidates(ep);
       const hasUrl = urlCandidates.length > 0;
 
+      if (hasUrl) {
+        playableEpisodes.push(buildEpisodePlaybackEntry(
+          seriesItem.title,
+          code,
+          tmdbEpisodeName || `Episode ${epNum}`,
+          urlCandidates,
+          progressKey
+        ));
+      }
+
       const thumbMarkup = tmdbStillPath
         ? `<img class="episode-thumb" src="${escapeHtml(`${CONFIG.TMDB_IMAGE_BASE_URL}${tmdbStillPath}`)}" alt="${escapeHtml(tmdbEpisodeName || code)}" loading="lazy" />`
         : `<div class="episode-thumb-fallback">${escapeHtml(code)}</div>`;
 
       html += `
-          <article class="episode-card${hasUrl ? ' episode-playable' : ''}" data-progress-key="${escapeHtml(progressKey)}"${hasUrl ? ` data-url-candidates="${escapeHtml(JSON.stringify(urlCandidates))}"` : ''}>
+          <article class="episode-card${hasUrl ? ' episode-playable' : ''}" data-progress-key="${escapeHtml(progressKey)}">
             <div class="episode-thumb-wrap">
               ${thumbMarkup}
             </div>
@@ -1962,12 +1991,38 @@ async function showSeriesModal(seriesItem) {
     html = '<p class="series-empty">Aucune information d\'episodes disponible.</p>';
   }
 
+  modal._playableEpisodes = playableEpisodes;
   content.innerHTML = html;
+
+  const nextEpisode = getSeriesNextEpisodeCandidate(seriesItem);
+  const continueIndex = nextEpisode?.progressKey
+    ? playableEpisodes.findIndex((entry) => entry.progressKey === nextEpisode.progressKey)
+    : -1;
+
+  if (head && continueIndex >= 0) {
+    const continueBtn = document.createElement('button');
+    continueBtn.type = 'button';
+    continueBtn.className = 'details-btn series-continue-btn';
+    continueBtn.textContent = `Continuer ${nextEpisode.code}`;
+    continueBtn.addEventListener('click', () => {
+      const playbackContext = createEpisodePlaybackContext(playableEpisodes, continueIndex);
+      if (!playbackContext) return;
+
+      openVideoPlayer(
+        playableEpisodes[continueIndex].candidates,
+        playableEpisodes[continueIndex].displayTitle,
+        playbackContext
+      );
+    });
+    head.appendChild(continueBtn);
+  }
+
   refreshProgressDecorations();
 }
 
 function closeSeriesModal() {
   const modal = document.getElementById('series-modal');
+  modal._playableEpisodes = [];
   modal.hidden = true;
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
@@ -2001,7 +2056,6 @@ function closeVideoPlayer() {
   video.pause();
   video.currentTime = 0;
   source.src = '';
-  source.type = 'video/mp4';
   playerState.urlCandidates = [];
   playerState.currentIndex = 0;
   playerState.playbackContext = null;
@@ -2022,6 +2076,8 @@ function setupVideoModal() {
   const modal = document.getElementById('video-modal');
   const closeBtn = document.getElementById('video-modal-close');
   const video = document.getElementById('video-player');
+  const prevEpisodeBtn = document.getElementById('video-prev-episode');
+  const nextEpisodeBtn = document.getElementById('video-next-episode');
   const SEEK_STEP_SECONDS = 10;
 
   function persistCurrentPlaybackProgress() {
@@ -2037,6 +2093,22 @@ function setupVideoModal() {
     );
     refreshProgressDecorations();
     refreshMcuViewIfActive();
+  }
+
+  function openEpisodeAtOffset(offset) {
+    const context = playerState.playbackContext;
+    const targetEpisode = getEpisodeContextEntry(context, offset);
+    const currentEpisodeIndex = Number(context?.episodeIndex);
+    const episodeList = Array.isArray(context?.episodeList) ? context.episodeList : [];
+
+    if (!targetEpisode?.candidates?.length || !Number.isInteger(currentEpisodeIndex)) return;
+
+    persistCurrentPlaybackProgress();
+    openVideoPlayer(
+      targetEpisode.candidates,
+      targetEpisode.displayTitle || targetEpisode.title,
+      createEpisodePlaybackContext(episodeList, currentEpisodeIndex + offset)
+    );
   }
 
   function applyPendingResumeTime() {
@@ -2056,6 +2128,8 @@ function setupVideoModal() {
   }
 
   closeBtn.addEventListener('click', closeVideoPlayer);
+  prevEpisodeBtn?.addEventListener('click', () => openEpisodeAtOffset(-1));
+  nextEpisodeBtn?.addEventListener('click', () => openEpisodeAtOffset(1));
   modal.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-video')) {
       closeVideoPlayer();
@@ -2114,14 +2188,13 @@ function setupVideoModal() {
     if (!context?.progressKey) return;
     markPlaybackCompleted(context.progressKey, context?.title || '');
 
-    const nextEpisode = context?.nextEpisode;
+    const nextEpisode = getEpisodeContextEntry(context, 1);
     if (context?.mediaType === 'episode' && nextEpisode?.candidates?.length) {
-      openVideoPlayer(nextEpisode.candidates, nextEpisode.title, {
-        progressKey: nextEpisode.progressKey,
-        title: nextEpisode.title,
-        mediaType: 'episode',
-        nextEpisode: nextEpisode.nextEpisode || null,
-      });
+      openVideoPlayer(
+        nextEpisode.candidates,
+        nextEpisode.displayTitle || nextEpisode.title,
+        createEpisodePlaybackContext(context.episodeList, Number(context.episodeIndex) + 1)
+      );
       return;
     }
 
@@ -2161,67 +2234,18 @@ function setupSeriesModal() {
       return;
     }
     const epItem = e.target instanceof HTMLElement && e.target.closest('.episode-playable');
-    if (epItem && epItem.dataset.urlCandidates) {
-      const epCode = epItem.querySelector('.episode-code')?.textContent || '';
-      const seriesTitle = document.getElementById('series-modal-title')?.textContent || 'Épisode';
-      const episodeTitle = `${seriesTitle} - ${epCode}`;
+    if (epItem) {
+      const playableEpisodes = Array.isArray(modal._playableEpisodes) ? modal._playableEpisodes : [];
       const progressKey = epItem.dataset.progressKey || '';
-      let urlCandidates = [];
-      try {
-        urlCandidates = JSON.parse(epItem.dataset.urlCandidates);
-      } catch {
-        urlCandidates = [];
-      }
+      const episodeIndex = playableEpisodes.findIndex((entry) => entry.progressKey === progressKey);
+      const playbackContext = createEpisodePlaybackContext(playableEpisodes, episodeIndex);
+      if (!playbackContext) return;
 
-      const allPlayable = [...modal.querySelectorAll('.episode-card.episode-playable')];
-      const currentIndex = allPlayable.indexOf(epItem);
-      const nextPlayable = currentIndex >= 0 ? allPlayable[currentIndex + 1] : null;
-      const nextPlayableAfter = currentIndex >= 0 ? allPlayable[currentIndex + 2] : null;
-      let nextEpisode = null;
-      if (nextPlayable && nextPlayable.dataset.urlCandidates) {
-        let nextCandidates = [];
-        try {
-          nextCandidates = JSON.parse(nextPlayable.dataset.urlCandidates);
-        } catch {
-          nextCandidates = [];
-        }
-        if (nextCandidates.length) {
-          const nextCode = nextPlayable.querySelector('.episode-code')?.textContent || '';
-          let nextNextEpisode = null;
-
-          if (nextPlayableAfter && nextPlayableAfter.dataset.urlCandidates) {
-            let nextAfterCandidates = [];
-            try {
-              nextAfterCandidates = JSON.parse(nextPlayableAfter.dataset.urlCandidates);
-            } catch {
-              nextAfterCandidates = [];
-            }
-
-            if (nextAfterCandidates.length) {
-              const nextAfterCode = nextPlayableAfter.querySelector('.episode-code')?.textContent || '';
-              nextNextEpisode = {
-                candidates: nextAfterCandidates,
-                progressKey: nextPlayableAfter.dataset.progressKey || '',
-                title: `${seriesTitle} - ${nextAfterCode}`,
-              };
-            }
-          }
-
-          nextEpisode = {
-            candidates: nextCandidates,
-            progressKey: nextPlayable.dataset.progressKey || '',
-            title: `${seriesTitle} - ${nextCode}`,
-            nextEpisode: nextNextEpisode,
-          };
-        }
-      }
-
-      openVideoPlayer(urlCandidates, episodeTitle, {
-        progressKey,
-        title: episodeTitle,
-        mediaType: 'episode',
-        nextEpisode,
-      });
+      openVideoPlayer(
+        playableEpisodes[episodeIndex].candidates,
+        playableEpisodes[episodeIndex].displayTitle,
+        playbackContext
+      );
     }
   });
 

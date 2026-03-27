@@ -1766,8 +1766,17 @@ body {
 }
 
 .video-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1rem 1.35rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-modal-footer-main {
+  min-width: 0;
+  flex: 1;
 }
 
 .video-modal-title {
@@ -1775,6 +1784,57 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+}
+
+.video-modal-meta {
+  margin-top: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.video-modal-meta[hidden] {
+  display: none;
+}
+
+.video-modal-episode-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.video-modal-episode-nav[hidden] {
+  display: none;
+}
+
+.video-episode-nav-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.58rem 0.95rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), opacity var(--transition);
+}
+
+.video-episode-nav-btn:hover:not(:disabled) {
+  border-color: var(--border-focus);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.video-episode-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.video-episode-nav-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 @media (max-width: 768px) {
@@ -1789,10 +1849,21 @@ body {
 
   .video-modal-footer {
     padding: 0.75rem 1rem;
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .video-modal-title {
     font-size: 0.95rem;
+  }
+
+  .video-modal-meta {
+    font-size: 0.82rem;
+  }
+
+  .video-modal-episode-nav {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .video-modal-close {
@@ -1819,6 +1890,14 @@ body {
   .video-modal-title {
     font-size: 0.85rem;
     line-height: 1.3;
+  }
+
+  .video-modal-meta {
+    font-size: 0.78rem;
+  }
+
+  .video-episode-nav-btn {
+    width: 100%;
   }
 
   .video-modal-close {
