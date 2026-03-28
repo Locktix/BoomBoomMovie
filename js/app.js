@@ -2120,6 +2120,65 @@ function setupVideoModal() {
   const nextEpisodeBtn = document.getElementById('video-next-episode');
   const SEEK_STEP_SECONDS = 10;
 
+  function seekVideoBy(offsetSeconds) {
+    const duration = Number(video.duration) || 0;
+    const currentTime = Number(video.currentTime) || 0;
+    const targetTime = Math.max(0, currentTime + Number(offsetSeconds || 0));
+
+    video.currentTime = duration > 0 ? Math.min(duration, targetTime) : targetTime;
+  }
+
+  function bindMediaSessionSeekHandlers() {
+    if (!('mediaSession' in navigator) || typeof navigator.mediaSession.setActionHandler !== 'function') {
+      return;
+    }
+
+    try {
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const offset = Number(details?.seekOffset) || SEEK_STEP_SECONDS;
+        seekVideoBy(Math.min(SEEK_STEP_SECONDS, offset));
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const offset = Number(details?.seekOffset) || SEEK_STEP_SECONDS;
+        seekVideoBy(-Math.min(SEEK_STEP_SECONDS, offset));
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        const targetTime = Number(details?.seekTime);
+        const duration = Number(video.duration) || 0;
+
+        if (!Number.isFinite(targetTime)) return;
+
+        video.currentTime = duration > 0 ? Math.min(duration, Math.max(0, targetTime)) : Math.max(0, targetTime);
+      });
+    } catch (_error) {
+      // Ignore browsers that expose Media Session partially but reject these handlers.
+    }
+  }
+
+  function handleVideoKeyboardShortcuts(e) {
+    if (modal.hidden) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      closeVideoPlayer();
+      return;
+    }
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      e.stopPropagation();
+      seekVideoBy(SEEK_STEP_SECONDS);
+      return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      e.stopPropagation();
+      seekVideoBy(-SEEK_STEP_SECONDS);
+    }
+  }
+
   function persistCurrentPlaybackProgress() {
     const context = playerState.playbackContext;
     const progressKey = context?.progressKey || '';
@@ -2170,33 +2229,14 @@ function setupVideoModal() {
   closeBtn.addEventListener('click', closeVideoPlayer);
   prevEpisodeBtn?.addEventListener('click', () => openEpisodeAtOffset(-1));
   nextEpisodeBtn?.addEventListener('click', () => openEpisodeAtOffset(1));
+  bindMediaSessionSeekHandlers();
   modal.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-video')) {
       closeVideoPlayer();
     }
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (modal.hidden) return;
-
-    if (e.key === 'Escape') {
-      closeVideoPlayer();
-      return;
-    }
-
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      const nextTime = Math.min((Number(video.duration) || 0), Math.max(0, Number(video.currentTime) + SEEK_STEP_SECONDS));
-      video.currentTime = nextTime;
-      return;
-    }
-
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      const prevTime = Math.max(0, Number(video.currentTime) - SEEK_STEP_SECONDS);
-      video.currentTime = prevTime;
-    }
-  });
+  window.addEventListener('keydown', handleVideoKeyboardShortcuts, true);
 
   video.addEventListener('loadedmetadata', () => {
     applyPendingResumeTime();
