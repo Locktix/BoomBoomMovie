@@ -102,6 +102,8 @@ const state = {
   series: [],
   collections: [],
   displayMode: 'grid',
+  activeCollectionKey: '',
+  activeGenreKey: '',
   selectedCollection: 'all',
   selectedStatus: {
     movies: 'all',
@@ -1844,15 +1846,76 @@ function applyCurrentFilters() {
   }
 
   if (section.id === 'view-collections') {
-    // Nettoyer la grille de recherche si elle existe
     const searchGrid = document.getElementById('home-search-grid');
     if (searchGrid) searchGrid.style.display = 'none';
+
+    const q = input.value.trim().toLowerCase();
+    const detailCards = section.querySelectorAll('.collections-detail-grid .card');
+    const detailSubtitle = document.getElementById('collections-detail-subtitle');
+
+    if (detailCards.length) {
+      let visibleCount = 0;
+      detailCards.forEach((card) => {
+        const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+        const isVisible = !q || title.includes(q);
+        card.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (detailSubtitle) {
+        detailSubtitle.textContent = `${visibleCount} resultat${visibleCount > 1 ? 's' : ''}`;
+      }
+      setCollectionsCount(visibleCount);
+      return;
+    }
+
+    const showcaseCards = section.querySelectorAll('.collection-showcase-card');
+    let visibleCollections = 0;
+    showcaseCards.forEach((card) => {
+      const label = String(card.dataset.collectionLabel || '').toLowerCase();
+      const isVisible = !q || label.includes(q);
+      card.style.display = isVisible ? '' : 'none';
+      if (isVisible) visibleCollections += 1;
+    });
+
+    setCollectionsCount(visibleCollections);
     return;
   }
 
   if (section.id === 'view-genres') {
     const searchGrid = document.getElementById('home-search-grid');
     if (searchGrid) searchGrid.style.display = 'none';
+
+    const q = input.value.trim().toLowerCase();
+    const detailCards = section.querySelectorAll('.genres-detail-grid .card');
+    const detailSubtitle = document.getElementById('genres-detail-subtitle');
+
+    if (detailCards.length) {
+      let visibleCount = 0;
+      detailCards.forEach((card) => {
+        const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+        const isVisible = !q || title.includes(q);
+        card.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (detailSubtitle) {
+        detailSubtitle.textContent = `${visibleCount} resultat${visibleCount > 1 ? 's' : ''}`;
+      }
+      setGenresCount(visibleCount);
+      return;
+    }
+
+    const showcaseCards = section.querySelectorAll('.collection-showcase-card[data-genre-key]');
+    let visibleGenres = 0;
+    showcaseCards.forEach((card) => {
+      const label = String(card.dataset.genreLabel || '').toLowerCase();
+      const isVisible = !q || label.includes(q);
+      card.style.display = isVisible ? '' : 'none';
+      if (isVisible) visibleGenres += 1;
+    });
+
+    setGenresCount(visibleGenres);
     return;
   }
 
@@ -1894,6 +1957,20 @@ function updateSearchPlaceholder() {
 
   if (section.id === 'view-mcu') {
     input.placeholder = 'Rechercher dans MCU…';
+    return;
+  }
+
+  if (section.id === 'view-collections') {
+    input.placeholder = state.activeCollectionKey
+      ? 'Rechercher dans cette collection…'
+      : 'Rechercher une collection…';
+    return;
+  }
+
+  if (section.id === 'view-genres') {
+    input.placeholder = state.activeGenreKey
+      ? 'Rechercher dans ce genre…'
+      : 'Rechercher un genre…';
     return;
   }
 
@@ -2657,6 +2734,232 @@ function getCollectionItems(collection) {
   return result;
 }
 
+function getCollectionDisplayEntries() {
+  const entries = [];
+
+  const mcuItems = getMcuOrderRenderableItems();
+  if (mcuItems.length) {
+    entries.push({
+      key: 'mcu',
+      label: 'MCU',
+      displayLabel: '✨ MCU',
+      sagaPrefix: 'MCU',
+      sagaOrdered: true,
+      showOrderIndex: true,
+      items: mcuItems,
+    });
+  }
+
+  state.collections.forEach((collection) => {
+    const items = getCollectionItems(collection);
+    if (!items.length) return;
+
+    const key = String(collection.id || normalizeCollection(collection.label) || '').trim();
+    if (!key) return;
+
+    entries.push({
+      key,
+      label: String(collection.label || '').trim() || key,
+      displayLabel: [collection.icon, collection.label].filter(Boolean).join(' '),
+      sagaPrefix: String(collection.badgePrefix || '').trim() || getNameInitials(collection.label),
+      sagaOrdered: Boolean(collection.ordered),
+      showOrderIndex: false,
+      items,
+    });
+  });
+
+  return entries;
+}
+
+function getCollectionPosterUrls(items, max = 7) {
+  const urls = [];
+
+  items.forEach(({ item }) => {
+    const poster = String(item?.poster || '').trim();
+    const backdrop = String(item?.backdrop || '').trim();
+    if (poster && !urls.includes(poster)) urls.push(poster);
+    if (backdrop && !urls.includes(backdrop)) urls.push(backdrop);
+  });
+
+  return urls.slice(0, Math.max(1, Number(max) || 7));
+}
+
+function setCollectionsCount(value) {
+  const count = document.getElementById('collections-count');
+  if (!count) return;
+  count.textContent = String(Math.max(0, Number(value) || 0));
+}
+
+function setGenresCount(value) {
+  const count = document.getElementById('genres-count');
+  if (!count) return;
+  count.textContent = String(Math.max(0, Number(value) || 0));
+}
+
+function openCollectionDetail(collectionKey) {
+  state.activeCollectionKey = String(collectionKey || '').trim();
+  renderCollectionRows();
+  updateSearchPlaceholder();
+  applyCurrentFilters();
+}
+
+function closeCollectionDetail() {
+  state.activeCollectionKey = '';
+  renderCollectionRows();
+  updateSearchPlaceholder();
+  applyCurrentFilters();
+}
+
+function openGenreDetail(genreKey) {
+  state.activeGenreKey = String(genreKey || '').trim();
+  renderGenreRows();
+  updateSearchPlaceholder();
+  applyCurrentFilters();
+}
+
+function closeGenreDetail() {
+  state.activeGenreKey = '';
+  renderGenreRows();
+  updateSearchPlaceholder();
+  applyCurrentFilters();
+}
+
+function renderCollectionsShowcase(container, entries) {
+  const showcaseGrid = document.createElement('div');
+  showcaseGrid.className = 'collections-showcase-grid';
+
+  entries.forEach((entry) => {
+    const card = document.createElement('button');
+    card.className = 'collection-showcase-card';
+    card.type = 'button';
+    card.dataset.collectionKey = entry.key;
+    card.dataset.collectionLabel = entry.displayLabel;
+
+    const posterUrls = getCollectionPosterUrls(entry.items, 7);
+    const mainPoster = posterUrls[0] || '';
+    const miniPosters = posterUrls.slice(1, 7);
+    const miniGridSize = miniPosters.length >= 6 ? 6 : 4;
+    const requiredMiniItems = miniGridSize;
+
+    const media = document.createElement('div');
+    media.className = 'collection-showcase-media';
+
+    if (mainPoster) {
+      const mainImg = document.createElement('img');
+      mainImg.className = 'collection-main-poster';
+      mainImg.src = mainPoster;
+      mainImg.loading = 'lazy';
+      mainImg.alt = entry.displayLabel;
+      media.appendChild(mainImg);
+    } else {
+      const fallback = document.createElement('div');
+      fallback.className = 'collection-main-fallback';
+      fallback.textContent = getNameInitials(entry.label);
+      media.appendChild(fallback);
+    }
+
+    const miniGrid = document.createElement('div');
+    miniGrid.className = `collection-mini-grid collection-mini-grid-${miniGridSize}`;
+
+    for (let i = 0; i < requiredMiniItems; i += 1) {
+      const posterUrl = miniPosters[i] || '';
+      if (posterUrl) {
+        const miniImg = document.createElement('img');
+        miniImg.className = 'collection-mini-item';
+        miniImg.src = posterUrl;
+        miniImg.loading = 'lazy';
+        miniImg.alt = '';
+        miniGrid.appendChild(miniImg);
+      } else {
+        const miniFallback = document.createElement('div');
+        miniFallback.className = 'collection-mini-fallback';
+        miniGrid.appendChild(miniFallback);
+      }
+    }
+
+    media.appendChild(miniGrid);
+    card.appendChild(media);
+
+    const meta = document.createElement('div');
+    meta.className = 'collection-showcase-meta';
+
+    const title = document.createElement('h3');
+    title.className = 'collection-showcase-title';
+    title.textContent = entry.displayLabel;
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'collection-showcase-subtitle';
+    subtitle.textContent = `${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
+
+    meta.appendChild(title);
+    meta.appendChild(subtitle);
+    card.appendChild(meta);
+
+    card.addEventListener('click', () => openCollectionDetail(entry.key));
+
+    showcaseGrid.appendChild(card);
+  });
+
+  container.appendChild(showcaseGrid);
+  setCollectionsCount(entries.length);
+}
+
+function renderCollectionDetail(container, entry) {
+  const detail = document.createElement('section');
+  detail.className = 'collections-detail';
+
+  const head = document.createElement('div');
+  head.className = 'collections-detail-head';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'collections-back-btn';
+  backBtn.type = 'button';
+  backBtn.textContent = '← Toutes les collections';
+  backBtn.addEventListener('click', closeCollectionDetail);
+
+  const main = document.createElement('div');
+  main.className = 'collections-detail-main';
+
+  const title = document.createElement('h3');
+  title.className = 'collections-detail-title';
+  title.textContent = entry.displayLabel;
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'collections-detail-subtitle';
+  subtitle.id = 'collections-detail-subtitle';
+  subtitle.textContent = `${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
+
+  main.appendChild(title);
+  main.appendChild(subtitle);
+  head.appendChild(backBtn);
+  head.appendChild(main);
+  detail.appendChild(head);
+
+  const detailGrid = document.createElement('div');
+  detailGrid.className = 'grid collections-detail-grid';
+
+  entry.items.forEach(({ item, isTV, index, orderIndex }, position) => {
+    const cardOptions = {
+      sagaBadge: entry.sagaOrdered ? `${entry.sagaPrefix} #${position + 1}` : '',
+      seasonLabel: isTV && Number.isFinite(Number(item?.season)) ? `Saison ${Number(item.season)}` : '',
+    };
+    const card = createCard(item, isTV, index, cardOptions);
+
+    if (entry.showOrderIndex && orderIndex != null) {
+      const rank = document.createElement('span');
+      rank.className = 'mcu-order-rank';
+      rank.textContent = `#${orderIndex}`;
+      card.appendChild(rank);
+    }
+
+    detailGrid.appendChild(card);
+  });
+
+  detail.appendChild(detailGrid);
+  container.appendChild(detail);
+  setCollectionsCount(entry.items.length);
+}
+
 function renderRow(containerEl, title, items, options = {}) {
   const { showIndex = false, viewAllTarget = null, sagaPrefix = '', sagaOrdered = false } = options;
   if (!items || !items.length) return;
@@ -2755,23 +3058,24 @@ function renderCollectionRows() {
   if (!container) return;
   container.innerHTML = '';
 
-  // MCU
-  const mcuItems = getMcuOrderRenderableItems();
-  if (mcuItems.length) {
-    renderRow(container, '✨ MCU', mcuItems, { showIndex: true, viewAllTarget: 'view-mcu' });
+  const entries = getCollectionDisplayEntries();
+  if (!entries.length) {
+    const empty = document.createElement('p');
+    empty.className = 'collections-empty';
+    empty.textContent = 'Aucune collection disponible pour le moment.';
+    container.appendChild(empty);
+    setCollectionsCount(0);
+    return;
   }
 
-  // User-defined collections
-  state.collections.forEach((collection) => {
-    const items = getCollectionItems(collection);
-    if (!items.length) return;
-    const label = [collection.icon, collection.label].filter(Boolean).join(' ');
-    const sagaPrefix = String(collection.badgePrefix || '').trim() || getNameInitials(collection.label);
-    renderRow(container, label, items, {
-      sagaPrefix,
-      sagaOrdered: Boolean(collection.ordered),
-    });
-  });
+  const activeEntry = entries.find((entry) => entry.key === state.activeCollectionKey) || null;
+  if (activeEntry) {
+    renderCollectionDetail(container, activeEntry);
+    return;
+  }
+
+  state.activeCollectionKey = '';
+  renderCollectionsShowcase(container, entries);
 }
 
 function getGenreItems() {
@@ -2802,15 +3106,160 @@ function getGenreItems() {
     });
 }
 
+function getGenreDisplayEntries() {
+  return getGenreItems().map(({ genre, items }) => ({
+    key: normalizeCollection(genre),
+    label: genre,
+    displayLabel: `🎞️ ${genre}`,
+    items,
+  }));
+}
+
+function renderGenresShowcase(container, entries) {
+  const showcaseGrid = document.createElement('div');
+  showcaseGrid.className = 'collections-showcase-grid';
+
+  entries.forEach((entry) => {
+    const card = document.createElement('button');
+    card.className = 'collection-showcase-card';
+    card.type = 'button';
+    card.dataset.genreKey = entry.key;
+    card.dataset.genreLabel = entry.displayLabel;
+
+    const posterUrls = getCollectionPosterUrls(entry.items, 7);
+    const mainPoster = posterUrls[0] || '';
+    const miniPosters = posterUrls.slice(1, 7);
+    const miniGridSize = miniPosters.length >= 6 ? 6 : 4;
+
+    const media = document.createElement('div');
+    media.className = 'collection-showcase-media';
+
+    if (mainPoster) {
+      const mainImg = document.createElement('img');
+      mainImg.className = 'collection-main-poster';
+      mainImg.src = mainPoster;
+      mainImg.loading = 'lazy';
+      mainImg.alt = entry.displayLabel;
+      media.appendChild(mainImg);
+    } else {
+      const fallback = document.createElement('div');
+      fallback.className = 'collection-main-fallback';
+      fallback.textContent = getNameInitials(entry.label);
+      media.appendChild(fallback);
+    }
+
+    const miniGrid = document.createElement('div');
+    miniGrid.className = `collection-mini-grid collection-mini-grid-${miniGridSize}`;
+
+    for (let i = 0; i < miniGridSize; i += 1) {
+      const posterUrl = miniPosters[i] || '';
+      if (posterUrl) {
+        const miniImg = document.createElement('img');
+        miniImg.className = 'collection-mini-item';
+        miniImg.src = posterUrl;
+        miniImg.loading = 'lazy';
+        miniImg.alt = '';
+        miniGrid.appendChild(miniImg);
+      } else {
+        const miniFallback = document.createElement('div');
+        miniFallback.className = 'collection-mini-fallback';
+        miniGrid.appendChild(miniFallback);
+      }
+    }
+
+    media.appendChild(miniGrid);
+    card.appendChild(media);
+
+    const meta = document.createElement('div');
+    meta.className = 'collection-showcase-meta';
+
+    const title = document.createElement('h3');
+    title.className = 'collection-showcase-title';
+    title.textContent = entry.displayLabel;
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'collection-showcase-subtitle';
+    subtitle.textContent = `${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
+
+    meta.appendChild(title);
+    meta.appendChild(subtitle);
+    card.appendChild(meta);
+
+    card.addEventListener('click', () => openGenreDetail(entry.key));
+
+    showcaseGrid.appendChild(card);
+  });
+
+  container.appendChild(showcaseGrid);
+  setGenresCount(entries.length);
+}
+
+function renderGenreDetail(container, entry) {
+  const detail = document.createElement('section');
+  detail.className = 'collections-detail';
+
+  const head = document.createElement('div');
+  head.className = 'collections-detail-head';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'collections-back-btn';
+  backBtn.type = 'button';
+  backBtn.textContent = '← Tous les genres';
+  backBtn.addEventListener('click', closeGenreDetail);
+
+  const main = document.createElement('div');
+  main.className = 'collections-detail-main';
+
+  const title = document.createElement('h3');
+  title.className = 'collections-detail-title';
+  title.textContent = entry.displayLabel;
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'collections-detail-subtitle';
+  subtitle.id = 'genres-detail-subtitle';
+  subtitle.textContent = `${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
+
+  main.appendChild(title);
+  main.appendChild(subtitle);
+  head.appendChild(backBtn);
+  head.appendChild(main);
+  detail.appendChild(head);
+
+  const detailGrid = document.createElement('div');
+  detailGrid.className = 'grid genres-detail-grid';
+
+  entry.items.forEach(({ item, isTV, index }) => {
+    detailGrid.appendChild(createCard(item, isTV, index));
+  });
+
+  detail.appendChild(detailGrid);
+  container.appendChild(detail);
+  setGenresCount(entry.items.length);
+}
+
 function renderGenreRows() {
   const container = document.getElementById('genres-rows');
   if (!container) return;
   container.innerHTML = '';
 
-  const genreRows = getGenreItems();
-  genreRows.forEach(({ genre, items }) => {
-    renderRow(container, `🎞️ ${genre}`, items);
-  });
+  const entries = getGenreDisplayEntries();
+  if (!entries.length) {
+    const empty = document.createElement('p');
+    empty.className = 'collections-empty';
+    empty.textContent = 'Aucun genre disponible pour le moment.';
+    container.appendChild(empty);
+    setGenresCount(0);
+    return;
+  }
+
+  const activeEntry = entries.find((entry) => entry.key === state.activeGenreKey) || null;
+  if (activeEntry) {
+    renderGenreDetail(container, activeEntry);
+    return;
+  }
+
+  state.activeGenreKey = '';
+  renderGenresShowcase(container, entries);
 }
 
 function renderGrid(items, gridId, countId, isTV) {
