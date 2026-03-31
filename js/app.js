@@ -1499,7 +1499,7 @@ function annotateLibraryLinks() {
           const candidateAvailability = getUrlAvailability(url);
           if (candidateAvailability.hasSignedExpiry) stats.signed += 1;
           if (candidateAvailability.isExpired) stats.expired += 1;
-          if (candidateAvailability.isExpiringSoon) stats.expiringSoon += 1
+          if (candidateAvailability.isExpiringSoon) stats.expiringSoon += 1;
         });
       });
     });
@@ -2609,19 +2609,17 @@ function createCard(item, isTV = false, index = 0, options = {}) {
 // ── Collections & home rows ──────────────────────────────────────────────────
 
 function getHeroCandidate() {
-  // Prefer movies with a backdrop and high voteAverage
-  const sorted = [
+  // Prefer items with a backdrop for the cinematic hero
+  const withBackdrop = [
     ...state.movies.map((item) => ({ item, isTV: false })),
     ...state.series.map((item) => ({ item, isTV: true })),
   ].filter(({ item }) => {
     const title = String(item?.title || '').trim();
-    return title && item?.backdrop;
-  }).sort((a, b) => (b.item.voteAverage || 0) - (a.item.voteAverage || 0));
+    if (!title) return false;
+    return Boolean(item?.backdrop);
+  });
 
-  if (sorted.length) return sorted[0];
-
-  // Fallback: any with poster
-  const pool = [
+  const pool = withBackdrop.length ? withBackdrop : [
     ...state.movies.map((item) => ({ item, isTV: false })),
     ...state.series.map((item) => ({ item, isTV: true })),
   ].filter(({ item }) => Boolean(String(item?.title || '').trim()) && Boolean(item?.poster));
@@ -2721,11 +2719,7 @@ function getRecentlyAdded(limit = 14) {
     ...state.movies.map((item) => ({ item, isTV: false })),
     ...state.series.map((item) => ({ item, isTV: true })),
   ];
-  allItems.sort((a, b) => {
-    const dateA = a.item.createdAt ? Date.parse(a.item.createdAt) : (Number(a.item.year) || 0);
-    const dateB = b.item.createdAt ? Date.parse(b.item.createdAt) : (Number(b.item.year) || 0);
-    return dateB - dateA;
-  });
+  allItems.sort((a, b) => (Number(b.item.year) || 0) - (Number(a.item.year) || 0));
   return allItems.slice(0, limit).map(({ item, isTV }, i) => ({ item, isTV, index: i }));
 }
 
@@ -2977,11 +2971,9 @@ function renderCollectionDetail(container, entry) {
       sagaBadge: entry.sagaOrdered ? `${entry.sagaPrefix} #${position + 1}` : '',
       seasonLabel: isTV && Number.isFinite(Number(item?.season)) ? `Saison ${Number(item.season)}` : '',
     };
-    const card = createCard(item, isTV, index ?? i, {
-      ...(cardOptions || {}),
-      sagaBadge,
-    });
-    if (showIndex && orderIndex != null) {
+    const card = createCard(item, isTV, index, cardOptions);
+
+    if (entry.showOrderIndex && orderIndex != null) {
       const rank = document.createElement('span');
       rank.className = 'mcu-order-rank';
       rank.textContent = `#${orderIndex}`;
@@ -3055,39 +3047,29 @@ function renderHomeRows() {
   // Continue watching row (only if there are unfinished items)
   const continueItems = getContinueWatchingItems(16);
   if (continueItems.length) {
-    renderRow(container, 'Reprendre la lecture', continueItems);
+    renderRow(container, '▶ Reprendre la lecture', continueItems);
   }
 
   // Recently added
   const recentItems = getRecentlyAdded(16);
   if (recentItems.length) {
-    renderRow(container, 'Récemment ajoutés', recentItems, { viewAllTarget: 'view-films' });
-  }
-
-  // Films populaires row (nouveau)
-  const popularMovies = (state.movies || [])
-    .slice()
-    .sort((a, b) => (b.voteAverage || 0) - (a.voteAverage || 0))
-    .slice(0, 16)
-    .map((item, i) => ({ item, isTV: false, index: i }));
-  if (popularMovies.length) {
-    renderRow(container, 'Films populaires', popularMovies, { viewAllTarget: 'view-films' });
+    renderRow(container, '🕐 Récemment ajoutés', recentItems, { viewAllTarget: 'view-films' });
   }
 
   // Series row
   if (state.series.length) {
     const seriesItems = state.series.map((item, i) => ({ item, isTV: true, index: i }));
-    renderRow(container, 'Séries', seriesItems, { viewAllTarget: 'view-series' });
+    renderRow(container, '📺 Séries', seriesItems, { viewAllTarget: 'view-series' });
   }
 
   // MCU row
   const mcuItems = getMcuOrderRenderableItems().slice(0, 20);
   if (mcuItems.length) {
-    renderRow(container, 'MCU', mcuItems, { showIndex: true, viewAllTarget: 'view-mcu' });
+    renderRow(container, '✨ MCU', mcuItems, { showIndex: true, viewAllTarget: 'view-mcu' });
   }
 
-  // Collections showcase (max 5, tuiles plus petites)
-  const collEntries = getCollectionDisplayEntries().slice(0, 5);
+  // Collections showcase (same cinematic tiles as the Collections view)
+  const collEntries = getCollectionDisplayEntries();
   if (collEntries.length) {
     const section = document.createElement('div');
     section.className = 'content-row home-collections-row';
@@ -3097,7 +3079,7 @@ function renderHomeRows() {
 
     const titleEl = document.createElement('h3');
     titleEl.className = 'row-title';
-    titleEl.textContent = 'Collections';
+    titleEl.textContent = '🎬 Collections';
     header.appendChild(titleEl);
 
     const seeAllBtn = document.createElement('button');
@@ -3110,7 +3092,7 @@ function renderHomeRows() {
     section.appendChild(header);
 
     const grid = document.createElement('div');
-    grid.className = 'collections-showcase-grid home-showcase-grid'; // Ajoute une classe pour home
+    grid.className = 'collections-showcase-grid';
     const usedImages = new Set();
 
     collEntries.forEach((entry) => {
@@ -3563,7 +3545,6 @@ async function fetchR2Catalog() {
           episodeNumber,
           seriesTitle,
           url,
-          createdAt: entry.createdAt || null,
         });
       }
     });
@@ -3750,7 +3731,6 @@ function buildLibraryFromR2Catalog(catalog) {
       const movie = {
         title: String(entry.filename || '').replace(/\.mp4$/i, '').trim() || 'Film',
         url: entry.url,
-        createdAt: entry.createdAt || null,
       };
       if (tmdbId > 0) movie.tmdbId = tmdbId;
       movies.push(movie);
@@ -3769,7 +3749,7 @@ function buildLibraryFromR2Catalog(catalog) {
     const groupKey = `${tmdbId}:${seriesTitle.toLowerCase()}`;
 
     if (!seriesGroupMap.has(groupKey)) {
-      const show = { title: seriesTitle, seasons: [], createdAt: null };
+      const show = { title: seriesTitle, seasons: [] };
       if (tmdbId > 0) show.tmdbId = tmdbId;
       seriesGroupMap.set(groupKey, { show, seasons: new Map() });
     }
@@ -3784,16 +3764,7 @@ function buildLibraryFromR2Catalog(catalog) {
     season.episodes[episodeNumber - 1] = {
       ...(season.episodes[episodeNumber - 1] || {}),
       url: entry.url,
-      createdAt: entry.createdAt || null,
     };
-
-    // Propagate the most recent createdAt to the series root
-    if (entry.createdAt) {
-      const prev = group.show.createdAt;
-      if (!prev || Date.parse(entry.createdAt) > Date.parse(prev)) {
-        group.show.createdAt = entry.createdAt;
-      }
-    }
   });
 
   const series = Array.from(seriesGroupMap.values()).map(({ show, seasons }) => ({
