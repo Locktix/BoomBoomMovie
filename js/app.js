@@ -3068,17 +3068,45 @@ function renderHomeRows() {
     renderRow(container, '✨ MCU', mcuItems, { showIndex: true, viewAllTarget: 'view-mcu' });
   }
 
-  // Collections from collections.json
-  state.collections.forEach((collection) => {
-    const items = getCollectionItems(collection);
-    if (!items.length) return;
-    const label = [collection.icon, collection.label].filter(Boolean).join(' ');
-    const sagaPrefix = String(collection.badgePrefix || '').trim() || getNameInitials(collection.label);
-    renderRow(container, label, items, {
-      sagaPrefix,
-      sagaOrdered: Boolean(collection.ordered),
+  // Collections showcase (same cinematic tiles as the Collections view)
+  const collEntries = getCollectionDisplayEntries();
+  if (collEntries.length) {
+    const section = document.createElement('div');
+    section.className = 'content-row home-collections-row';
+
+    const header = document.createElement('div');
+    header.className = 'row-header';
+
+    const titleEl = document.createElement('h3');
+    titleEl.className = 'row-title';
+    titleEl.textContent = '🎬 Collections';
+    header.appendChild(titleEl);
+
+    const seeAllBtn = document.createElement('button');
+    seeAllBtn.className = 'row-see-all';
+    seeAllBtn.type = 'button';
+    seeAllBtn.textContent = 'Voir tout';
+    seeAllBtn.addEventListener('click', () => navigateTo('view-collections'));
+    header.appendChild(seeAllBtn);
+
+    section.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'collections-showcase-grid';
+    const usedImages = new Set();
+
+    collEntries.forEach((entry) => {
+      const card = buildShowcaseCard(
+        entry, 'collectionKey', 'collectionLabel',
+        () => { navigateTo('view-collections'); openCollectionDetail(entry.key); },
+        usedImages
+      );
+      grid.appendChild(card);
     });
-  });
+
+    section.appendChild(grid);
+    container.appendChild(section);
+  }
 }
 
 function renderCollectionRows() {
