@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.7",
+    "date": "2026-03-31",
+    "label": "Collections et Genres en tuiles cinématiques",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Refonte complète de la vue Collections : chaque saga est désormais une tuile cinématique 16:9 avec backdrop plein cadre, dégradé noir et mini-strip de posters"
+      },
+      {
+        "type": "feature",
+        "description": "Refonte complète de la vue Genres sur le même modèle que Collections avec tuiles backdrop et navigation identique"
+      },
+      {
+        "type": "feature",
+        "description": "Clic sur une tuile Collection ou Genre ouvre la liste complète des titres correspondants en grille avec bouton retour"
+      },
+      {
+        "type": "feature",
+        "description": "Recherche contextuelle dans les deux sections : filtre les tuiles en vue grille ou les titres quand une collection/genre est ouverte"
+      },
+      {
+        "type": "improvement",
+        "description": "Garantie d'unicité des images : deux tuiles ne partagent jamais le même backdrop, même si un film appartient à plusieurs genres"
+      },
+      {
+        "type": "improvement",
+        "description": "Compteur dynamique dans l'en-tête de section mis à jour selon la vue active (nombre de collections, de titres dans un genre, etc.)"
+      }
+    ]
+  },
+  {
     "version": "1.6",
     "date": "2026-03-23",
     "label": "Progression locale et reprise de lecture",

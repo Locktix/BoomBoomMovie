@@ -2824,79 +2824,86 @@ function closeGenreDetail() {
   applyCurrentFilters();
 }
 
+function buildShowcaseCard(entry, dataAttr, dataLabel, onClick, usedImages) {
+  const card = document.createElement('button');
+  card.className = 'collection-showcase-card';
+  card.type = 'button';
+  card.dataset[dataAttr] = entry.key;
+  card.dataset[dataLabel] = entry.displayLabel;
+
+  // Pick a unique backdrop that hasn't been used by another card yet
+  let backdropUrl = '';
+  for (const { item } of entry.items) {
+    const bd = String(item?.backdrop || '').trim();
+    if (bd && !usedImages.has(bd)) { backdropUrl = bd; break; }
+  }
+  if (!backdropUrl) {
+    for (const { item } of entry.items) {
+      const p = String(item?.poster || '').trim();
+      if (p && !usedImages.has(p)) { backdropUrl = p; break; }
+    }
+  }
+  if (backdropUrl) usedImages.add(backdropUrl);
+
+  // Poster strip: pick unique posters not already used as backdrop by other cards
+  const posterUrls = [];
+  for (const { item } of entry.items) {
+    const p = String(item?.poster || '').trim();
+    if (p && !posterUrls.includes(p) && p !== backdropUrl) posterUrls.push(p);
+    if (posterUrls.length >= 4) break;
+  }
+
+  if (backdropUrl) {
+    const bgImg = document.createElement('img');
+    bgImg.className = 'showcase-bg';
+    bgImg.src = backdropUrl;
+    bgImg.loading = 'lazy';
+    bgImg.alt = '';
+    card.appendChild(bgImg);
+  } else {
+    const bgFallback = document.createElement('div');
+    bgFallback.className = 'showcase-bg-fallback';
+    bgFallback.textContent = getNameInitials(entry.label);
+    card.appendChild(bgFallback);
+  }
+
+  const strip = document.createElement('div');
+  strip.className = 'showcase-poster-strip';
+  posterUrls.slice(0, 4).forEach((url) => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.loading = 'lazy';
+    img.alt = '';
+    strip.appendChild(img);
+  });
+  if (posterUrls.length > 1) card.appendChild(strip);
+
+  const content = document.createElement('div');
+  content.className = 'showcase-content';
+
+  const title = document.createElement('h3');
+  title.className = 'showcase-title';
+  title.textContent = entry.displayLabel;
+
+  const countEl = document.createElement('p');
+  countEl.className = 'showcase-count';
+  countEl.innerHTML = `<span class="showcase-dot"></span>${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
+
+  content.appendChild(title);
+  content.appendChild(countEl);
+  card.appendChild(content);
+
+  card.addEventListener('click', onClick);
+  return card;
+}
+
 function renderCollectionsShowcase(container, entries) {
   const showcaseGrid = document.createElement('div');
   showcaseGrid.className = 'collections-showcase-grid';
+  const usedImages = new Set();
 
   entries.forEach((entry) => {
-    const card = document.createElement('button');
-    card.className = 'collection-showcase-card';
-    card.type = 'button';
-    card.dataset.collectionKey = entry.key;
-    card.dataset.collectionLabel = entry.displayLabel;
-
-    const posterUrls = getCollectionPosterUrls(entry.items, 7);
-    const mainPoster = posterUrls[0] || '';
-    const miniPosters = posterUrls.slice(1, 7);
-    const miniGridSize = miniPosters.length >= 6 ? 6 : 4;
-    const requiredMiniItems = miniGridSize;
-
-    const media = document.createElement('div');
-    media.className = 'collection-showcase-media';
-
-    if (mainPoster) {
-      const mainImg = document.createElement('img');
-      mainImg.className = 'collection-main-poster';
-      mainImg.src = mainPoster;
-      mainImg.loading = 'lazy';
-      mainImg.alt = entry.displayLabel;
-      media.appendChild(mainImg);
-    } else {
-      const fallback = document.createElement('div');
-      fallback.className = 'collection-main-fallback';
-      fallback.textContent = getNameInitials(entry.label);
-      media.appendChild(fallback);
-    }
-
-    const miniGrid = document.createElement('div');
-    miniGrid.className = `collection-mini-grid collection-mini-grid-${miniGridSize}`;
-
-    for (let i = 0; i < requiredMiniItems; i += 1) {
-      const posterUrl = miniPosters[i] || '';
-      if (posterUrl) {
-        const miniImg = document.createElement('img');
-        miniImg.className = 'collection-mini-item';
-        miniImg.src = posterUrl;
-        miniImg.loading = 'lazy';
-        miniImg.alt = '';
-        miniGrid.appendChild(miniImg);
-      } else {
-        const miniFallback = document.createElement('div');
-        miniFallback.className = 'collection-mini-fallback';
-        miniGrid.appendChild(miniFallback);
-      }
-    }
-
-    media.appendChild(miniGrid);
-    card.appendChild(media);
-
-    const meta = document.createElement('div');
-    meta.className = 'collection-showcase-meta';
-
-    const title = document.createElement('h3');
-    title.className = 'collection-showcase-title';
-    title.textContent = entry.displayLabel;
-
-    const subtitle = document.createElement('p');
-    subtitle.className = 'collection-showcase-subtitle';
-    subtitle.textContent = `${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
-
-    meta.appendChild(title);
-    meta.appendChild(subtitle);
-    card.appendChild(meta);
-
-    card.addEventListener('click', () => openCollectionDetail(entry.key));
-
+    const card = buildShowcaseCard(entry, 'collectionKey', 'collectionLabel', () => openCollectionDetail(entry.key), usedImages);
     showcaseGrid.appendChild(card);
   });
 
@@ -3118,75 +3125,10 @@ function getGenreDisplayEntries() {
 function renderGenresShowcase(container, entries) {
   const showcaseGrid = document.createElement('div');
   showcaseGrid.className = 'collections-showcase-grid';
+  const usedImages = new Set();
 
   entries.forEach((entry) => {
-    const card = document.createElement('button');
-    card.className = 'collection-showcase-card';
-    card.type = 'button';
-    card.dataset.genreKey = entry.key;
-    card.dataset.genreLabel = entry.displayLabel;
-
-    const posterUrls = getCollectionPosterUrls(entry.items, 7);
-    const mainPoster = posterUrls[0] || '';
-    const miniPosters = posterUrls.slice(1, 7);
-    const miniGridSize = miniPosters.length >= 6 ? 6 : 4;
-
-    const media = document.createElement('div');
-    media.className = 'collection-showcase-media';
-
-    if (mainPoster) {
-      const mainImg = document.createElement('img');
-      mainImg.className = 'collection-main-poster';
-      mainImg.src = mainPoster;
-      mainImg.loading = 'lazy';
-      mainImg.alt = entry.displayLabel;
-      media.appendChild(mainImg);
-    } else {
-      const fallback = document.createElement('div');
-      fallback.className = 'collection-main-fallback';
-      fallback.textContent = getNameInitials(entry.label);
-      media.appendChild(fallback);
-    }
-
-    const miniGrid = document.createElement('div');
-    miniGrid.className = `collection-mini-grid collection-mini-grid-${miniGridSize}`;
-
-    for (let i = 0; i < miniGridSize; i += 1) {
-      const posterUrl = miniPosters[i] || '';
-      if (posterUrl) {
-        const miniImg = document.createElement('img');
-        miniImg.className = 'collection-mini-item';
-        miniImg.src = posterUrl;
-        miniImg.loading = 'lazy';
-        miniImg.alt = '';
-        miniGrid.appendChild(miniImg);
-      } else {
-        const miniFallback = document.createElement('div');
-        miniFallback.className = 'collection-mini-fallback';
-        miniGrid.appendChild(miniFallback);
-      }
-    }
-
-    media.appendChild(miniGrid);
-    card.appendChild(media);
-
-    const meta = document.createElement('div');
-    meta.className = 'collection-showcase-meta';
-
-    const title = document.createElement('h3');
-    title.className = 'collection-showcase-title';
-    title.textContent = entry.displayLabel;
-
-    const subtitle = document.createElement('p');
-    subtitle.className = 'collection-showcase-subtitle';
-    subtitle.textContent = `${entry.items.length} titre${entry.items.length > 1 ? 's' : ''}`;
-
-    meta.appendChild(title);
-    meta.appendChild(subtitle);
-    card.appendChild(meta);
-
-    card.addEventListener('click', () => openGenreDetail(entry.key));
-
+    const card = buildShowcaseCard(entry, 'genreKey', 'genreLabel', () => openGenreDetail(entry.key), usedImages);
     showcaseGrid.appendChild(card);
   });
 
