@@ -2609,19 +2609,23 @@ function createCard(item, isTV = false, index = 0, options = {}) {
 // ── Collections & home rows ──────────────────────────────────────────────────
 
 function getHeroCandidate() {
-  const candidates = [
+  // Prefer items with a backdrop for the cinematic hero
+  const withBackdrop = [
     ...state.movies.map((item) => ({ item, isTV: false })),
     ...state.series.map((item) => ({ item, isTV: true })),
   ].filter(({ item }) => {
     const title = String(item?.title || '').trim();
     if (!title) return false;
-    return Boolean(item?.backdrop || item?.poster);
+    return Boolean(item?.backdrop);
   });
 
-  if (!candidates.length) return null;
+  const pool = withBackdrop.length ? withBackdrop : [
+    ...state.movies.map((item) => ({ item, isTV: false })),
+    ...state.series.map((item) => ({ item, isTV: true })),
+  ].filter(({ item }) => Boolean(String(item?.title || '').trim()) && Boolean(item?.poster));
 
-  const randomIndex = Math.floor(Math.random() * candidates.length);
-  return candidates[randomIndex] || null;
+  if (!pool.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)] || null;
 }
 
 function renderHomeHero() {
@@ -2639,7 +2643,7 @@ function renderHomeHero() {
   const releaseLabel = !isTV && item.releaseDate
     ? String(item.releaseDate)
     : String(item.year || '');
-  const overview = String(item.overview || 'Un film a voir absolument ce soir.').trim();
+  const overview = String(item.overview || '').trim();
   const heroImageUrl = String(item.backdrop || item.poster || '').trim();
 
   if (heroImageUrl) {
@@ -2648,16 +2652,33 @@ function renderHomeHero() {
     hero.style.removeProperty('--hero-bg');
   }
 
+  // Build meta segments: type · year · genres
+  const typeBadge = isTV ? 'Série' : 'Film';
+  const genres = getItemGenres(item).slice(0, 3);
+  const metaParts = [typeBadge, releaseLabel, ...genres].filter(Boolean);
+  const metaHtml = metaParts.map((part, i) =>
+    (i > 0 ? '<span class="hero-dot"></span>' : '') + escapeHtml(part)
+  ).join('');
+
   hero.innerHTML = `
     <div class="home-hero-content">
-      <p class="home-hero-kicker">Selection BoomBoom</p>
+      <p class="home-hero-kicker">Sélection BoomBoom</p>
       <h2 class="home-hero-title">${escapeHtml(item.title)}</h2>
-      <p class="home-hero-meta">${escapeHtml(releaseLabel)}</p>
-      <p class="home-hero-overview">${escapeHtml(overview)}</p>
+      <p class="home-hero-meta">${metaHtml}</p>
+      ${overview ? `<p class="home-hero-overview">${escapeHtml(overview)}</p>` : ''}
       <div class="home-hero-actions">
-        <button type="button" class="hero-watch-btn" id="hero-watch-btn">▶ Regarder</button>
-        <button type="button" class="hero-details-btn" id="hero-details-btn">Infos</button>
+        <button type="button" class="hero-watch-btn" id="hero-watch-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Regarder
+        </button>
+        <button type="button" class="hero-details-btn" id="hero-details-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          Plus d'infos
+        </button>
       </div>
+    </div>
+    <div class="home-hero-scroll" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
     </div>
   `;
 
