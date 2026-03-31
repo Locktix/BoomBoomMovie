@@ -2714,12 +2714,16 @@ async function loadCollections() {
   }
 }
 
-function getRecentlyAdded(limit = 14) {
+function getRecentlyAdded(limit = 20) {
   const allItems = [
     ...state.movies.map((item) => ({ item, isTV: false })),
     ...state.series.map((item) => ({ item, isTV: true })),
   ];
-  allItems.sort((a, b) => (Number(b.item.year) || 0) - (Number(a.item.year) || 0));
+  allItems.sort((a, b) => {
+    const dateA = a.item.createdAt ? new Date(a.item.createdAt).getTime() : 0;
+    const dateB = b.item.createdAt ? new Date(b.item.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
   return allItems.slice(0, limit).map(({ item, isTV }, i) => ({ item, isTV, index: i }));
 }
 
@@ -3051,9 +3055,9 @@ function renderHomeRows() {
   }
 
   // Recently added
-  const recentItems = getRecentlyAdded(16);
+  const recentItems = getRecentlyAdded(20);
   if (recentItems.length) {
-    renderRow(container, '🕐 Récemment ajoutés', recentItems, { viewAllTarget: 'view-films' });
+    renderRow(container, '🆕 Dernières nouveautés de BoomBoomMovie', recentItems);
   }
 
   // Series row
@@ -3533,6 +3537,7 @@ async function fetchR2Catalog() {
       const parsedEpisode = Number(entry?.episodeNumber ?? 0);
       const episodeNumber = Number.isFinite(parsedEpisode) && parsedEpisode > 0 ? parsedEpisode : 0;
       const seriesTitle = String(entry?.seriesTitle || '').trim();
+      const createdAt = String(entry?.createdAt || '').trim();
       if (filename && url) byFilename.set(filename.toLowerCase(), url);
       if (url) {
         entries.push({
@@ -3544,6 +3549,7 @@ async function fetchR2Catalog() {
           seasonNumber,
           episodeNumber,
           seriesTitle,
+          createdAt,
           url,
         });
       }
@@ -3733,6 +3739,7 @@ function buildLibraryFromR2Catalog(catalog) {
         url: entry.url,
       };
       if (tmdbId > 0) movie.tmdbId = tmdbId;
+      if (entry.createdAt) movie.createdAt = entry.createdAt;
       movies.push(movie);
       return;
     }
@@ -3757,6 +3764,13 @@ function buildLibraryFromR2Catalog(catalog) {
     const group = seriesGroupMap.get(groupKey);
     if (!group.seasons.has(seasonNumber)) {
       group.seasons.set(seasonNumber, { season: seasonNumber, episodes: [] });
+    }
+
+    // Track the most recent createdAt for this series
+    if (entry.createdAt) {
+      const entryDate = new Date(entry.createdAt).getTime();
+      const currentDate = group.show.createdAt ? new Date(group.show.createdAt).getTime() : 0;
+      if (entryDate > currentDate) group.show.createdAt = entry.createdAt;
     }
 
     const season = group.seasons.get(seasonNumber);
