@@ -79,14 +79,5 @@
     "tmdbIds": [920, 49013, 260514],
     "type": "movie",
     "ordered": true
-  },
-  {
-    "id": "afterthewalking-dead",
-    "label": "After the Walking Dead",
-    "icon": "🧟‍♂️",
-    "badgePrefix": "ATWD",
-    "tmdbIds": [94305, 136248, 194583, 206586, 211684],
-    "type": "tv",
-    "ordered": true
   }
 ]
