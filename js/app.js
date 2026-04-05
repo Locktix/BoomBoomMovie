@@ -124,11 +124,13 @@ const WATCH_PROGRESS_STORE_KEY = 'boomboom:watch-progress:v1';
 const WATCH_PROGRESS_SAVE_INTERVAL_MS = 2500;
 const WATCH_PROGRESS_MIN_RESUME_SECONDS = 15;
 const WATCH_PROGRESS_COMPLETED_RATIO = 0.92;
+const RATINGS_STORE_KEY = 'boomboom:ratings:v1';
 const tmdbPosterCache = new Map();
 const tmdbDetailsCache = new Map();
 const tmdbSeasonDetailsCache = new Map();
 
 let watchProgressStore = {};
+let ratingsStore = {};
 const WATCH_STATUS_FILTERS = [
   { value: 'all', label: 'Tout' },
   { value: 'not-started', label: 'Non vus' },
@@ -183,6 +185,229 @@ function saveWatchProgressStore() {
     // Ignore persistence errors (private mode / quota).
   }
 }
+
+// ── Personal ratings (1-5 stars, stored in localStorage) ─────────────────
+
+function loadRatingsStore() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RATINGS_STORE_KEY) || '{}');
+    ratingsStore = parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    ratingsStore = {};
+  }
+}
+
+function saveRatingsStore() {
+  try {
+    localStorage.setItem(RATINGS_STORE_KEY, JSON.stringify(ratingsStore));
+  } catch {
+    // Ignore (private mode / quota).
+  }
+}
+
+function getRatingKey(item, mediaType) {
+  const tmdbId = getTmdbNumericId(item);
+  const prefix = mediaType === 'tv' ? 'series' : 'movie';
+  if (tmdbId) return `${prefix}:${tmdbId}`;
+  return `${prefix}:title:${safeBase64Encode(normalizeProgressTitle(item?.title || prefix))}`;
+}
+
+function getUserRating(ratingKey) {
+  if (!ratingKey) return 0;
+  const entry = ratingsStore[ratingKey];
+  const value = Number(entry?.rating);
+  return Number.isInteger(value) && value >= 1 && value <= 5 ? value : 0;
+}
+
+function setUserRating(ratingKey, rating) {
+  if (!ratingKey) return;
+  const value = Number(rating);
+  if (!Number.isInteger(value) || value < 1 || value > 5) {
+    delete ratingsStore[ratingKey];
+  } else {
+    ratingsStore[ratingKey] = { rating: value, updatedAt: Date.now() };
+  }
+  saveRatingsStore();
+}
+
+function refreshRatingDecorations() {
+  document.querySelectorAll('[data-rating-display-for]').forEach((el) => {
+    const key = el.getAttribute('data-rating-display-for') || '';
+    const rating = getUserRating(key);
+    if (rating > 0) {
+      el.textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+      el.removeAttribute('hidden');
+    } else {
+      el.textContent = '';
+      el.setAttribute('hidden', 'hidden');
+    }
+  });
+}
+
+function renderStarRatingWidget(ratingKey, containerEl) {
+  if (!containerEl) return;
+  const currentRating = getUserRating(ratingKey);
+
+  containerEl.innerHTML = '';
+
+  const label = document.createElement('span');
+  label.className = 'rating-label';
+  label.textContent = 'Ma note :';
+
+  const stars = document.createElement('div');
+  stars.className = 'rating-stars';
+  stars.setAttribute('role', 'group');
+  stars.setAttribute('aria-label', 'Note personnelle sur 5');
+
+  for (let i = 1; i <= 5; i += 1) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rating-star' + (i <= currentRating ? ' active' : '');
+    btn.setAttribute('aria-label', `${i} étoile${i > 1 ? 's' : ''}`);
+    btn.textContent = i <= currentRating ? '★' : '☆';
+    btn.dataset.value = String(i);
+
+    btn.addEventListener('mouseenter', () => {
+      stars.querySelectorAll('.rating-star').forEach((s, idx) => {
+        s.textContent = idx < i ? '★' : '☆';
+        s.classList.toggle('active', idx < i);
+      });
+    });
+
+    btn.addEventListener('click', () => {
+      const newRating = currentRating === i ? 0 : i;
+      setUserRating(ratingKey, newRating);
+      refreshRatingDecorations();
+      renderStarRatingWidget(ratingKey, containerEl);
+    });
+
+    stars.appendChild(btn);
+  }
+
+  stars.addEventListener('mouseleave', () => {
+    const saved = getUserRating(ratingKey);
+    stars.querySelectorAll('.rating-star').forEach((s, idx) => {
+      s.textContent = idx < saved ? '★' : '☆';
+      s.classList.toggle('active', idx < saved);
+    });
+  });
+
+  const ratingValue = document.createElement('span');
+  ratingValue.className = 'rating-value-label';
+  ratingValue.textContent = currentRating > 0 ? `${currentRating}/5` : '';
+
+  containerEl.appendChild(label);
+  containerEl.appendChild(stars);
+  containerEl.appendChild(ratingValue);
+}
+
+// ── Episode / season / series rating helpers ─────────────────────────────
+
+function getEpisodeRatingKey(seriesItem, seasonNumber, episodeNumber) {
+  const tmdbId = getTmdbNumericId(seriesItem);
+  const seriesSlug = normalizeProgressTitle(seriesItem?.title || 'series');
+  const idPart = tmdbId ? `tmdb:${tmdbId}` : `title:${safeBase64Encode(seriesSlug)}`;
+  return `ep-rating:${idPart}:s${Number(seasonNumber) || 0}:e${Number(episodeNumber) || 0}`;
+}
+
+function getSeasonRatingAverage(seriesItem, seasonNumber) {
+  const seasons = Array.isArray(seriesItem?.seasons) ? seriesItem.seasons : [];
+  const season = seasons.find((s) => Number(s?.season) === Number(seasonNumber));
+  if (!season) return null;
+  const epList = Array.isArray(season.episodes) ? season.episodes : [];
+  const ratings = [];
+  epList.forEach((_, i) => {
+    const r = getUserRating(getEpisodeRatingKey(seriesItem, seasonNumber, i + 1));
+    if (r > 0) ratings.push(r);
+  });
+  if (!ratings.length) return null;
+  return ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+}
+
+function getSeriesEpisodeRatingAverage(seriesItem) {
+  const seasons = Array.isArray(seriesItem?.seasons) ? seriesItem.seasons : [];
+  const ratings = [];
+  seasons.forEach((season) => {
+    const seasonNum = Number(season?.season) || 1;
+    const epList = Array.isArray(season.episodes) ? season.episodes : [];
+    epList.forEach((_, i) => {
+      const r = getUserRating(getEpisodeRatingKey(seriesItem, seasonNum, i + 1));
+      if (r > 0) ratings.push(r);
+    });
+  });
+  if (!ratings.length) return null;
+  return ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+}
+
+function renderMiniStarWidget(ratingKey, containerEl, onRate) {
+  if (!containerEl) return;
+  const currentRating = getUserRating(ratingKey);
+  containerEl.innerHTML = '';
+  containerEl.className = 'ep-rating-stars';
+  containerEl.setAttribute('role', 'group');
+  containerEl.setAttribute('aria-label', "Note de l'épisode sur 5");
+
+  for (let i = 1; i <= 5; i += 1) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ep-rating-star' + (i <= currentRating ? ' active' : '');
+    btn.setAttribute('aria-label', `${i} étoile${i > 1 ? 's' : ''}`);
+    btn.textContent = i <= currentRating ? '★' : '☆';
+
+    btn.addEventListener('mouseenter', () => {
+      containerEl.querySelectorAll('.ep-rating-star').forEach((s, idx) => {
+        s.textContent = idx < i ? '★' : '☆';
+        s.classList.toggle('active', idx < i);
+      });
+    });
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const newRating = currentRating === i ? 0 : i;
+      setUserRating(ratingKey, newRating);
+      renderMiniStarWidget(ratingKey, containerEl, onRate);
+      if (typeof onRate === 'function') onRate();
+    });
+
+    containerEl.appendChild(btn);
+  }
+
+  containerEl.addEventListener('mouseleave', () => {
+    const saved = getUserRating(ratingKey);
+    containerEl.querySelectorAll('.ep-rating-star').forEach((s, idx) => {
+      s.textContent = idx < saved ? '★' : '☆';
+      s.classList.toggle('active', idx < saved);
+    });
+  });
+}
+
+function refreshSeriesModalAverages(contentEl, headEl, seriesItem) {
+  contentEl.querySelectorAll('[data-season-avg-for]').forEach((el) => {
+    const seasonNum = Number(el.getAttribute('data-season-avg-for'));
+    const avg = getSeasonRatingAverage(seriesItem, seasonNum);
+    if (avg !== null) {
+      el.textContent = `Moy. ★ ${avg.toFixed(1)}/5`;
+      el.removeAttribute('hidden');
+    } else {
+      el.textContent = '';
+      el.setAttribute('hidden', 'hidden');
+    }
+  });
+
+  const seriesAvgEl = headEl?.querySelector('.series-rating-avg');
+  if (seriesAvgEl) {
+    const avg = getSeriesEpisodeRatingAverage(seriesItem);
+    if (avg !== null) {
+      const rounded = Math.round(avg);
+      seriesAvgEl.textContent = `Note moyenne série : ${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)} ${avg.toFixed(1)}/5`;
+      seriesAvgEl.removeAttribute('hidden');
+    } else {
+      seriesAvgEl.setAttribute('hidden', 'hidden');
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 
 function getWatchProgressEntry(progressKey) {
   if (!progressKey) return null;
@@ -301,6 +526,8 @@ function refreshProgressDecorations() {
     badge.textContent = '';
     badge.classList.remove('watch-state-resume', 'watch-state-complete');
   });
+
+  refreshRatingDecorations();
 }
 
 function getWatchStatusFromEntry(entry) {
@@ -939,6 +1166,7 @@ function renderDetailsModalContent(item, mediaType, bundle) {
           ${Number.isFinite(voteAverage) ? `<span class="details-stat">Note TMDB: ${escapeHtml(voteAverage.toFixed(1))}/10</span>` : ''}
           ${genres.slice(0, 4).map((genre) => `<span class="details-stat">${escapeHtml(genre)}</span>`).join('')}
         </div>
+        <div class="rating-wrap" id="details-rating-wrap"></div>
         <div class="details-trailer-list">
           <button type="button" class="details-btn" data-details-action="mark-watched">${isAlreadyCompleted ? 'Retirer comme vu' : 'Marquer comme vu'}</button>
         </div>
@@ -981,6 +1209,26 @@ function renderDetailsModalContent(item, mediaType, bundle) {
         : '<p class="details-empty">Aucune bande-annonce YouTube disponible.</p>'}
     </section>
   `;
+
+  const ratingWrap = content.querySelector('#details-rating-wrap');
+  if (ratingWrap) {
+    if (mediaType === 'movie') {
+      const ratingKey = getRatingKey(item, 'movie');
+      renderStarRatingWidget(ratingKey, ratingWrap);
+    } else {
+      const avg = getSeriesEpisodeRatingAverage(item);
+      if (avg !== null) {
+        const rounded = Math.round(avg);
+        ratingWrap.innerHTML = `
+          <span class="rating-label">Moyenne épisodes :</span>
+          <span class="rating-stars-display">${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}</span>
+          <span class="rating-value-label">${avg.toFixed(1)}/5</span>
+        `;
+      } else {
+        ratingWrap.hidden = true;
+      }
+    }
+  }
 
   content.querySelectorAll('[data-trailer-key]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -2022,6 +2270,15 @@ async function showSeriesModal(seriesItem) {
   const existingContinueBtn = head?.querySelector('.series-continue-btn');
   existingContinueBtn?.remove();
 
+  // Series average rating element
+  let seriesAvgEl = head?.querySelector('.series-rating-avg');
+  if (!seriesAvgEl && head) {
+    seriesAvgEl = document.createElement('p');
+    seriesAvgEl.className = 'series-rating-avg';
+    seriesAvgEl.setAttribute('hidden', 'hidden');
+    head.appendChild(seriesAvgEl);
+  }
+
   content.innerHTML = '<p class="series-empty">Chargement des episodes TMDB...</p>';
 
   modal.hidden = false;
@@ -2051,6 +2308,7 @@ async function showSeriesModal(seriesItem) {
         <header class="season-card-head">
           <h4>Saison ${seasonNum}</h4>
           <span>${epCount} episode(s) | ${season.year || ''}</span>
+          <span class="season-avg-badge" data-season-avg-for="${seasonNum}" hidden></span>
         </header>
         <div class="episode-list">
     `;
@@ -2081,8 +2339,9 @@ async function showSeriesModal(seriesItem) {
         ? `<img class="episode-thumb" src="${escapeHtml(`${CONFIG.TMDB_IMAGE_BASE_URL}${tmdbStillPath}`)}" alt="${escapeHtml(tmdbEpisodeName || code)}" loading="lazy" />`
         : `<div class="episode-thumb-fallback">${escapeHtml(code)}</div>`;
 
+      const epRatingKey = getEpisodeRatingKey(seriesItem, seasonNum, epNum);
       html += `
-          <article class="episode-card${hasUrl ? ' episode-playable' : ''}" data-progress-key="${escapeHtml(progressKey)}">
+          <article class="episode-card${hasUrl ? ' episode-playable' : ''}" data-progress-key="${escapeHtml(progressKey)}" data-ep-rating-widget-key="${escapeHtml(epRatingKey)}">
             <div class="episode-thumb-wrap">
               ${thumbMarkup}
             </div>
@@ -2090,6 +2349,7 @@ async function showSeriesModal(seriesItem) {
               <p class="episode-code">${code}</p>
               <p class="episode-title">${escapeHtml(tmdbEpisodeName || `Episode ${epNum}`)}</p>
               <p class="episode-year">${escapeHtml(tmdbAirDate || String(season.year || ''))}</p>
+              <div data-ep-rating-widget="${escapeHtml(epRatingKey)}"></div>
             </div>
             <span class="watch-state-badge watch-state-badge-episode" data-progress-badge-for="${escapeHtml(progressKey)}" hidden></span>
             <div class="watch-progress watch-progress-episode" data-progress-key="${escapeHtml(progressKey)}"><span class="watch-progress-fill"></span></div>
@@ -2110,6 +2370,16 @@ async function showSeriesModal(seriesItem) {
 
   modal._playableEpisodes = playableEpisodes;
   content.innerHTML = html;
+
+  // Wire episode star rating widgets
+  content.querySelectorAll('[data-ep-rating-widget]').forEach((wrap) => {
+    const key = wrap.getAttribute('data-ep-rating-widget') || '';
+    if (!key) return;
+    renderMiniStarWidget(key, wrap, () => refreshSeriesModalAverages(content, head, seriesItem));
+  });
+
+  // Render initial season + series averages
+  refreshSeriesModalAverages(content, head, seriesItem);
 
   const nextEpisode = getSeriesNextEpisodeCandidate(seriesItem);
   const continueIndex = nextEpisode?.progressKey
@@ -2438,6 +2708,8 @@ function createCard(item, isTV = false, index = 0, options = {}) {
     ? `<span class="card-saga-badge">${escapeHtml(sagaBadgeLabel)}</span>`
     : '';
   const progressKey = !isTV ? getMovieProgressKey(item) : '';
+  const itemRatingKey = getRatingKey(item, isTV ? 'tv' : 'movie');
+  const currentCardRating = getUserRating(itemRatingKey);
 
   let cardWatchStatus = 'not-started';
   let progressBadgeMarkup = '';
@@ -2494,6 +2766,7 @@ function createCard(item, isTV = false, index = 0, options = {}) {
         ${seasonBadge}
         ${collectionBadge}
       </div>
+      <div class="card-rating" data-rating-display-for="${escapeHtml(itemRatingKey)}"${currentCardRating > 0 ? '' : ' hidden'}>${currentCardRating > 0 ? '★'.repeat(currentCardRating) + '☆'.repeat(5 - currentCardRating) : ''}</div>
     </div>
   `;
 
@@ -3801,6 +4074,7 @@ async function init() {
   ]);
 
   loadWatchProgressStore();
+  loadRatingsStore();
 
   setupNav();
   setupSearch();
