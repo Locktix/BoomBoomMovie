@@ -2687,6 +2687,35 @@ function setupVideoModal() {
       e.preventDefault();
       e.stopPropagation();
       seekVideoBy(-SEEK_STEP_SECONDS);
+      return;
+    }
+
+    if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+      return;
+    }
+
+    if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!document.fullscreenElement) {
+        video.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+      return;
+    }
+
+    if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      e.stopPropagation();
+      video.muted = !video.muted;
     }
   }
 
@@ -2748,6 +2777,13 @@ function setupVideoModal() {
   });
 
   window.addEventListener('keydown', handleVideoKeyboardShortcuts, true);
+
+  // After clicking anywhere on the native video controls (including the seek bar),
+  // blur the video element so subsequent arrow-key events reach our capture handler
+  // cleanly, without the browser's shadow-DOM controls intercepting them first.
+  video.addEventListener('click', () => {
+    requestAnimationFrame(() => video.blur());
+  });
 
   video.addEventListener('loadedmetadata', () => {
     applyPendingResumeTime();
