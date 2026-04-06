@@ -1,5 +1,64 @@
 [
   {
+    "version": "1.8",
+    "date": "2026-04-06",
+    "label": "Comptes, notes et statistiques",
+    "changes": [
+      {
+        "type": "feature",
+        "description": "Système de comptes utilisateurs avec inscription, connexion et déconnexion via Firebase Authentication"
+      },
+      {
+        "type": "feature",
+        "description": "Synchronisation cloud de la progression et des notes en temps réel via Firestore — les données suivent l'utilisateur sur tous ses appareils"
+      },
+      {
+        "type": "feature",
+        "description": "Système de notes personnelles par étoiles (0.5 à 5) pour les films, séries et épisodes individuels avec demi-étoile visuelle"
+      },
+      {
+        "type": "feature",
+        "description": "Page Mes stats : films vus, épisodes complétés, temps d'écran total (films + séries), note moyenne, genre préféré et titres récemment regardés"
+      },
+      {
+        "type": "feature",
+        "description": "Page Demandes de titres : recherche TMDB et soumission de demandes d'ajout directement depuis l'application"
+      },
+      {
+        "type": "feature",
+        "description": "Interface d'administration pour gérer et modérer les demandes de titres (accès réservé aux comptes admin)"
+      },
+      {
+        "type": "feature",
+        "description": "Hero cinématique plein cadre sur l'accueil avec animation d'ambiance, métadonnées condensées et sélection prioritaire des items avec backdrop"
+      },
+      {
+        "type": "feature",
+        "description": "Section Collections mise en avant sur l'accueil avec tuiles cinématiques et lien vers la vue complète"
+      },
+      {
+        "type": "improvement",
+        "description": "Notation et Marquer comme vu requièrent désormais un compte — une invite de connexion s'ouvre automatiquement"
+      },
+      {
+        "type": "improvement",
+        "description": "Calcul du temps d'écran corrigé : fallback sur le runtime TMDB quand la durée n'est pas encore enregistrée en local"
+      },
+      {
+        "type": "improvement",
+        "description": "Les étoiles de notation utilisent un rendu graphique CSS (demi-remplissage) plutôt que des caractères texte dans les badges et la fiche détails"
+      },
+      {
+        "type": "fix",
+        "description": "Correction du temps d'écran qui restait incorrect pour les films marqués manuellement sans avoir lancé la lecture"
+      },
+      {
+        "type": "fix",
+        "description": "Déconnexion vide maintenant correctement la progression et les notes de la session — plus aucune donnée personnelle visible sans être connecté"
+      }
+    ]
+  },
+  {
     "version": "1.7",
     "date": "2026-03-31",
     "label": "Collections et Genres en tuiles cinématiques",
