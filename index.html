@@ -39,6 +39,10 @@
         <input type="search" class="search" id="search" placeholder="Rechercher un titre…" autocomplete="off" />
       </div>
 
+      <button class="profile-btn" id="profile-btn" type="button" aria-label="Menu compte" hidden>
+        <span class="profile-avatar" id="profile-avatar">?</span>
+      </button>
+      <button class="auth-open-btn" id="auth-open-btn" type="button">Connexion</button>
 
     </div>
   </header>
@@ -62,6 +66,13 @@
         <div class="section-header-right">
           <div class="filter-chips" id="movies-status-filters"></div>
           <div class="filter-chips" id="movies-collection-filters"></div>
+          <select class="filter-select filter-select-sm" id="movies-genre-select"><option value="">Tous les genres</option></select>
+          <select class="filter-select filter-select-sm" id="movies-sort-select">
+            <option value="default">Trier par…</option>
+            <option value="date-desc">Date ↓</option>
+            <option value="date-asc">Date ↑</option>
+            <option value="rating-desc">Note ↓</option>
+          </select>
           <button id="view-toggle-movies" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
         </div>
       </div>
@@ -78,6 +89,13 @@
         <div class="section-header-right">
           <div class="filter-chips" id="series-status-filters"></div>
           <div class="filter-chips" id="series-collection-filters"></div>
+          <select class="filter-select filter-select-sm" id="series-genre-select"><option value="">Tous les genres</option></select>
+          <select class="filter-select filter-select-sm" id="series-sort-select">
+            <option value="default">Trier par…</option>
+            <option value="date-desc">Date ↓</option>
+            <option value="date-asc">Date ↑</option>
+            <option value="rating-desc">Note ↓</option>
+          </select>
           <button id="view-toggle-series" class="view-toggle" type="button" aria-label="Changer le type d'affichage" title="Changer le type d'affichage"></button>
         </div>
       </div>
@@ -115,6 +133,33 @@
         </div>
       </div>
       <div class="grid" id="mcu-grid"></div>
+    </section>
+
+    <!-- Stats View -->
+    <section id="view-stats" class="view">
+      <div class="section-header">
+        <div class="section-head-left">
+          <h2 class="section-title">Statistiques</h2>
+        </div>
+      </div>
+      <div id="stats-content" class="stats-content"></div>
+    </section>
+
+    <!-- Requests View -->
+    <section id="view-requests" class="view">
+      <div class="section-header">
+        <div class="section-head-left">
+          <h2 class="section-title">Demandes</h2>
+          <span class="count" id="requests-count"></span>
+        </div>
+        <div class="section-header-right">
+          <button class="btn-request-title" id="btn-request-title" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Demander un titre
+          </button>
+        </div>
+      </div>
+      <div id="requests-grid" class="requests-grid"></div>
     </section>
 
   </main>
@@ -174,6 +219,59 @@
     </section>
   </div>
 
+  <!-- ===== AUTH MODAL ===== -->
+  <div id="auth-modal" class="auth-modal" hidden aria-hidden="true">
+    <div class="auth-modal-backdrop" data-close-auth></div>
+    <section class="auth-modal-panel" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <button id="auth-modal-close" class="auth-modal-close" aria-label="Fermer">✕</button>
+      <div class="auth-modal-head">
+        <p class="auth-kicker">BoomBoom</p>
+        <h2 id="auth-modal-title" class="auth-modal-title">Connexion</h2>
+      </div>
+      <div id="auth-modal-content" class="auth-modal-content"></div>
+    </section>
+  </div>
+
+  <!-- ===== PROFILE DROPDOWN ===== -->
+  <div id="profile-dropdown" class="profile-dropdown" hidden>
+    <p class="profile-email" id="profile-email"></p>
+    <hr class="profile-sep" />
+    <button class="profile-menu-item" id="profile-nav-stats" type="button">📊 Mes stats</button>
+    <button class="profile-menu-item" id="profile-nav-requests" type="button">🎬 Demander un titre</button>
+    <hr class="profile-sep" />
+    <button class="profile-menu-item" id="profile-signout" type="button">🚪 Déconnexion</button>
+    <button class="profile-menu-item profile-menu-danger" id="profile-delete" type="button">🗑️ Supprimer le compte</button>
+  </div>
+
+  <!-- ===== TMDB SEARCH MODAL ===== -->
+  <div id="tmdb-search-modal" class="tmdb-search-modal" hidden aria-hidden="true">
+    <div class="tmdb-search-backdrop" data-close-tmdb></div>
+    <section class="tmdb-search-panel" role="dialog" aria-modal="true" aria-labelledby="tmdb-search-title">
+      <button id="tmdb-search-close" class="tmdb-search-close" aria-label="Fermer">✕</button>
+      <div class="tmdb-search-head">
+        <h3 id="tmdb-search-title">Ajouter un titre à ma bibliothèque</h3>
+      </div>
+      <div class="tmdb-search-form">
+        <div class="tmdb-search-mode-wrap">
+          <button class="tmdb-mode-btn active" id="tmdb-mode-query" type="button">Mots-clés</button>
+          <button class="tmdb-mode-btn" id="tmdb-mode-id" type="button">ID TMDB</button>
+        </div>
+        <div class="tmdb-input-row">
+          <input type="text" id="tmdb-search-input" class="tmdb-search-input"
+            placeholder="Nom du film ou de la série…" autocomplete="off" />
+          <select id="tmdb-id-type" class="filter-select filter-select-sm" hidden>
+            <option value="movie">Film</option>
+            <option value="tv">Série</option>
+          </select>
+          <button type="button" class="tmdb-search-btn" id="tmdb-search-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="tmdb-search-results" class="tmdb-search-results"></div>
+    </section>
+  </div>
+
   <!-- ===== ROADMAP MODAL ===== -->
   <div id="roadmap-modal" class="roadmap-modal" hidden aria-hidden="true">
     <div class="roadmap-modal-backdrop" data-close-roadmap></div>
@@ -187,6 +285,12 @@
     </section>
   </div>
 
+  <!-- Firebase compat SDK v10 -->
+  <script src="firebase.config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-module.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

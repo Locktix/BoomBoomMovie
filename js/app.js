@@ -109,6 +109,14 @@ const state = {
     movies: 'all',
     series: 'all',
   },
+  sortConfig: {
+    movies: 'default',
+    series: 'default',
+  },
+  filterConfig: {
+    movies: { genre: '' },
+    series: { genre: '' },
+  },
 };
 
 const playerState = {
@@ -131,6 +139,25 @@ const tmdbSeasonDetailsCache = new Map();
 
 let watchProgressStore = {};
 let ratingsStore = {};
+
+// ── Firebase debounce timers (évite trop d'écritures pendant la lecture) ──
+const _fbProgressTimers = {};
+function _fbDebounceProgress(progressKey, data) {
+  if (!window.FB?.isLoggedIn?.()) return;
+  clearTimeout(_fbProgressTimers[progressKey]);
+  _fbProgressTimers[progressKey] = setTimeout(() => {
+    window.FB.saveProgress(progressKey, data);
+  }, 3000);
+}
+
+function _fbSaveRatingNow(ratingKey, data) {
+  if (!window.FB?.isLoggedIn?.()) return;
+  if (data) {
+    window.FB.saveRating(ratingKey, data);
+  } else {
+    window.FB.deleteRatingCloud(ratingKey);
+  }
+}
 const WATCH_STATUS_FILTERS = [
   { value: 'all', label: 'Tout' },
   { value: 'not-started', label: 'Non vus' },
@@ -224,8 +251,10 @@ function setUserRating(ratingKey, rating) {
   const value = Number(rating);
   if (!Number.isInteger(value) || value < 1 || value > 5) {
     delete ratingsStore[ratingKey];
+    _fbSaveRatingNow(ratingKey, null);
   } else {
     ratingsStore[ratingKey] = { rating: value, updatedAt: Date.now() };
+    _fbSaveRatingNow(ratingKey, ratingsStore[ratingKey]);
   }
   saveRatingsStore();
 }
@@ -453,6 +482,8 @@ function updateWatchProgressEntry(progressKey, payload) {
     updatedAt: Date.now(),
   };
   saveWatchProgressStore();
+  // Sync Firebase (débouncé 3s pour ne pas saturer pendant la lecture)
+  _fbDebounceProgress(progressKey, watchProgressStore[progressKey]);
 }
 
 function removeWatchProgressEntry(progressKey) {
@@ -460,6 +491,8 @@ function removeWatchProgressEntry(progressKey) {
   if (!Object.prototype.hasOwnProperty.call(watchProgressStore, progressKey)) return;
   delete watchProgressStore[progressKey];
   saveWatchProgressStore();
+  // Sync Firebase
+  if (window.FB?.isLoggedIn?.()) window.FB.deleteProgress(progressKey);
 }
 
 function markPlaybackCompleted(progressKey, title = '') {
@@ -1855,6 +1888,8 @@ function refreshFiltersForActiveSection() {
   if (section.id === 'view-home') return;
   if (section.id === 'view-collections') return;
   if (section.id === 'view-genres') return;
+  if (section.id === 'view-stats') return;
+  if (section.id === 'view-requests') return;
 
   const cards = [...section.querySelectorAll('.card')];
 
@@ -1871,6 +1906,8 @@ function refreshFiltersForActiveSection() {
 
   renderAllCollectionChips(collections);
   renderStatusChips();
+  _populateGenreSelect(section);
+  _wireAdvancedFilters(section);
 }
 
 function renderStatusChips() {
@@ -2171,6 +2208,7 @@ function applyCurrentFilters() {
   const selectedCollection = state.selectedCollection;
   const statusKey = section.id === 'view-series' ? 'series' : 'movies';
   const selectedStatus = state.selectedStatus[statusKey] || 'all';
+  const selectedGenre = state.filterConfig[statusKey]?.genre || '';
   let visibleCount = 0;
 
   section.querySelectorAll('.card').forEach((card) => {
@@ -2179,7 +2217,9 @@ function applyCurrentFilters() {
     const matchCollection = selectedCollection === 'all' || card.dataset.collection === selectedCollection;
     const cardStatus = card.dataset.watchStatus || 'not-started';
     const matchStatus = selectedStatus === 'all' || selectedStatus === cardStatus;
-    const isVisible = matchSearch && matchCollection && matchStatus;
+    const cardGenres = (card.dataset.genres || '').split('|').map((g) => g.toLowerCase());
+    const matchGenre = !selectedGenre || cardGenres.includes(selectedGenre.toLowerCase());
+    const isVisible = matchSearch && matchCollection && matchStatus && matchGenre;
 
     card.style.display = isVisible ? '' : 'none';
     if (isVisible) visibleCount += 1;
@@ -2196,6 +2236,57 @@ function applyCurrentFilters() {
 
 function setupFilters() {
   refreshFiltersForActiveSection();
+}
+
+function _populateGenreSelect(section) {
+  const isMovies = section.id === 'view-films';
+  const isSeries = section.id === 'view-series';
+  if (!isMovies && !isSeries) return;
+
+  const stateKey = isSeries ? 'series' : 'movies';
+  const selectId = isSeries ? 'series-genre-select' : 'movies-genre-select';
+  const select = document.getElementById(selectId);
+  if (!select) return;
+
+  const items = isSeries ? state.series : state.movies;
+  const genreSet = new Set();
+  items.forEach((item) => getItemGenres(item).forEach((g) => genreSet.add(g)));
+  const genres = [...genreSet].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+
+  const currentVal = state.filterConfig[stateKey]?.genre || '';
+  select.innerHTML = '<option value="">Tous les genres</option>'
+    + genres.map((g) => `<option value="${escapeHtml(g)}"${g === currentVal ? ' selected' : ''}>${escapeHtml(g)}</option>`).join('');
+}
+
+const _advancedFiltersBound = new Set();
+function _wireAdvancedFilters(section) {
+  const isMovies = section.id === 'view-films';
+  const isSeries = section.id === 'view-series';
+  if (!isMovies && !isSeries) return;
+
+  const stateKey  = isSeries ? 'series' : 'movies';
+  const genreSelId = isSeries ? 'series-genre-select' : 'movies-genre-select';
+  const sortSelId  = isSeries ? 'series-sort-select'  : 'movies-sort-select';
+
+  if (!_advancedFiltersBound.has(genreSelId)) {
+    const genreSel = document.getElementById(genreSelId);
+    genreSel?.addEventListener('change', () => {
+      state.filterConfig[stateKey].genre = genreSel.value;
+      applyCurrentFilters();
+    });
+    _advancedFiltersBound.add(genreSelId);
+  }
+
+  if (!_advancedFiltersBound.has(sortSelId)) {
+    const sortSel = document.getElementById(sortSelId);
+    sortSel?.addEventListener('change', () => {
+      state.sortConfig[stateKey] = sortSel.value;
+      renderLibrary();
+      refreshFiltersForActiveSection();
+      applyCurrentFilters();
+    });
+    _advancedFiltersBound.add(sortSelId);
+  }
 }
 
 function updateSearchPlaceholder() {
@@ -2692,6 +2783,9 @@ function createCard(item, isTV = false, index = 0, options = {}) {
   card.setAttribute('role', 'button');
   card.setAttribute('aria-label', `${item.title} (${releaseLabel})`);
   card.dataset.year = String(item.year || '');
+  // genres pour le filtre avancé
+  const cardGenreList = getItemGenres(item);
+  card.dataset.genres = cardGenreList.join('|');
   const collectionLabel = getItemCollection(item);
   card.dataset.collection = normalizeCollection(collectionLabel);
   card.dataset.collectionLabel = collectionLabel;
@@ -3577,33 +3671,63 @@ function renderGrid(items, gridId, countId, isTV) {
 }
 
 function renderLibrary() {
-  renderGrid(state.movies, 'movies-grid', 'movies-count', false);
-  renderGrid(state.series, 'series-grid', 'series-count', true);
+  const moviesSorted = _getSortedItems(state.movies, 'movies');
+  const seriesSorted = _getSortedItems(state.series, 'series');
+  renderGrid(moviesSorted, 'movies-grid', 'movies-count', false);
+  renderGrid(seriesSorted, 'series-grid', 'series-count', true);
   renderHomeRows();
   renderCollectionRows();
   renderGenreRows();
   refreshProgressDecorations();
 }
 
+function _getSortedItems(items, section) {
+  const sort = state.sortConfig[section] || 'default';
+  if (sort === 'date-desc' || sort === 'default') return items;
+  if (sort === 'date-asc') {
+    return [...items].sort((a, b) => {
+      const ya = Number(a?.year) || 0;
+      const yb = Number(b?.year) || 0;
+      if (ya !== yb) return ya - yb;
+      return String(a?.title || '').localeCompare(String(b?.title || ''), 'fr', { sensitivity: 'base' });
+    });
+  }
+  if (sort === 'rating-desc') {
+    const isTV = section === 'series';
+    return [...items].sort((a, b) => {
+      const ra = getUserRating(getRatingKey(a, isTV ? 'tv' : 'movie'));
+      const rb = getUserRating(getRatingKey(b, isTV ? 'tv' : 'movie'));
+      if (rb !== ra) return rb - ra;
+      return String(a?.title || '').localeCompare(String(b?.title || ''), 'fr', { sensitivity: 'base' });
+    });
+  }
+  return items;
+}
+
+function navigateTo(target) {
+  const navLinks = document.querySelectorAll('.nav-link[data-view]');
+  const views    = document.querySelectorAll('.view');
+
+  navLinks.forEach((l) => {
+    const isActive = l.dataset.view === target;
+    l.classList.toggle('active', isActive);
+    l.setAttribute('aria-current', isActive ? 'page' : 'false');
+  });
+
+  views.forEach((v) => v.classList.toggle('active', v.id === target));
+  updateSearchPlaceholder();
+  refreshFiltersForActiveSection();
+  applyCurrentFilters();
+
+  if (target === 'view-stats')    renderStatsView();
+  if (target === 'view-requests') renderRequestsView();
+}
+
 function setupNav() {
   const navLinks = document.querySelectorAll('.nav-link[data-view]');
-  const views = document.querySelectorAll('.view');
 
   navLinks.forEach((link) => {
-    link.addEventListener('click', () => {
-      const target = link.dataset.view;
-
-      navLinks.forEach((l) => {
-        const isActive = l === link;
-        l.classList.toggle('active', isActive);
-        l.setAttribute('aria-current', isActive ? 'page' : 'false');
-      });
-
-      views.forEach((v) => v.classList.toggle('active', v.id === target));
-      updateSearchPlaceholder();
-      refreshFiltersForActiveSection();
-      applyCurrentFilters();
-    });
+    link.addEventListener('click', () => navigateTo(link.dataset.view));
   });
 }
 
@@ -4068,6 +4192,18 @@ async function init() {
   const initStartTime = performance.now();
   console.log('%c🚀 BoomBoomMovie init() started', 'color: #00ff00; font-weight: bold');
 
+  // Initialiser Firebase dès le début
+  if (typeof window.FB !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+    window.FB.init(firebaseConfig);
+    window.FB.onAuthChange((user) => {
+      if (user) {
+        onUserLogin(user);
+      } else {
+        onUserLogout();
+      }
+    });
+  }
+
   await Promise.all([
     loadTmdbConfigFile(),
     loadCollections(),
@@ -4084,6 +4220,9 @@ async function init() {
   setupDetailsModal();
   setupSeriesModal();
   setupRoadmapModal();
+  setupAuthModal();
+  setupProfileDropdown();
+  setupTmdbSearchModal();
   updateSearchPlaceholder();
 
   try {
@@ -4196,6 +4335,674 @@ async function init() {
   } finally {
     hideLoading();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FIREBASE AUTH UI
+// ═══════════════════════════════════════════════════════════════════════════
+
+const AUTH_ERROR_MESSAGES = {
+  'auth/email-already-in-use':    'Cet e-mail est déjà associé à un compte.',
+  'auth/wrong-password':          'Mot de passe incorrect.',
+  'auth/user-not-found':          'Aucun compte trouvé avec cet e-mail.',
+  'auth/invalid-email':           'Adresse e-mail invalide.',
+  'auth/weak-password':           'Le mot de passe doit contenir au moins 6 caractères.',
+  'auth/too-many-requests':       'Trop de tentatives. Réessaie plus tard.',
+  'auth/requires-recent-login':   'Reconnecte-toi avant de supprimer ton compte.',
+  'auth/invalid-credential':      'E-mail ou mot de passe incorrect.',
+};
+
+function _fbErrorMessage(err) {
+  return AUTH_ERROR_MESSAGES[err?.code] || String(err?.message || 'Une erreur est survenue.');
+}
+
+function openAuthModal(mode) {
+  const modal = document.getElementById('auth-modal');
+  if (!modal) return;
+  _renderAuthForm(mode || 'login');
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  const input = document.getElementById('auth-email-input');
+  setTimeout(() => input?.focus(), 60);
+}
+
+function closeAuthModal() {
+  const modal = document.getElementById('auth-modal');
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function _renderAuthForm(mode) {
+  const titleEl  = document.getElementById('auth-modal-title');
+  const contentEl = document.getElementById('auth-modal-content');
+  if (!titleEl || !contentEl) return;
+
+  const isLogin = mode !== 'register';
+  titleEl.textContent = isLogin ? 'Connexion' : 'Créer un compte';
+
+  contentEl.innerHTML = `
+    <form id="auth-form" class="auth-form" novalidate>
+      <label class="auth-label" for="auth-email-input">E-mail</label>
+      <input class="auth-input" id="auth-email-input" type="email" autocomplete="email"
+        placeholder="ton@email.com" required />
+
+      <label class="auth-label" for="auth-password-input">Mot de passe</label>
+      <input class="auth-input" id="auth-password-input" type="password"
+        autocomplete="${isLogin ? 'current-password' : 'new-password'}"
+        placeholder="${isLogin ? '••••••' : 'Min. 6 caractères'}" required />
+
+      <p id="auth-error" class="auth-error" hidden></p>
+
+      <button class="auth-submit-btn" type="submit">
+        ${isLogin ? 'Se connecter' : "S'inscrire"}
+      </button>
+    </form>
+    <p class="auth-switch">
+      ${isLogin
+        ? 'Pas encore de compte ? <button class="auth-link" id="auth-switch-btn" type="button">Créer un compte</button>'
+        : 'Déjà un compte ? <button class="auth-link" id="auth-switch-btn" type="button">Se connecter</button>'}
+    </p>
+  `;
+
+  const form      = document.getElementById('auth-form');
+  const switchBtn = document.getElementById('auth-switch-btn');
+  const errorEl   = document.getElementById('auth-error');
+
+  switchBtn?.addEventListener('click', () => _renderAuthForm(isLogin ? 'register' : 'login'));
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('auth-email-input')?.value?.trim() || '';
+    const password = document.getElementById('auth-password-input')?.value || '';
+    const btn = form.querySelector('.auth-submit-btn');
+
+    if (!email || !password) return;
+
+    errorEl.hidden = true;
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+      if (isLogin) {
+        await window.FB.signIn(email, password);
+      } else {
+        await window.FB.signUp(email, password);
+      }
+      closeAuthModal();
+    } catch (err) {
+      errorEl.textContent = _fbErrorMessage(err);
+      errorEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = isLogin ? 'Se connecter' : "S'inscrire";
+    }
+  });
+}
+
+function _renderDeleteAccountForm() {
+  const titleEl   = document.getElementById('auth-modal-title');
+  const contentEl = document.getElementById('auth-modal-content');
+  if (!titleEl || !contentEl) return;
+
+  titleEl.textContent = 'Supprimer le compte';
+  contentEl.innerHTML = `
+    <p class="auth-danger-warning">
+      ⚠️ Cette action est <strong>irréversible</strong>. Toutes tes données
+      (progression, notes, bibliothèque) seront supprimées définitivement.
+    </p>
+    <form id="delete-form" class="auth-form" novalidate>
+      <label class="auth-label" for="delete-password-input">Confirme ton mot de passe</label>
+      <input class="auth-input" id="delete-password-input" type="password"
+        placeholder="••••••" required autocomplete="current-password" />
+      <p id="delete-error" class="auth-error" hidden></p>
+      <button class="auth-submit-btn auth-submit-danger" type="submit">Supprimer définitivement</button>
+    </form>
+  `;
+
+  document.getElementById('delete-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const password = document.getElementById('delete-password-input')?.value || '';
+    const errorEl  = document.getElementById('delete-error');
+    const btn      = e.target.querySelector('.auth-submit-btn');
+
+    errorEl.hidden = true;
+    btn.disabled   = true;
+    btn.textContent = '…';
+
+    try {
+      await window.FB.deleteAccount(password);
+      closeAuthModal();
+    } catch (err) {
+      errorEl.textContent = _fbErrorMessage(err);
+      errorEl.hidden = false;
+      btn.disabled   = false;
+      btn.textContent = 'Supprimer définitivement';
+    }
+  });
+}
+
+function setupAuthModal() {
+  const openBtn  = document.getElementById('auth-open-btn');
+  const closeBtn = document.getElementById('auth-modal-close');
+  const modal    = document.getElementById('auth-modal');
+  if (!modal) return;
+
+  openBtn?.addEventListener('click', () => openAuthModal('login'));
+  closeBtn?.addEventListener('click', closeAuthModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-auth')) closeAuthModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeAuthModal();
+  });
+}
+
+function _updateHeaderForAuth(user) {
+  const openBtn    = document.getElementById('auth-open-btn');
+  const profileBtn = document.getElementById('profile-btn');
+  const avatarEl   = document.getElementById('profile-avatar');
+  const emailEl    = document.getElementById('profile-email');
+
+  if (user) {
+    if (openBtn)    openBtn.hidden    = true;
+    if (profileBtn) profileBtn.hidden = false;
+    if (avatarEl) {
+      const email = user.email || '';
+      avatarEl.textContent = email.charAt(0).toUpperCase() || '?';
+    }
+    if (emailEl) emailEl.textContent = user.email || '';
+  } else {
+    if (openBtn)    openBtn.hidden    = false;
+    if (profileBtn) profileBtn.hidden = true;
+    _hideProfileDropdown();
+  }
+}
+
+function _hideProfileDropdown() {
+  const dd = document.getElementById('profile-dropdown');
+  if (dd) dd.hidden = true;
+}
+
+function setupProfileDropdown() {
+  const profileBtn  = document.getElementById('profile-btn');
+  const dropdown    = document.getElementById('profile-dropdown');
+  const signoutBtn  = document.getElementById('profile-signout');
+  const deleteBtn   = document.getElementById('profile-delete');
+  const navStats    = document.getElementById('profile-nav-stats');
+  const navRequests = document.getElementById('profile-nav-requests');
+  if (!profileBtn || !dropdown) return;
+
+  profileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const rect = profileBtn.getBoundingClientRect();
+    dropdown.style.top  = `${rect.bottom + 8}px`;
+    dropdown.style.right = `${window.innerWidth - rect.right}px`;
+    dropdown.hidden = !dropdown.hidden;
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== profileBtn) {
+      _hideProfileDropdown();
+    }
+  });
+
+  navStats?.addEventListener('click', () => {
+    _hideProfileDropdown();
+    navigateTo('view-stats');
+  });
+
+  navRequests?.addEventListener('click', () => {
+    _hideProfileDropdown();
+    navigateTo('view-requests');
+  });
+
+  signoutBtn?.addEventListener('click', async () => {
+    _hideProfileDropdown();
+    await window.FB?.signOut?.();
+  });
+
+  deleteBtn?.addEventListener('click', () => {
+    _hideProfileDropdown();
+    openAuthModal('login');
+    _renderDeleteAccountForm();
+  });
+}
+
+async function onUserLogin(user) {
+  console.log(`[BoomBoom] Connecté : ${user.email}`);
+  _updateHeaderForAuth(user);
+
+  // Migration localStorage → Firestore (première connexion seulement)
+  await window.FB.migrateFromLocalStorage(watchProgressStore, ratingsStore);
+
+  // Charger les données Cloud et mettre à jour les stores locaux
+  const [cloudProgress, cloudRatings] = await Promise.all([
+    window.FB.loadAllProgress(),
+    window.FB.loadAllRatings(),
+  ]);
+
+  // Fusionner : la version Cloud (plus récente) remplace le local
+  Object.entries(cloudProgress).forEach(([key, val]) => {
+    const localEntry = watchProgressStore[key];
+    const cloudTs = Number(val?.updatedAt) || 0;
+    const localTs = Number(localEntry?.updatedAt) || 0;
+    if (cloudTs >= localTs) watchProgressStore[key] = val;
+  });
+  Object.entries(cloudRatings).forEach(([key, val]) => {
+    const localEntry = ratingsStore[key];
+    const cloudTs = Number(val?.updatedAt) || 0;
+    const localTs = Number(localEntry?.updatedAt) || 0;
+    if (cloudTs >= localTs) ratingsStore[key] = val;
+  });
+
+  saveWatchProgressStore();
+  saveRatingsStore();
+
+  // Synchronisation temps réel
+  window.FB.setupRealtimeSync(
+    (progressStore) => {
+      watchProgressStore = { ...watchProgressStore, ...progressStore };
+      saveWatchProgressStore();
+      refreshProgressDecorations();
+      renderLibrary();
+    },
+    (rStore) => {
+      ratingsStore = { ...ratingsStore, ...rStore };
+      saveRatingsStore();
+      refreshRatingDecorations();
+    }
+  );
+
+  renderLibrary();
+  refreshFiltersForActiveSection();
+  applyCurrentFilters();
+
+  // Rafraîchir si on est sur une vue spéciale
+  const section = getActiveSection();
+  if (section?.id === 'view-stats')    renderStatsView();
+  if (section?.id === 'view-requests') renderRequestsView();
+}
+
+function onUserLogout() {
+  console.log('[BoomBoom] Déconnecté');
+  _updateHeaderForAuth(null);
+  window.FB?.teardownRealtimeSync?.();
+
+  // Revenir aux données localStorage
+  loadWatchProgressStore();
+  loadRatingsStore();
+
+  renderLibrary();
+  refreshFiltersForActiveSection();
+  applyCurrentFilters();
+
+  const section = getActiveSection();
+  if (section?.id === 'view-stats')    renderStatsView();
+  if (section?.id === 'view-requests') renderRequestsView();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DASHBOARD STATISTIQUES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function _getStatsData() {
+  let moviesSeenCount   = 0;
+  let seriesStarted     = 0;
+  let seriesCompleted   = 0;
+  let totalRatings      = 0;
+  let ratingsSum        = 0;
+  const genreCount      = new Map();
+
+  state.movies.forEach((item) => {
+    const status = getMovieWatchStatus(item);
+    if (status === 'completed') moviesSeenCount += 1;
+    getItemGenres(item).forEach((g) => genreCount.set(g, (genreCount.get(g) || 0) + 1));
+  });
+
+  state.series.forEach((item) => {
+    const status = getSeriesWatchStatus(item);
+    if (status === 'in-progress') seriesStarted  += 1;
+    if (status === 'completed')   seriesCompleted += 1;
+    getItemGenres(item).forEach((g) => genreCount.set(g, (genreCount.get(g) || 0) + 1));
+  });
+
+  Object.values(ratingsStore).forEach((entry) => {
+    const r = Number(entry?.rating);
+    if (Number.isInteger(r) && r >= 1 && r <= 5) {
+      totalRatings += 1;
+      ratingsSum   += r;
+    }
+  });
+
+  const avgRating = totalRatings > 0 ? (ratingsSum / totalRatings).toFixed(1) : '—';
+
+  const topGenres = [...genreCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+
+  return { moviesSeenCount, seriesStarted, seriesCompleted, avgRating, topGenres, totalRatings };
+}
+
+function renderStatsView() {
+  const container = document.getElementById('stats-content');
+  if (!container) return;
+
+  const { moviesSeenCount, seriesStarted, seriesCompleted, avgRating, topGenres } = _getStatsData();
+  const totalMovies = state.movies.length;
+  const totalSeries = state.series.length;
+  const maxGenreCount = topGenres.length ? topGenres[0][1] : 1;
+
+  container.innerHTML = `
+    <div class="stats-cards">
+      <div class="stats-card">
+        <span class="stats-card-icon">🎬</span>
+        <span class="stats-card-value">${moviesSeenCount}</span>
+        <span class="stats-card-label">Films vus</span>
+        <span class="stats-card-sub">sur ${totalMovies} films</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-icon">📺</span>
+        <span class="stats-card-value">${seriesCompleted}</span>
+        <span class="stats-card-label">Séries terminées</span>
+        <span class="stats-card-sub">${seriesStarted} en cours · ${totalSeries} total</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-icon">⭐</span>
+        <span class="stats-card-value">${avgRating}</span>
+        <span class="stats-card-label">Note moyenne</span>
+        <span class="stats-card-sub">sur 5 étoiles</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-icon">📊</span>
+        <span class="stats-card-value">${totalMovies + totalSeries}</span>
+        <span class="stats-card-label">Titres au total</span>
+        <span class="stats-card-sub">${totalMovies} films · ${totalSeries} séries</span>
+      </div>
+    </div>
+
+    ${topGenres.length ? `
+    <div class="stats-section">
+      <h3 class="stats-section-title">Genres les plus représentés</h3>
+      <div class="stats-genre-list">
+        ${topGenres.map(([genre, count]) => `
+          <div class="stats-genre-row">
+            <span class="stats-genre-name">${escapeHtml(genre)}</span>
+            <div class="stats-genre-bar-wrap">
+              <div class="stats-genre-bar" style="width:${Math.round((count / maxGenreCount) * 100)}%"></div>
+            </div>
+            <span class="stats-genre-count">${count}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BIBLIOTHÈQUE PERSONNELLE (Firebase)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _requestsUnsubscribe = null;
+
+async function renderRequestsView() {
+  const grid    = document.getElementById('requests-grid');
+  const countEl = document.getElementById('requests-count');
+  const addBtn  = document.getElementById('btn-request-title');
+  if (!grid) return;
+
+  if (!window.FB?.isLoggedIn?.()) {
+    if (addBtn) addBtn.hidden = true;
+    grid.innerHTML = `
+      <div class="library-auth-prompt">
+        <p class="library-auth-icon">🔒</p>
+        <p>Connecte-toi pour faire une demande de titre.</p>
+        <button class="auth-submit-btn" id="requests-login-btn" type="button">Connexion</button>
+      </div>`;
+    document.getElementById('requests-login-btn')?.addEventListener('click', () => openAuthModal('login'));
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  if (addBtn) addBtn.hidden = false;
+  grid.innerHTML = '<p class="details-empty">Chargement…</p>';
+
+  // Abonnement temps réel
+  if (_requestsUnsubscribe) _requestsUnsubscribe();
+  _requestsUnsubscribe = window.FB.onRequestsChange((items) => {
+    if (countEl) countEl.textContent = items.length ? String(items.length) : '';
+    _renderRequestsList(items);
+  });
+}
+
+function _renderRequestsList(items) {
+  const grid = document.getElementById('requests-grid');
+  if (!grid) return;
+
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty-state"><span class="empty-icon">🎬</span><p>Tu n\'as pas encore fait de demande. Clique sur "Demander un titre" !</p></div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  items.forEach((item) => grid.appendChild(_createRequestCard(item)));
+}
+
+function _createRequestCard(item) {
+  const STATUS_CONFIG = {
+    pending:  { label: 'En attente', cls: '' },
+    approved: { label: 'Approuvé',   cls: 'watch-state-resume' },
+    added:    { label: '✓ Ajouté',   cls: 'watch-state-complete' },
+  };
+  const sc = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
+
+  const posterUrl = item.poster ? escapeHtml(item.poster) : '';
+  const typeLabel = item.mediaType === 'tv' ? 'Série' : 'Film';
+
+  const card = document.createElement('div');
+  card.className = 'request-card';
+  card.innerHTML = `
+    <div class="request-card-poster">
+      ${posterUrl
+        ? `<img src="${posterUrl}" alt="${escapeHtml(item.title)}" loading="lazy" />`
+        : `<div class="request-card-fallback">${escapeHtml(typeLabel)}</div>`}
+    </div>
+    <div class="request-card-body">
+      <p class="request-card-title">${escapeHtml(item.title)}</p>
+      <p class="request-card-meta">${escapeHtml(typeLabel)}${item.year ? ' · ' + escapeHtml(String(item.year)) : ''}</p>
+      ${item.note ? `<p class="request-card-note">"${escapeHtml(item.note)}"</p>` : ''}
+      <div class="request-card-footer">
+        <span class="watch-state-badge ${escapeHtml(sc.cls)}">${escapeHtml(sc.label)}</span>
+        ${item.status === 'pending' ? `<button class="request-cancel-btn" data-doc-id="${escapeHtml(item.id)}" type="button">Annuler</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  card.querySelector('.request-cancel-btn')?.addEventListener('click', async (e) => {
+    const docId = e.currentTarget.dataset.docId;
+    try {
+      await window.FB.cancelRequest(docId);
+    } catch (err) {
+      showNotice(err.message || 'Erreur lors de l\'annulation.', 'error');
+    }
+  });
+
+  return card;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODULE DE RECHERCHE TMDB
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _tmdbSearchMode = 'query'; // 'query' | 'id'
+
+function openTmdbSearchModal() {
+  const modal = document.getElementById('tmdb-search-modal');
+  if (!modal) return;
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('tmdb-search-input')?.focus();
+}
+
+function closeTmdbSearchModal() {
+  const modal = document.getElementById('tmdb-search-modal');
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  const results = document.getElementById('tmdb-search-results');
+  if (results) results.innerHTML = '';
+}
+
+function setupTmdbSearchModal() {
+  const modal      = document.getElementById('tmdb-search-modal');
+  const closeBtn   = document.getElementById('tmdb-search-close');
+  const searchBtn  = document.getElementById('tmdb-search-btn');
+  const input      = document.getElementById('tmdb-search-input');
+  const modeQuery  = document.getElementById('tmdb-mode-query');
+  const modeId     = document.getElementById('tmdb-mode-id');
+  const idTypeSelect = document.getElementById('tmdb-id-type');
+  const addBtn     = document.getElementById('btn-request-title');
+  if (!modal) return;
+
+  addBtn?.addEventListener('click', openTmdbSearchModal);
+  closeBtn?.addEventListener('click', closeTmdbSearchModal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target?.hasAttribute?.('data-close-tmdb')) closeTmdbSearchModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeTmdbSearchModal();
+  });
+
+  modeQuery?.addEventListener('click', () => {
+    _tmdbSearchMode = 'query';
+    modeQuery.classList.add('active');
+    modeId.classList.remove('active');
+    if (input) input.placeholder = 'Nom du film ou de la série…';
+    if (idTypeSelect) idTypeSelect.hidden = true;
+  });
+
+  modeId?.addEventListener('click', () => {
+    _tmdbSearchMode = 'id';
+    modeId.classList.add('active');
+    modeQuery.classList.remove('active');
+    if (input) input.placeholder = 'ID TMDB (ex: 299536)';
+    if (idTypeSelect) idTypeSelect.hidden = false;
+  });
+
+  searchBtn?.addEventListener('click', _runTmdbSearch);
+  input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') _runTmdbSearch(); });
+}
+
+async function _runTmdbSearch() {
+  const input    = document.getElementById('tmdb-search-input');
+  const results  = document.getElementById('tmdb-search-results');
+  const idType   = document.getElementById('tmdb-id-type');
+  if (!input || !results) return;
+
+  const query = input.value.trim();
+  if (!query) return;
+
+  results.innerHTML = '<p class="tmdb-searching">Recherche en cours…</p>';
+
+  try {
+    let items = [];
+    if (_tmdbSearchMode === 'id') {
+      const mediaType = idType?.value || 'movie';
+      const result = await window.FB.searchTmdbById(
+        query, mediaType,
+        CONFIG.TMDB_BEARER_TOKEN, CONFIG.TMDB_API_KEY, CONFIG.TMDB_LANG
+      );
+      if (result) items = [result];
+    } else {
+      items = await window.FB.searchTmdbByQuery(
+        query,
+        CONFIG.TMDB_BEARER_TOKEN, CONFIG.TMDB_API_KEY, CONFIG.TMDB_LANG
+      );
+    }
+
+    if (!items.length) {
+      results.innerHTML = '<p class="tmdb-searching">Aucun résultat trouvé.</p>';
+      return;
+    }
+
+    results.innerHTML = '';
+    items.forEach((tmdbItem) => {
+      const card = _buildTmdbResultCard(tmdbItem);
+      results.appendChild(card);
+    });
+  } catch {
+    results.innerHTML = '<p class="tmdb-searching">Erreur lors de la recherche TMDB.</p>';
+  }
+}
+
+function _buildTmdbResultCard(tmdbItem) {
+  const mediaType  = tmdbItem.media_type || 'movie';
+  const title      = String(tmdbItem.title || tmdbItem.name || '').trim();
+  const overview   = String(tmdbItem.overview || '').trim();
+  const posterPath = String(tmdbItem.poster_path || '').trim();
+  const posterUrl  = posterPath ? `${CONFIG.TMDB_IMAGE_BASE_URL}${posterPath}` : '';
+  const date       = String(tmdbItem.release_date || tmdbItem.first_air_date || '').trim();
+  const year       = date ? date.slice(0, 4) : '';
+  const tmdbId     = Number(tmdbItem.id) || 0;
+  const genres     = Array.isArray(tmdbItem.genre_ids) ? tmdbItem.genre_ids : [];
+  const typeLabel  = mediaType === 'tv' ? 'Série' : 'Film';
+
+  const card = document.createElement('div');
+  card.className = 'tmdb-result-card';
+  card.innerHTML = `
+    <div class="tmdb-result-poster">
+      ${posterUrl
+        ? `<img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(title)}" loading="lazy" />`
+        : `<div class="tmdb-result-poster-fallback">${escapeHtml(typeLabel)}</div>`}
+    </div>
+    <div class="tmdb-result-info">
+      <p class="tmdb-result-title">${escapeHtml(title)}</p>
+      <p class="tmdb-result-meta">${escapeHtml(typeLabel)} · ${escapeHtml(year)}</p>
+      ${overview ? `<p class="tmdb-result-overview">${escapeHtml(overview.slice(0, 120))}…</p>` : ''}
+    </div>
+    <div class="tmdb-result-actions">
+      <button class="tmdb-add-btn" type="button">Demander</button>
+    </div>
+    <div class="tmdb-note-area" hidden>
+      <textarea class="tmdb-note-input" placeholder="Commentaire optionnel…" maxlength="200" rows="2"></textarea>
+      <button class="tmdb-confirm-btn" type="button">Confirmer la demande →</button>
+    </div>
+  `;
+
+  card.querySelector('.tmdb-add-btn')?.addEventListener('click', () => {
+    if (!window.FB?.isLoggedIn?.()) {
+      openAuthModal('login');
+      return;
+    }
+    card.querySelector('.tmdb-note-area').hidden = false;
+    card.querySelector('.tmdb-add-btn').hidden = true;
+    card.querySelector('.tmdb-note-input')?.focus();
+  });
+
+  card.querySelector('.tmdb-confirm-btn')?.addEventListener('click', async () => {
+    const note       = card.querySelector('.tmdb-note-input')?.value.trim() || '';
+    const confirmBtn = card.querySelector('.tmdb-confirm-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '…';
+    try {
+      await window.FB.submitRequest({ tmdbId, mediaType, title, poster: posterUrl, overview, year: Number(year) || 0, note });
+      card.querySelector('.tmdb-note-area').innerHTML = '<p class="tmdb-request-sent">✓ Demande envoyée !</p>';
+      const section = getActiveSection();
+      if (section?.id === 'view-requests') renderRequestsView();
+    } catch (err) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirmer la demande →';
+      showNotice(err.message || 'Erreur lors de la demande.', 'error');
+    }
+  });
+
+  return card;
 }
 
 document.addEventListener('DOMContentLoaded', init);
