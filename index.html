@@ -43,6 +43,12 @@
         <span class="profile-avatar" id="profile-avatar">👤</span>
       </button>
 
+      <button class="burger-btn" id="burger-btn" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-nav">
+        <span class="burger-line"></span>
+        <span class="burger-line"></span>
+        <span class="burger-line"></span>
+      </button>
+
     </div>
   </header>
 
@@ -267,6 +273,51 @@
       </div>
       <div id="auth-modal-content" class="auth-modal-content"></div>
     </section>
+  </div>
+
+  <!-- ===== MOBILE NAV DRAWER ===== -->
+  <div id="mobile-nav" class="mobile-nav" hidden aria-hidden="true">
+    <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
+    <div class="mobile-nav-panel" role="dialog" aria-modal="true" aria-label="Menu de navigation">
+      <div class="mobile-nav-top">
+        <span class="mobile-nav-logo">BoomBoom</span>
+        <button class="mobile-nav-close" id="mobile-nav-close" type="button" aria-label="Fermer le menu">✕</button>
+      </div>
+      <div class="mobile-nav-search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="search" id="mobile-search" class="search" placeholder="Rechercher un titre…" autocomplete="off" />
+      </div>
+      <nav class="mobile-nav-links" aria-label="Navigation principale">
+        <button class="nav-link active" data-view="view-home" type="button" aria-current="page">Accueil</button>
+        <button class="nav-link" data-view="view-films" type="button" aria-current="false">🎬 Films</button>
+        <button class="nav-link" data-view="view-series" type="button" aria-current="false">📺 Séries</button>
+        <button class="nav-link" data-view="view-collections" type="button" aria-current="false">🎭 Collections</button>
+        <button class="nav-link" data-view="view-genres" type="button" aria-current="false">🎞️ Genres</button>
+        <button class="nav-link" data-view="view-mcu" type="button" aria-current="false">✨ MCU</button>
+      </nav>
+      <div class="mobile-nav-footer">
+        <div id="mobile-profile-logged-in" hidden>
+          <div class="mobile-profile-user">
+            <span class="mobile-profile-avatar-badge" id="mobile-profile-avatar">👤</span>
+            <span class="mobile-profile-email" id="mobile-profile-email"></span>
+          </div>
+          <hr class="profile-sep" />
+          <button class="profile-menu-item" id="mobile-profile-change-avatar" type="button">🖼️ Changer l'avatar</button>
+          <button class="profile-menu-item" id="mobile-profile-nav-stats" type="button">📊 Mes stats</button>
+          <button class="profile-menu-item" id="mobile-profile-nav-requests" type="button">🎬 Demander un titre</button>
+          <button class="profile-menu-item profile-menu-admin" id="mobile-profile-nav-admin" type="button" hidden>🛡️ Admin</button>
+          <hr class="profile-sep" />
+          <button class="profile-menu-item" id="mobile-profile-signout" type="button">🚪 Déconnexion</button>
+          <button class="profile-menu-item profile-menu-danger" id="mobile-profile-delete" type="button">🗑️ Supprimer le compte</button>
+        </div>
+        <div id="mobile-profile-logged-out">
+          <p class="profile-email">Non connecté</p>
+          <button class="profile-menu-item" id="mobile-profile-open-auth" type="button">🔑 Se connecter</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== PROFILE DROPDOWN ===== -->

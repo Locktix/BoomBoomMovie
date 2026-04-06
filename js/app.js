@@ -3843,9 +3843,15 @@ function setupNav() {
 }
 
 function setupSearch() {
-  const input = document.getElementById('search');
+  const input       = document.getElementById('search');
+  const mobileInput = document.getElementById('mobile-search');
 
   input.addEventListener('input', () => {
+    applyCurrentFilters();
+  });
+
+  mobileInput?.addEventListener('input', () => {
+    input.value = mobileInput.value;
     applyCurrentFilters();
   });
 }
@@ -4334,6 +4340,7 @@ async function init() {
   setupAuthModal();
   setupProfileDropdown();
   setupAvatarPicker();
+  setupBurgerMenu();
   setupTmdbSearchModal();
   updateSearchPlaceholder();
 
@@ -4619,18 +4626,32 @@ function _updateHeaderForAuth(user) {
   const loggedInEl    = document.getElementById('profile-logged-in');
   const loggedOutEl   = document.getElementById('profile-logged-out');
 
+  const mobileAvatarEl      = document.getElementById('mobile-profile-avatar');
+  const mobileEmailEl       = document.getElementById('mobile-profile-email');
+  const mobileLoggedInEl    = document.getElementById('mobile-profile-logged-in');
+  const mobileLoggedOutEl   = document.getElementById('mobile-profile-logged-out');
+
   if (user) {
     const avatarDisplay = _currentAvatarId || (user.email?.charAt(0) || '?').toUpperCase();
     if (avatarEl) avatarEl.textContent = avatarDisplay;
     if (emailEl)  emailEl.textContent  = user.email || '';
     if (loggedInEl)  loggedInEl.hidden  = false;
     if (loggedOutEl) loggedOutEl.hidden = true;
+
+    if (mobileAvatarEl)    mobileAvatarEl.textContent = avatarDisplay;
+    if (mobileEmailEl)     mobileEmailEl.textContent  = user.email || '';
+    if (mobileLoggedInEl)  mobileLoggedInEl.hidden    = false;
+    if (mobileLoggedOutEl) mobileLoggedOutEl.hidden   = true;
   } else {
     _currentAvatarId = null;
     if (avatarEl) avatarEl.textContent = '👤';
     if (loggedInEl)  loggedInEl.hidden  = true;
     if (loggedOutEl) loggedOutEl.hidden = false;
     _hideProfileDropdown();
+
+    if (mobileAvatarEl)    mobileAvatarEl.textContent = '👤';
+    if (mobileLoggedInEl)  mobileLoggedInEl.hidden    = true;
+    if (mobileLoggedOutEl) mobileLoggedOutEl.hidden   = false;
   }
 }
 
@@ -4778,6 +4799,74 @@ function setupAvatarPicker() {
   window._openAvatarPicker = openPicker;
 }
 
+function setupBurgerMenu() {
+  const burgerBtn = document.getElementById('burger-btn');
+  const mobileNav = document.getElementById('mobile-nav');
+  const backdrop  = document.getElementById('mobile-nav-backdrop');
+  const closeBtn  = document.getElementById('mobile-nav-close');
+  if (!burgerBtn || !mobileNav) return;
+
+  function openMenu() {
+    mobileNav.hidden = false;
+    mobileNav.setAttribute('aria-hidden', 'false');
+    burgerBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    mobileNav.hidden = true;
+    mobileNav.setAttribute('aria-hidden', 'true');
+    burgerBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  burgerBtn.addEventListener('click', openMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+  backdrop?.addEventListener('click', closeMenu);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !mobileNav.hidden) closeMenu();
+  });
+
+  // Fermer + naviguer au clic sur un lien du drawer
+  mobileNav.querySelectorAll('.nav-link[data-view]').forEach((link) => {
+    link.addEventListener('click', () => {
+      closeMenu();
+      navigateTo(link.dataset.view);
+    });
+  });
+
+  // Actions profil mobile
+  document.getElementById('mobile-profile-open-auth')?.addEventListener('click', () => {
+    closeMenu();
+    openAuthModal('login');
+  });
+  document.getElementById('mobile-profile-nav-stats')?.addEventListener('click', () => {
+    closeMenu();
+    navigateTo('view-stats');
+  });
+  document.getElementById('mobile-profile-nav-requests')?.addEventListener('click', () => {
+    closeMenu();
+    navigateTo('view-requests');
+  });
+  document.getElementById('mobile-profile-nav-admin')?.addEventListener('click', () => {
+    closeMenu();
+    navigateTo('view-admin');
+  });
+  document.getElementById('mobile-profile-change-avatar')?.addEventListener('click', () => {
+    closeMenu();
+    window._openAvatarPicker?.();
+  });
+  document.getElementById('mobile-profile-signout')?.addEventListener('click', async () => {
+    closeMenu();
+    await window.FB?.signOut?.();
+  });
+  document.getElementById('mobile-profile-delete')?.addEventListener('click', () => {
+    closeMenu();
+    openAuthModal('login');
+    _renderDeleteAccountForm();
+  });
+}
+
 async function onUserLogin(user) {
   console.log(`[BoomBoom] Connecté : ${user.email}`);
   _updateHeaderForAuth(user);
@@ -4842,8 +4931,10 @@ async function onUserLogin(user) {
 
   // Afficher le bouton admin si l'utilisateur est admin
   const isAdmin = await window.FB.checkIsAdmin();
-  const adminBtn = document.getElementById('profile-nav-admin');
-  if (adminBtn) adminBtn.hidden = !isAdmin;
+  const adminBtn       = document.getElementById('profile-nav-admin');
+  const mobileAdminBtn = document.getElementById('mobile-profile-nav-admin');
+  if (adminBtn)       adminBtn.hidden       = !isAdmin;
+  if (mobileAdminBtn) mobileAdminBtn.hidden = !isAdmin;
 }
 
 function onUserLogout() {
@@ -4852,8 +4943,10 @@ function onUserLogout() {
   window.FB?.teardownRealtimeSync?.();
 
   // Cacher bouton admin
-  const adminBtn = document.getElementById('profile-nav-admin');
-  if (adminBtn) adminBtn.hidden = true;
+  const adminBtn       = document.getElementById('profile-nav-admin');
+  const mobileAdminBtn = document.getElementById('mobile-profile-nav-admin');
+  if (adminBtn)       adminBtn.hidden       = true;
+  if (mobileAdminBtn) mobileAdminBtn.hidden = true;
 
   // Vider les données de la session (progress + notes) — elles appartiennent au compte
   watchProgressStore = {};
