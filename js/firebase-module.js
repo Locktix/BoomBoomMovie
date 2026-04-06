@@ -8,9 +8,23 @@
  *   rules_version = '2';
  *   service cloud.firestore {
  *     match /databases/{database}/documents {
+ *
+ *       // Document racine users/{uid} (nécessaire pour checkIsAdmin)
+ *       match /users/{userId} {
+ *         allow read, write: if request.auth != null
+ *                            && request.auth.uid == userId;
+ *       }
+ *
+ *       // Sous-collections progress / ratings / requests
  *       match /users/{userId}/{document=**} {
  *         allow read, write: if request.auth != null
  *                            && request.auth.uid == userId;
+ *       }
+ *
+ *       // Admin : accès à toutes les demandes via collectionGroup
+ *       match /{path=**}/requests/{reqId} {
+ *         allow read, write: if request.auth != null
+ *           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
  *       }
  *     }
  *   }
@@ -282,6 +296,61 @@
     } catch { return () => {}; }
   }
 
+  // ── Admin ───────────────────────────────────────────────────────────────────────
+  async function checkIsAdmin() {
+    const ref = _userRef();
+    if (!ref) return false;
+    try {
+      const doc = await ref.get();
+      return doc.exists && doc.data()?.admin === true;
+    } catch { return false; }
+  }
+
+  async function getAllRequests() {
+    if (!_db) return [];
+    try {
+      const snap = await _db.collectionGroup('requests').get();
+      const items = snap.docs.map((d) => ({
+        id:     d.id,
+        userId: d.ref.parent.parent.id,
+        ...d.data(),
+      }));
+      items.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
+      return items;
+    } catch { return []; }
+  }
+
+  function onAllRequestsChange(callback) {
+    if (!_db || typeof callback !== 'function') return () => {};
+    try {
+      return _db.collectionGroup('requests')
+        .onSnapshot(
+          (snap) => {
+            const items = snap.docs.map((d) => ({
+              id:     d.id,
+              userId: d.ref.parent.parent.id,
+              ...d.data(),
+            }));
+            items.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
+            callback(items);
+          },
+          (err) => { console.warn('[FB] onAllRequestsChange:', err.message); }
+        );
+    } catch { return () => {}; }
+  }
+
+  async function updateRequestStatus(userId, docId, status) {
+    if (!_db || !userId || !docId) return;
+    await _db
+      .collection('users').doc(userId)
+      .collection('requests').doc(docId)
+      .update({
+        status,
+        updatedByAdmin: true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+  }
+
   // ── Migration localStorage → Firestore (exécutée une seule fois) ─────────
   async function migrateFromLocalStorage(progressStore, ratingsStore) {
     const ref = _userRef();
@@ -405,6 +474,10 @@
     cancelRequest,
     getUserRequests,
     onRequestsChange,
+    checkIsAdmin,
+    getAllRequests,
+    onAllRequestsChange,
+    updateRequestStatus,
     migrateFromLocalStorage,
     setupRealtimeSync,
     teardownRealtimeSync,

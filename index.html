@@ -39,10 +39,9 @@
         <input type="search" class="search" id="search" placeholder="Rechercher un titre…" autocomplete="off" />
       </div>
 
-      <button class="profile-btn" id="profile-btn" type="button" aria-label="Menu compte" hidden>
-        <span class="profile-avatar" id="profile-avatar">?</span>
+      <button class="profile-btn" id="profile-btn" type="button" aria-label="Menu compte">
+        <span class="profile-avatar" id="profile-avatar">👤</span>
       </button>
-      <button class="auth-open-btn" id="auth-open-btn" type="button">Connexion</button>
 
     </div>
   </header>
@@ -162,6 +161,26 @@
       <div id="requests-grid" class="requests-grid"></div>
     </section>
 
+    <!-- Admin View -->
+    <section id="view-admin" class="view">
+      <div class="section-header">
+        <div class="section-head-left">
+          <h2 class="section-title">🛡️ Admin — Demandes</h2>
+          <span class="count" id="admin-requests-count"></span>
+        </div>
+        <div class="section-header-right">
+          <select id="admin-filter-status" class="filter-select-sm">
+            <option value="all">Tous</option>
+            <option value="pending">En attente</option>
+            <option value="approved">Approuvés</option>
+            <option value="added">✓ Ajoutés</option>
+            <option value="refused">✗ Refusés</option>
+          </select>
+        </div>
+      </div>
+      <div id="admin-requests-list" class="admin-requests-list"></div>
+    </section>
+
   </main>
 
   <!-- ===== MEDIA DETAILS MODAL ===== -->
@@ -223,10 +242,12 @@
   <div id="auth-modal" class="auth-modal" hidden aria-hidden="true">
     <div class="auth-modal-backdrop" data-close-auth></div>
     <section class="auth-modal-panel" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-      <button id="auth-modal-close" class="auth-modal-close" aria-label="Fermer">✕</button>
       <div class="auth-modal-head">
-        <p class="auth-kicker">BoomBoom</p>
-        <h2 id="auth-modal-title" class="auth-modal-title">Connexion</h2>
+        <div class="auth-modal-head-text">
+          <p class="auth-kicker">BoomBoom</p>
+          <h2 id="auth-modal-title" class="auth-modal-title">Connexion</h2>
+        </div>
+        <button id="auth-modal-close" class="auth-modal-close" aria-label="Fermer">✕</button>
       </div>
       <div id="auth-modal-content" class="auth-modal-content"></div>
     </section>
@@ -234,13 +255,23 @@
 
   <!-- ===== PROFILE DROPDOWN ===== -->
   <div id="profile-dropdown" class="profile-dropdown" hidden>
-    <p class="profile-email" id="profile-email"></p>
-    <hr class="profile-sep" />
-    <button class="profile-menu-item" id="profile-nav-stats" type="button">📊 Mes stats</button>
-    <button class="profile-menu-item" id="profile-nav-requests" type="button">🎬 Demander un titre</button>
-    <hr class="profile-sep" />
-    <button class="profile-menu-item" id="profile-signout" type="button">🚪 Déconnexion</button>
-    <button class="profile-menu-item profile-menu-danger" id="profile-delete" type="button">🗑️ Supprimer le compte</button>
+    <!-- Bloc connecté -->
+    <div id="profile-logged-in" hidden>
+      <p class="profile-email" id="profile-email"></p>
+      <hr class="profile-sep" />
+      <button class="profile-menu-item" id="profile-nav-stats" type="button">📊 Mes stats</button>
+      <button class="profile-menu-item" id="profile-nav-requests" type="button">🎬 Demander un titre</button>
+      <button class="profile-menu-item profile-menu-admin" id="profile-nav-admin" type="button" hidden>🛡️ Admin</button>
+      <hr class="profile-sep" />
+      <button class="profile-menu-item" id="profile-signout" type="button">🚪 Déconnexion</button>
+      <button class="profile-menu-item profile-menu-danger" id="profile-delete" type="button">🗑️ Supprimer le compte</button>
+    </div>
+    <!-- Bloc déconnecté -->
+    <div id="profile-logged-out">
+      <p class="profile-email">Non connecté</p>
+      <hr class="profile-sep" />
+      <button class="profile-menu-item" id="profile-open-auth" type="button">🔑 Se connecter</button>
+    </div>
   </div>
 
   <!-- ===== TMDB SEARCH MODAL ===== -->

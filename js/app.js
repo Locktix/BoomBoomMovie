@@ -436,7 +436,7 @@ function refreshSeriesModalAverages(contentEl, headEl, seriesItem) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
 
 function getWatchProgressEntry(progressKey) {
   if (!progressKey) return null;
@@ -2295,25 +2295,25 @@ function updateSearchPlaceholder() {
   if (!input || !section) return;
 
   if (section.id === 'view-mcu') {
-    input.placeholder = 'Rechercher dans MCU…';
+    input.placeholder = 'Rechercher dans MCU⬦';
     return;
   }
 
   if (section.id === 'view-collections') {
     input.placeholder = state.activeCollectionKey
-      ? 'Rechercher dans cette collection…'
-      : 'Rechercher une collection…';
+      ? 'Rechercher dans cette collection⬦'
+      : 'Rechercher une collection⬦';
     return;
   }
 
   if (section.id === 'view-genres') {
     input.placeholder = state.activeGenreKey
-      ? 'Rechercher dans ce genre…'
-      : 'Rechercher un genre…';
+      ? 'Rechercher dans ce genre⬦'
+      : 'Rechercher un genre⬦';
     return;
   }
 
-  input.placeholder = 'Rechercher un titre…';
+  input.placeholder = 'Rechercher un titre⬦';
 }
 
 function setupDisplayMode() {
@@ -2411,6 +2411,7 @@ async function showSeriesModal(seriesItem) {
       const tmdbEpisode = tmdbEpisodes.find((entry) => Number(entry?.episode_number) === epNum) || tmdbEpisodes[i] || null;
       const tmdbEpisodeName = String(tmdbEpisode?.name || '').trim();
       const tmdbAirDate = String(tmdbEpisode?.air_date || '').trim();
+      const airYear = tmdbAirDate ? tmdbAirDate.slice(0, 4) : String(season.year || '');
       const tmdbStillPath = String(tmdbEpisode?.still_path || '').trim();
 
       const urlCandidates = Array.isArray(ep?._urlCandidates) ? ep._urlCandidates : getMediaUrlCandidates(ep);
@@ -2439,7 +2440,7 @@ async function showSeriesModal(seriesItem) {
             <div class="episode-main">
               <p class="episode-code">${code}</p>
               <p class="episode-title">${escapeHtml(tmdbEpisodeName || `Episode ${epNum}`)}</p>
-              <p class="episode-year">${escapeHtml(tmdbAirDate || String(season.year || ''))}</p>
+              <p class="episode-year">${escapeHtml(airYear)}</p>
               <div data-ep-rating-widget="${escapeHtml(epRatingKey)}"></div>
             </div>
             <span class="watch-state-badge watch-state-badge-episode" data-progress-badge-for="${escapeHtml(progressKey)}" hidden></span>
@@ -3721,6 +3722,7 @@ function navigateTo(target) {
 
   if (target === 'view-stats')    renderStatsView();
   if (target === 'view-requests') renderRequestsView();
+  if (target === 'view-admin')    renderAdminView();
 }
 
 function setupNav() {
@@ -4186,7 +4188,7 @@ function buildLibraryFromR2Catalog(catalog) {
   return { movies, series };
 }
 
-// ──────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
 
 async function init() {
   const initStartTime = performance.now();
@@ -4386,17 +4388,18 @@ function _renderAuthForm(mode) {
 
   contentEl.innerHTML = `
     <form id="auth-form" class="auth-form" novalidate>
-      <label class="auth-label" for="auth-email-input">E-mail</label>
-      <input class="auth-input" id="auth-email-input" type="email" autocomplete="email"
-        placeholder="ton@email.com" required />
-
-      <label class="auth-label" for="auth-password-input">Mot de passe</label>
-      <input class="auth-input" id="auth-password-input" type="password"
-        autocomplete="${isLogin ? 'current-password' : 'new-password'}"
-        placeholder="${isLogin ? '••••••' : 'Min. 6 caractères'}" required />
-
+      <div class="auth-field">
+        <label class="auth-label" for="auth-email-input">E-mail</label>
+        <input class="auth-input" id="auth-email-input" type="email" autocomplete="email"
+          placeholder="ton@email.com" required />
+      </div>
+      <div class="auth-field">
+        <label class="auth-label" for="auth-password-input">Mot de passe</label>
+        <input class="auth-input" id="auth-password-input" type="password"
+          autocomplete="${isLogin ? 'current-password' : 'new-password'}"
+          placeholder="${isLogin ? '⬢⬢⬢⬢⬢⬢' : 'Min. 6 caractères'}" required />
+      </div>
       <p id="auth-error" class="auth-error" hidden></p>
-
       <button class="auth-submit-btn" type="submit">
         ${isLogin ? 'Se connecter' : "S'inscrire"}
       </button>
@@ -4424,7 +4427,7 @@ function _renderAuthForm(mode) {
 
     errorEl.hidden = true;
     btn.disabled = true;
-    btn.textContent = '…';
+    btn.textContent = '⬦';
 
     try {
       if (isLogin) {
@@ -4454,9 +4457,11 @@ function _renderDeleteAccountForm() {
       (progression, notes, bibliothèque) seront supprimées définitivement.
     </p>
     <form id="delete-form" class="auth-form" novalidate>
-      <label class="auth-label" for="delete-password-input">Confirme ton mot de passe</label>
-      <input class="auth-input" id="delete-password-input" type="password"
-        placeholder="••••••" required autocomplete="current-password" />
+      <div class="auth-field">
+        <label class="auth-label" for="delete-password-input">Confirme ton mot de passe</label>
+        <input class="auth-input" id="delete-password-input" type="password"
+          placeholder="⬢⬢⬢⬢⬢⬢" required autocomplete="current-password" />
+      </div>
       <p id="delete-error" class="auth-error" hidden></p>
       <button class="auth-submit-btn auth-submit-danger" type="submit">Supprimer définitivement</button>
     </form>
@@ -4470,7 +4475,7 @@ function _renderDeleteAccountForm() {
 
     errorEl.hidden = true;
     btn.disabled   = true;
-    btn.textContent = '…';
+    btn.textContent = '⬦';
 
     try {
       await window.FB.deleteAccount(password);
@@ -4485,12 +4490,10 @@ function _renderDeleteAccountForm() {
 }
 
 function setupAuthModal() {
-  const openBtn  = document.getElementById('auth-open-btn');
   const closeBtn = document.getElementById('auth-modal-close');
   const modal    = document.getElementById('auth-modal');
   if (!modal) return;
 
-  openBtn?.addEventListener('click', () => openAuthModal('login'));
   closeBtn?.addEventListener('click', closeAuthModal);
   modal.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-auth')) closeAuthModal();
@@ -4501,22 +4504,21 @@ function setupAuthModal() {
 }
 
 function _updateHeaderForAuth(user) {
-  const openBtn    = document.getElementById('auth-open-btn');
-  const profileBtn = document.getElementById('profile-btn');
-  const avatarEl   = document.getElementById('profile-avatar');
-  const emailEl    = document.getElementById('profile-email');
+  const profileBtn    = document.getElementById('profile-btn');
+  const avatarEl      = document.getElementById('profile-avatar');
+  const emailEl       = document.getElementById('profile-email');
+  const loggedInEl    = document.getElementById('profile-logged-in');
+  const loggedOutEl   = document.getElementById('profile-logged-out');
 
   if (user) {
-    if (openBtn)    openBtn.hidden    = true;
-    if (profileBtn) profileBtn.hidden = false;
-    if (avatarEl) {
-      const email = user.email || '';
-      avatarEl.textContent = email.charAt(0).toUpperCase() || '?';
-    }
-    if (emailEl) emailEl.textContent = user.email || '';
+    if (avatarEl) avatarEl.textContent = (user.email?.charAt(0) || '?').toUpperCase();
+    if (emailEl)  emailEl.textContent  = user.email || '';
+    if (loggedInEl)  loggedInEl.hidden  = false;
+    if (loggedOutEl) loggedOutEl.hidden = true;
   } else {
-    if (openBtn)    openBtn.hidden    = false;
-    if (profileBtn) profileBtn.hidden = true;
+    if (avatarEl) avatarEl.textContent = '👤';
+    if (loggedInEl)  loggedInEl.hidden  = true;
+    if (loggedOutEl) loggedOutEl.hidden = false;
     _hideProfileDropdown();
   }
 }
@@ -4533,13 +4535,21 @@ function setupProfileDropdown() {
   const deleteBtn   = document.getElementById('profile-delete');
   const navStats    = document.getElementById('profile-nav-stats');
   const navRequests = document.getElementById('profile-nav-requests');
+  const navAdmin    = document.getElementById('profile-nav-admin');
+  const openAuthBtn = document.getElementById('profile-open-auth');
   if (!profileBtn || !dropdown) return;
 
   profileBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const rect = profileBtn.getBoundingClientRect();
-    dropdown.style.top  = `${rect.bottom + 8}px`;
-    dropdown.style.right = `${window.innerWidth - rect.right}px`;
+    const rect        = profileBtn.getBoundingClientRect();
+    const dropW       = Math.min(260, window.innerWidth - 8);
+    const rightOffset = Math.max(4, window.innerWidth - rect.right);
+    dropdown.style.top   = `${rect.bottom + 6}px`;
+    dropdown.style.right = `${rightOffset}px`;
+    dropdown.style.left  = 'auto';
+    if (rightOffset + dropW > window.innerWidth - 4) {
+      dropdown.style.right = '4px';
+    }
     dropdown.hidden = !dropdown.hidden;
   });
 
@@ -4547,6 +4557,11 @@ function setupProfileDropdown() {
     if (!dropdown.contains(e.target) && e.target !== profileBtn) {
       _hideProfileDropdown();
     }
+  });
+
+  openAuthBtn?.addEventListener('click', () => {
+    _hideProfileDropdown();
+    openAuthModal('login');
   });
 
   navStats?.addEventListener('click', () => {
@@ -4557,6 +4572,11 @@ function setupProfileDropdown() {
   navRequests?.addEventListener('click', () => {
     _hideProfileDropdown();
     navigateTo('view-requests');
+  });
+
+  navAdmin?.addEventListener('click', () => {
+    _hideProfileDropdown();
+    navigateTo('view-admin');
   });
 
   signoutBtn?.addEventListener('click', async () => {
@@ -4624,12 +4644,22 @@ async function onUserLogin(user) {
   const section = getActiveSection();
   if (section?.id === 'view-stats')    renderStatsView();
   if (section?.id === 'view-requests') renderRequestsView();
+  if (section?.id === 'view-admin')    renderAdminView();
+
+  // Afficher le bouton admin si l'utilisateur est admin
+  const isAdmin = await window.FB.checkIsAdmin();
+  const adminBtn = document.getElementById('profile-nav-admin');
+  if (adminBtn) adminBtn.hidden = !isAdmin;
 }
 
 function onUserLogout() {
   console.log('[BoomBoom] Déconnecté');
   _updateHeaderForAuth(null);
   window.FB?.teardownRealtimeSync?.();
+
+  // Cacher bouton admin
+  const adminBtn = document.getElementById('profile-nav-admin');
+  if (adminBtn) adminBtn.hidden = true;
 
   // Revenir aux données localStorage
   loadWatchProgressStore();
@@ -4642,108 +4672,16 @@ function onUserLogout() {
   const section = getActiveSection();
   if (section?.id === 'view-stats')    renderStatsView();
   if (section?.id === 'view-requests') renderRequestsView();
+  if (section?.id === 'view-admin')    navigateTo('view-home');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DASHBOARD STATISTIQUES
 // ═══════════════════════════════════════════════════════════════════════════
 
-function _getStatsData() {
-  let moviesSeenCount   = 0;
-  let seriesStarted     = 0;
-  let seriesCompleted   = 0;
-  let totalRatings      = 0;
-  let ratingsSum        = 0;
-  const genreCount      = new Map();
-
-  state.movies.forEach((item) => {
-    const status = getMovieWatchStatus(item);
-    if (status === 'completed') moviesSeenCount += 1;
-    getItemGenres(item).forEach((g) => genreCount.set(g, (genreCount.get(g) || 0) + 1));
-  });
-
-  state.series.forEach((item) => {
-    const status = getSeriesWatchStatus(item);
-    if (status === 'in-progress') seriesStarted  += 1;
-    if (status === 'completed')   seriesCompleted += 1;
-    getItemGenres(item).forEach((g) => genreCount.set(g, (genreCount.get(g) || 0) + 1));
-  });
-
-  Object.values(ratingsStore).forEach((entry) => {
-    const r = Number(entry?.rating);
-    if (Number.isInteger(r) && r >= 1 && r <= 5) {
-      totalRatings += 1;
-      ratingsSum   += r;
-    }
-  });
-
-  const avgRating = totalRatings > 0 ? (ratingsSum / totalRatings).toFixed(1) : '—';
-
-  const topGenres = [...genreCount.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
-
-  return { moviesSeenCount, seriesStarted, seriesCompleted, avgRating, topGenres, totalRatings };
-}
-
-function renderStatsView() {
-  const container = document.getElementById('stats-content');
-  if (!container) return;
-
-  const { moviesSeenCount, seriesStarted, seriesCompleted, avgRating, topGenres } = _getStatsData();
-  const totalMovies = state.movies.length;
-  const totalSeries = state.series.length;
-  const maxGenreCount = topGenres.length ? topGenres[0][1] : 1;
-
-  container.innerHTML = `
-    <div class="stats-cards">
-      <div class="stats-card">
-        <span class="stats-card-icon">🎬</span>
-        <span class="stats-card-value">${moviesSeenCount}</span>
-        <span class="stats-card-label">Films vus</span>
-        <span class="stats-card-sub">sur ${totalMovies} films</span>
-      </div>
-      <div class="stats-card">
-        <span class="stats-card-icon">📺</span>
-        <span class="stats-card-value">${seriesCompleted}</span>
-        <span class="stats-card-label">Séries terminées</span>
-        <span class="stats-card-sub">${seriesStarted} en cours · ${totalSeries} total</span>
-      </div>
-      <div class="stats-card">
-        <span class="stats-card-icon">⭐</span>
-        <span class="stats-card-value">${avgRating}</span>
-        <span class="stats-card-label">Note moyenne</span>
-        <span class="stats-card-sub">sur 5 étoiles</span>
-      </div>
-      <div class="stats-card">
-        <span class="stats-card-icon">📊</span>
-        <span class="stats-card-value">${totalMovies + totalSeries}</span>
-        <span class="stats-card-label">Titres au total</span>
-        <span class="stats-card-sub">${totalMovies} films · ${totalSeries} séries</span>
-      </div>
-    </div>
-
-    ${topGenres.length ? `
-    <div class="stats-section">
-      <h3 class="stats-section-title">Genres les plus représentés</h3>
-      <div class="stats-genre-list">
-        ${topGenres.map(([genre, count]) => `
-          <div class="stats-genre-row">
-            <span class="stats-genre-name">${escapeHtml(genre)}</span>
-            <div class="stats-genre-bar-wrap">
-              <div class="stats-genre-bar" style="width:${Math.round((count / maxGenreCount) * 100)}%"></div>
-            </div>
-            <span class="stats-genre-count">${count}</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>` : ''}
-  `;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════
 // BIBLIOTHÈQUE PERSONNELLE (Firebase)
-// ═══════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════
 
 let _requestsUnsubscribe = null;
 
@@ -4757,7 +4695,7 @@ async function renderRequestsView() {
     if (addBtn) addBtn.hidden = true;
     grid.innerHTML = `
       <div class="library-auth-prompt">
-        <p class="library-auth-icon">🔒</p>
+        <p class="library-auth-icon">🔐</p>
         <p>Connecte-toi pour faire une demande de titre.</p>
         <button class="auth-submit-btn" id="requests-login-btn" type="button">Connexion</button>
       </div>`;
@@ -4769,7 +4707,6 @@ async function renderRequestsView() {
   if (addBtn) addBtn.hidden = false;
   grid.innerHTML = '<p class="details-empty">Chargement…</p>';
 
-  // Abonnement temps réel
   if (_requestsUnsubscribe) _requestsUnsubscribe();
   _requestsUnsubscribe = window.FB.onRequestsChange((items) => {
     if (countEl) countEl.textContent = items.length ? String(items.length) : '';
@@ -4782,7 +4719,7 @@ function _renderRequestsList(items) {
   if (!grid) return;
 
   if (!items.length) {
-    grid.innerHTML = '<div class="empty-state"><span class="empty-icon">🎬</span><p>Tu n\'as pas encore fait de demande. Clique sur "Demander un titre" !</p></div>';
+    grid.innerHTML = '<div class="empty-state"><span class="empty-icon">📭</span><p>Tu n\'as pas encore fait de demande. Clique sur "Demander un titre" !</p></div>';
     return;
   }
 
@@ -4794,7 +4731,8 @@ function _createRequestCard(item) {
   const STATUS_CONFIG = {
     pending:  { label: 'En attente', cls: '' },
     approved: { label: 'Approuvé',   cls: 'watch-state-resume' },
-    added:    { label: '✓ Ajouté',   cls: 'watch-state-complete' },
+    added:    { label: '✔ Ajouté',   cls: 'watch-state-complete' },
+    refused:  { label: '✗ Refusé',   cls: 'watch-state-refused' },
   };
   const sc = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
 
@@ -4814,7 +4752,7 @@ function _createRequestCard(item) {
       <p class="request-card-meta">${escapeHtml(typeLabel)}${item.year ? ' · ' + escapeHtml(String(item.year)) : ''}</p>
       ${item.note ? `<p class="request-card-note">"${escapeHtml(item.note)}"</p>` : ''}
       <div class="request-card-footer">
-        <span class="watch-state-badge ${escapeHtml(sc.cls)}">${escapeHtml(sc.label)}</span>
+        <span class="request-status-badge status-${escapeHtml(item.status || 'pending')}">${escapeHtml(sc.label)}</span>
         ${item.status === 'pending' ? `<button class="request-cancel-btn" data-doc-id="${escapeHtml(item.id)}" type="button">Annuler</button>` : ''}
       </div>
     </div>
@@ -4832,9 +4770,9 @@ function _createRequestCard(item) {
   return card;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════
 // MODULE DE RECHERCHE TMDB
-// ═══════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════
 
 let _tmdbSearchMode = 'query'; // 'query' | 'id'
 
@@ -4858,14 +4796,14 @@ function closeTmdbSearchModal() {
 }
 
 function setupTmdbSearchModal() {
-  const modal      = document.getElementById('tmdb-search-modal');
-  const closeBtn   = document.getElementById('tmdb-search-close');
-  const searchBtn  = document.getElementById('tmdb-search-btn');
-  const input      = document.getElementById('tmdb-search-input');
-  const modeQuery  = document.getElementById('tmdb-mode-query');
-  const modeId     = document.getElementById('tmdb-mode-id');
+  const modal        = document.getElementById('tmdb-search-modal');
+  const closeBtn     = document.getElementById('tmdb-search-close');
+  const searchBtn    = document.getElementById('tmdb-search-btn');
+  const input        = document.getElementById('tmdb-search-input');
+  const modeQuery    = document.getElementById('tmdb-mode-query');
+  const modeId       = document.getElementById('tmdb-mode-id');
   const idTypeSelect = document.getElementById('tmdb-id-type');
-  const addBtn     = document.getElementById('btn-request-title');
+  const addBtn       = document.getElementById('btn-request-title');
   if (!modal) return;
 
   addBtn?.addEventListener('click', openTmdbSearchModal);
@@ -4900,9 +4838,9 @@ function setupTmdbSearchModal() {
 }
 
 async function _runTmdbSearch() {
-  const input    = document.getElementById('tmdb-search-input');
-  const results  = document.getElementById('tmdb-search-results');
-  const idType   = document.getElementById('tmdb-id-type');
+  const input   = document.getElementById('tmdb-search-input');
+  const results = document.getElementById('tmdb-search-results');
+  const idType  = document.getElementById('tmdb-id-type');
   if (!input || !results) return;
 
   const query = input.value.trim();
@@ -4950,8 +4888,13 @@ function _buildTmdbResultCard(tmdbItem) {
   const date       = String(tmdbItem.release_date || tmdbItem.first_air_date || '').trim();
   const year       = date ? date.slice(0, 4) : '';
   const tmdbId     = Number(tmdbItem.id) || 0;
-  const genres     = Array.isArray(tmdbItem.genre_ids) ? tmdbItem.genre_ids : [];
   const typeLabel  = mediaType === 'tv' ? 'Série' : 'Film';
+
+  const alreadyInCatalog = tmdbId > 0 && (
+    mediaType === 'tv'
+      ? state.series.some((s) => getTmdbNumericId(s) === tmdbId)
+      : state.movies.some((m) => getTmdbNumericId(m) === tmdbId)
+  );
 
   const card = document.createElement('div');
   card.className = 'tmdb-result-card';
@@ -4967,7 +4910,9 @@ function _buildTmdbResultCard(tmdbItem) {
       ${overview ? `<p class="tmdb-result-overview">${escapeHtml(overview.slice(0, 120))}…</p>` : ''}
     </div>
     <div class="tmdb-result-actions">
-      <button class="tmdb-add-btn" type="button">Demander</button>
+      ${alreadyInCatalog
+        ? `<span class="tmdb-already-badge">✓ Déjà disponible</span>`
+        : `<button class="tmdb-add-btn" type="button">Demander</button>`}
     </div>
     <div class="tmdb-note-area" hidden>
       <textarea class="tmdb-note-input" placeholder="Commentaire optionnel…" maxlength="200" rows="2"></textarea>
@@ -4975,35 +4920,364 @@ function _buildTmdbResultCard(tmdbItem) {
     </div>
   `;
 
-  card.querySelector('.tmdb-add-btn')?.addEventListener('click', () => {
-    if (!window.FB?.isLoggedIn?.()) {
-      openAuthModal('login');
-      return;
+  if (!alreadyInCatalog) {
+    card.querySelector('.tmdb-add-btn')?.addEventListener('click', () => {
+      if (!window.FB?.isLoggedIn?.()) {
+        openAuthModal('login');
+        return;
+      }
+      card.querySelector('.tmdb-note-area').hidden = false;
+      card.querySelector('.tmdb-add-btn').hidden = true;
+      card.querySelector('.tmdb-note-input')?.focus();
+    });
+
+    card.querySelector('.tmdb-confirm-btn')?.addEventListener('click', async () => {
+      const note       = card.querySelector('.tmdb-note-input')?.value.trim() || '';
+      const confirmBtn = card.querySelector('.tmdb-confirm-btn');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = '…';
+      try {
+        await window.FB.submitRequest({ tmdbId, mediaType, title, poster: posterUrl, overview, year: Number(year) || 0, note });
+        card.querySelector('.tmdb-note-area').innerHTML = '<p class="tmdb-request-sent">✔ Demande envoyée !</p>';
+        const section = getActiveSection();
+        if (section?.id === 'view-requests') renderRequestsView();
+      } catch (err) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirmer la demande →';
+        showNotice(err.message || 'Erreur lors de la demande.', 'error');
+      }
+    });
+  }
+
+  return card;
+}
+
+function _formatScreenTime(totalSeconds) {
+  const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  if (total === 0) return '—';
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  if (h === 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h${String(m).padStart(2, '0')}`;
+}
+
+function _getStatsData() {
+  let moviesSeenCount         = 0;
+  let seriesStarted           = 0;
+  let seriesCompleted         = 0;
+  let episodesCompleted       = 0;
+  let totalRatings            = 0;
+  let ratingsSum              = 0;
+  let screenTimeMoviesSeconds = 0;
+  let screenTimeSeriesSeconds = 0;
+  const genreCount = new Map();
+  const recentItems = [];
+
+  // ── Films ──────────────────────────────────────────────────────────────────────────────────
+  state.movies.forEach((item) => {
+    const key    = getMovieProgressKey(item);
+    const entry  = getWatchProgressEntry(key);
+    const status = getWatchStatusFromEntry(entry);
+
+    if (status === 'completed' || status === 'in-progress') {
+      getItemGenres(item).forEach((g) => genreCount.set(g, (genreCount.get(g) || 0) + 1));
     }
-    card.querySelector('.tmdb-note-area').hidden = false;
-    card.querySelector('.tmdb-add-btn').hidden = true;
-    card.querySelector('.tmdb-note-input')?.focus();
+    if (status === 'completed') {
+      moviesSeenCount += 1;
+      const dur = Number(entry?.durationSeconds) || 0;
+      if (dur > 0) screenTimeMoviesSeconds += dur;
+      const ts = Number(entry?.updatedAt) || 0;
+      if (ts > 0) recentItems.push({ title: item.title, year: item.year, type: 'Film', updatedAt: ts });
+    }
   });
 
-  card.querySelector('.tmdb-confirm-btn')?.addEventListener('click', async () => {
-    const note       = card.querySelector('.tmdb-note-input')?.value.trim() || '';
-    const confirmBtn = card.querySelector('.tmdb-confirm-btn');
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = '…';
-    try {
-      await window.FB.submitRequest({ tmdbId, mediaType, title, poster: posterUrl, overview, year: Number(year) || 0, note });
-      card.querySelector('.tmdb-note-area').innerHTML = '<p class="tmdb-request-sent">✓ Demande envoyée !</p>';
-      const section = getActiveSection();
-      if (section?.id === 'view-requests') renderRequestsView();
-    } catch (err) {
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Confirmer la demande →';
-      showNotice(err.message || 'Erreur lors de la demande.', 'error');
+  // ── Séries ────────────────────────────────────────────────────────────────────────────────
+  state.series.forEach((item) => {
+    const status = getSeriesWatchStatus(item);
+    if (status === 'in-progress') seriesStarted  += 1;
+    if (status === 'completed')   seriesCompleted += 1;
+    if (status === 'completed' || status === 'in-progress') {
+      getItemGenres(item).forEach((g) => genreCount.set(g, (genreCount.get(g) || 0) + 1));
     }
+
+    let latestEpTs = 0;
+    (Array.isArray(item?.seasons) ? item.seasons : []).forEach((season) => {
+      const seasonNum = Number(season?.season) || 1;
+      (Array.isArray(season?.episodes) ? season.episodes : []).forEach((_, idx) => {
+        const epKey   = getEpisodeProgressKey(item, seasonNum, idx + 1);
+        const epEntry = getWatchProgressEntry(epKey);
+        if (!epEntry) return;
+        if (getWatchStatusFromEntry(epEntry) !== 'completed') return;
+        episodesCompleted += 1;
+        const dur = Number(epEntry?.durationSeconds) || 0;
+        if (dur > 0) screenTimeSeriesSeconds += dur;
+        const ts = Number(epEntry?.updatedAt) || 0;
+        if (ts > latestEpTs) latestEpTs = ts;
+      });
+    });
+    if (latestEpTs > 0) recentItems.push({ title: item.title, year: item.year, type: 'Série', updatedAt: latestEpTs });
+  });
+
+  // ── Notes ─────────────────────────────────────────────────────────────────────────────────
+  Object.values(ratingsStore).forEach((entry) => {
+    const r = Number(entry?.rating);
+    if (Number.isInteger(r) && r >= 1 && r <= 5) { totalRatings += 1; ratingsSum += r; }
+  });
+
+    const avgRating      = totalRatings > 0 ? (ratingsSum / totalRatings).toFixed(1) : '—';
+  const topGenres      = [...genreCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const favoriteGenre  = topGenres.length ? topGenres[0][0] : null;
+  const maxGenreCount  = topGenres.length ? topGenres[0][1] : 1;
+  const totalScreenSeconds = screenTimeMoviesSeconds + screenTimeSeriesSeconds;
+  recentItems.sort((a, b) => b.updatedAt - a.updatedAt);
+
+  return {
+    moviesSeenCount, seriesStarted, seriesCompleted, episodesCompleted,
+    avgRating, totalRatings,
+    topGenres, favoriteGenre, maxGenreCount,
+    screenTimeMoviesSeconds, screenTimeSeriesSeconds, totalScreenSeconds,
+    recentWatched: recentItems.slice(0, 8),
+  };
+}
+
+function renderStatsView() {
+  const container = document.getElementById('stats-content');
+  if (!container) return;
+
+  const {
+    moviesSeenCount, seriesStarted, seriesCompleted, episodesCompleted,
+    avgRating, totalRatings,
+    topGenres, favoriteGenre, maxGenreCount,
+    screenTimeMoviesSeconds, screenTimeSeriesSeconds, totalScreenSeconds,
+    recentWatched,
+  } = _getStatsData();
+
+  const hasActivity = moviesSeenCount > 0 || seriesStarted > 0 || seriesCompleted > 0 || episodesCompleted > 0;
+
+  if (!hasActivity) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🎬</span>
+        <p>Tu n'as encore rien regardé.<br>Lance un film ou une série pour voir tes stats ici !</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="stats-cards">
+      <div class="stats-card">
+        <span class="stats-card-icon">📊</span>
+        <span class="stats-card-value">${moviesSeenCount}</span>
+        <span class="stats-card-label">Films vus</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-icon">📊</span>
+        <span class="stats-card-value">${episodesCompleted}</span>
+        <span class="stats-card-label">Titres au total</span>
+        <span class="stats-card-sub">${seriesCompleted} série(s) terminée(s)${seriesStarted > 0 ? ` · ${seriesStarted} en cours` : ''}</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-icon">⭐</span>
+        <span class="stats-card-value">${avgRating}</span>
+        <span class="stats-card-label">Note moyenne</span>
+        <span class="stats-card-sub">${totalRatings > 0 ? `sur ${totalRatings} titre(s)` : 'Aucune note'}</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-icon">⏱️</span>
+        <span class="stats-card-value">${_formatScreenTime(totalScreenSeconds)}</span>
+        <span class="stats-card-label">Temps d'écran</span>
+        <span class="stats-card-sub">${_formatScreenTime(screenTimeMoviesSeconds)} films · ${_formatScreenTime(screenTimeSeriesSeconds)} séries</span>
+      </div>
+      ${favoriteGenre ? `
+      <div class="stats-card stats-card-accent">
+        <span class="stats-card-icon">📊</span>
+        <span class="stats-card-value stats-card-value-text">${escapeHtml(favoriteGenre)}</span>
+        <span class="stats-card-label">Genre préféré</span>
+      </div>` : ''}
+    </div>
+
+    ${recentWatched.length ? `
+    <div class="stats-section">
+      <h3 class="stats-section-title">Récemment regardés</h3>
+      <div class="stats-recent-list">
+        ${recentWatched.map((item) => `
+          <div class="stats-recent-row">
+            <span class="stats-recent-badge">${escapeHtml(item.type)}</span>
+            <span class="stats-recent-title">${escapeHtml(item.title)}${item.year ? ` <span class="stats-recent-year">${escapeHtml(String(item.year))}</span>` : ''}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    ${topGenres.length > 1 ? `
+    <div class="stats-section">
+      <h3 class="stats-section-title">Genres regardés</h3>
+      <div class="stats-genre-list">
+        ${topGenres.map(([genre, count]) => `
+          <div class="stats-genre-row">
+            <span class="stats-genre-name">${escapeHtml(genre)}</span>
+            <div class="stats-genre-bar-wrap">
+              <div class="stats-genre-bar" style="width:${Math.round((count / maxGenreCount) * 100)}%"></div>
+            </div>
+            <span class="stats-genre-count">${count}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN VIEW
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _adminUnsubscribe = null;
+let _adminAllItems    = [];
+
+async function renderAdminView() {
+  const listEl   = document.getElementById('admin-requests-list');
+  const countEl  = document.getElementById('admin-requests-count');
+  const filterEl = document.getElementById('admin-filter-status');
+  if (!listEl) return;
+
+  if (!window.FB?.isLoggedIn?.()) {
+    listEl.innerHTML = '<div class="empty-state"><span class="empty-icon">🔒</span><p>Accès réservé.</p></div>';
+    return;
+  }
+
+  const isAdmin = await window.FB.checkIsAdmin();
+  if (!isAdmin) {
+    listEl.innerHTML = '<div class="empty-state"><span class="empty-icon">🚫</span><p>Tu n\'as pas les droits admin.</p></div>';
+    return;
+  }
+
+  listEl.innerHTML = '<p class="details-empty">Chargement⬦</p>';
+
+  if (_adminUnsubscribe) _adminUnsubscribe();
+  _adminUnsubscribe = window.FB.onAllRequestsChange((items) => {
+    _adminAllItems = items;
+    _renderAdminList(items, filterEl?.value || 'all', listEl, countEl);
+  });
+
+  filterEl?.addEventListener('change', () => {
+    _renderAdminList(_adminAllItems, filterEl.value, listEl, countEl);
+  });
+}
+
+function _renderAdminList(items, filter, listEl, countEl) {
+  // Grouper par tmdbId+mediaType (ou par id si tmdbId absent)
+  const groups = new Map();
+  items.forEach((item) => {
+    const key = item.tmdbId > 0 ? `${item.mediaType}:${item.tmdbId}` : item.id;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  });
+
+  // Filtrer : un groupe apparait si au moins une demande correspond au filtre
+  const filteredGroups = [];
+  groups.forEach((groupItems) => {
+    const match = filter === 'all' ? groupItems : groupItems.filter((i) => i.status === filter);
+    if (match.length) filteredGroups.push(groupItems);
+  });
+
+  if (countEl) countEl.textContent = filteredGroups.length ? String(filteredGroups.length) : '';
+
+  if (!filteredGroups.length) {
+    listEl.innerHTML = '<div class="empty-state"><span class="empty-icon">\uD83D\uDCED</span><p>Aucune demande.</p></div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  // Trier : groupes avec au moins un pending en premier
+  filteredGroups.sort((a, b) => {
+    const aPending = a.some((i) => i.status === 'pending') ? 0 : 1;
+    const bPending = b.some((i) => i.status === 'pending') ? 0 : 1;
+    if (aPending !== bPending) return aPending - bPending;
+    const aDate = Math.max(...a.map((i) => i.createdAt?.toMillis?.() ?? 0));
+    const bDate = Math.max(...b.map((i) => i.createdAt?.toMillis?.() ?? 0));
+    return bDate - aDate;
+  });
+
+  filteredGroups.forEach((groupItems) => listEl.appendChild(_createAdminCard(groupItems)));
+}
+
+function _createAdminCard(groupItems) {
+  const rep = groupItems[0];
+  const STATUS_CONFIG = {
+    pending:  { label: 'En attente', cls: '' },
+    approved: { label: 'Approuv\u00e9',   cls: 'watch-state-resume' },
+    added:    { label: '\u2713 Ajout\u00e9',   cls: 'watch-state-complete' },
+    refused:  { label: '\u2717 Refus\u00e9',   cls: 'watch-state-refused' },
+  };
+  const typeLabel = rep.mediaType === 'tv' ? 'S\u00e9rie' : 'Film';
+
+  // Statut global : pending si au moins un pending, sinon statut majoritaire
+  const statusCounts = {};
+  groupItems.forEach((i) => { statusCounts[i.status] = (statusCounts[i.status] || 0) + 1; });
+  const globalStatus = statusCounts.pending > 0 ? 'pending'
+    : Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0][0];
+  const sc = STATUS_CONFIG[globalStatus] || STATUS_CONFIG.pending;
+
+  // Liste des demandeurs
+  const requestersHtml = groupItems.map((item) => {
+    const date = item.createdAt?.toDate?.()
+      ? item.createdAt.toDate().toLocaleDateString('fr-FR')
+      : '';
+    const isc = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
+    return `<div class="admin-requester">
+      <span class="admin-requester-email">${escapeHtml(item.requestedByEmail || 'Anonyme')}</span>
+      ${date ? `<span class="admin-card-date">${date}</span>` : ''}
+      <span class="request-status-badge ${escapeHtml(isc.cls)}">${escapeHtml(isc.label)}</span>
+      ${item.note ? `<span class="admin-requester-note">&ldquo;${escapeHtml(item.note)}&rdquo;</span>` : ''}
+    </div>`;
+  }).join('');
+
+  const card = document.createElement('div');
+  card.className = 'admin-card';
+  card.innerHTML = `
+    <div class="admin-card-poster">
+      ${rep.poster
+        ? `<img src="${escapeHtml(rep.poster)}" alt="${escapeHtml(rep.title)}" loading="lazy" />`
+        : `<div class="request-card-fallback">${escapeHtml(typeLabel)}</div>`}
+    </div>
+    <div class="admin-card-body">
+      <p class="admin-card-title">
+        ${escapeHtml(rep.title)}${rep.year ? ` <span class="admin-card-year">${escapeHtml(String(rep.year))}</span>` : ''}
+        ${groupItems.length > 1 ? `<span class="admin-demand-count">${groupItems.length} demandes</span>` : ''}
+      </p>
+      <span class="admin-card-type">${escapeHtml(typeLabel)}</span>
+      <div class="admin-requesters-list">${requestersHtml}</div>
+      <div class="admin-card-footer">
+        <div class="admin-card-actions">
+          ${globalStatus !== 'approved' ? `<button class="admin-action-btn admin-action-approve" type="button">Approuver tout</button>` : ''}
+          ${globalStatus !== 'added'    ? `<button class="admin-action-btn admin-action-added"   type="button">Ajout\u00e9 \u2713</button>` : ''}
+          ${globalStatus !== 'refused'  ? `<button class="admin-action-btn admin-action-refuse"  type="button">Refuser tout</button>` : ''}
+          ${globalStatus !== 'pending'  ? `<button class="admin-action-btn admin-action-pending" type="button">Remettre en attente</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  card.querySelectorAll('.admin-action-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const status = btn.classList.contains('admin-action-approve') ? 'approved'
+                   : btn.classList.contains('admin-action-added')   ? 'added'
+                   : btn.classList.contains('admin-action-refuse')  ? 'refused'
+                   : 'pending';
+      btn.disabled = true;
+      try {
+        await Promise.all(groupItems.map((item) =>
+          window.FB.updateRequestStatus(item.userId, item.id, status)
+        ));
+      } catch (err) {
+        showNotice(err.message || 'Erreur.', 'error');
+        btn.disabled = false;
+      }
+    });
   });
 
   return card;
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
