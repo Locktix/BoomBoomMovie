@@ -183,6 +183,22 @@
 
   </main>
 
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <p class="site-footer-brand">BoomBoom</p>
+      <p class="site-footer-text">
+        Site personnel à but non public — réservé à un usage privé et familial.
+        Aucun contenu n'est hébergé sur ce site&nbsp;; les médias sont diffusés depuis un stockage cloud personnel.
+      </p>
+      <p class="site-footer-text">
+        Données collectées&nbsp;: adresse e-mail (authentification), progression de visionnage et notes personnelles.
+        Ces données sont stockées sur Firebase (Google) et ne sont jamais partagées ni utilisées à des fins commerciales.
+      </p>
+      <p class="site-footer-copy">&copy; <span id="footer-year"></span> BoomBoom — Projet privé, tous droits réservés.</p>
+    </div>
+  </footer>
+
   <!-- ===== MEDIA DETAILS MODAL ===== -->
   <div id="details-modal" class="details-modal" hidden aria-hidden="true">
     <div class="details-modal-backdrop" data-close-details></div>
@@ -334,6 +350,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="js/firebase-module.js"></script>
+  <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
   <script src="js/app.js"></script>
 </body>
 </html>
