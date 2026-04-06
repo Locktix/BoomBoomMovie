@@ -139,6 +139,7 @@ const tmdbSeasonDetailsCache = new Map();
 
 let watchProgressStore = {};
 let ratingsStore = {};
+let _currentAvatarId = null;
 
 // ── Firebase debounce timers (évite trop d'écritures pendant la lecture) ──
 const _fbProgressTimers = {};
@@ -4332,6 +4333,7 @@ async function init() {
   setupRoadmapModal();
   setupAuthModal();
   setupProfileDropdown();
+  setupAvatarPicker();
   setupTmdbSearchModal();
   updateSearchPlaceholder();
 
@@ -4612,18 +4614,19 @@ function setupAuthModal() {
 }
 
 function _updateHeaderForAuth(user) {
-  const profileBtn    = document.getElementById('profile-btn');
   const avatarEl      = document.getElementById('profile-avatar');
   const emailEl       = document.getElementById('profile-email');
   const loggedInEl    = document.getElementById('profile-logged-in');
   const loggedOutEl   = document.getElementById('profile-logged-out');
 
   if (user) {
-    if (avatarEl) avatarEl.textContent = (user.email?.charAt(0) || '?').toUpperCase();
+    const avatarDisplay = _currentAvatarId || (user.email?.charAt(0) || '?').toUpperCase();
+    if (avatarEl) avatarEl.textContent = avatarDisplay;
     if (emailEl)  emailEl.textContent  = user.email || '';
     if (loggedInEl)  loggedInEl.hidden  = false;
     if (loggedOutEl) loggedOutEl.hidden = true;
   } else {
+    _currentAvatarId = null;
     if (avatarEl) avatarEl.textContent = '👤';
     if (loggedInEl)  loggedInEl.hidden  = true;
     if (loggedOutEl) loggedOutEl.hidden = false;
@@ -4687,6 +4690,12 @@ function setupProfileDropdown() {
     navigateTo('view-admin');
   });
 
+  const changeAvatarBtn = document.getElementById('profile-change-avatar');
+  changeAvatarBtn?.addEventListener('click', () => {
+    _hideProfileDropdown();
+    window._openAvatarPicker?.();
+  });
+
   signoutBtn?.addEventListener('click', async () => {
     _hideProfileDropdown();
     await window.FB?.signOut?.();
@@ -4699,9 +4708,86 @@ function setupProfileDropdown() {
   });
 }
 
+function setupAvatarPicker() {
+  const AVATARS = [
+    '🦁', '🐯', '🐻', '🦊', '🐺',
+    '🦝', '🐼', '🐨', '🦄', '🐲',
+    '🦅', '🦋', '🌟', '🔥', '⚡',
+    '🌙', '🎭', '👾', '🤖', '😎',
+  ];
+
+  const modal    = document.getElementById('avatar-picker-modal');
+  const grid     = document.getElementById('avatar-picker-grid');
+  const saveBtn  = document.getElementById('avatar-picker-save');
+  const closeBtn = document.getElementById('avatar-picker-close');
+  if (!modal || !grid) return;
+
+  let _pendingSelection = null;
+
+  AVATARS.forEach((emoji) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'avatar-option';
+    btn.textContent = emoji;
+    btn.dataset.avatar = emoji;
+    btn.setAttribute('aria-label', emoji);
+    btn.addEventListener('click', () => {
+      _pendingSelection = emoji;
+      grid.querySelectorAll('.avatar-option').forEach((b) => b.classList.remove('avatar-option--selected'));
+      btn.classList.add('avatar-option--selected');
+    });
+    grid.appendChild(btn);
+  });
+
+  function openPicker() {
+    _pendingSelection = _currentAvatarId || null;
+    grid.querySelectorAll('.avatar-option').forEach((b) => {
+      b.classList.toggle('avatar-option--selected', b.dataset.avatar === _pendingSelection);
+    });
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closePicker() {
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  closeBtn?.addEventListener('click', closePicker);
+  modal.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLElement && e.target.hasAttribute('data-close-avatar')) closePicker();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closePicker();
+  });
+
+  saveBtn?.addEventListener('click', async () => {
+    if (!_pendingSelection) return;
+    saveBtn.disabled = true;
+    try {
+      await window.FB?.saveAvatar?.(_pendingSelection);
+      _currentAvatarId = _pendingSelection;
+      const user = window.FB?.getCurrentUser?.();
+      if (user) _updateHeaderForAuth(user);
+      closePicker();
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  window._openAvatarPicker = openPicker;
+}
+
 async function onUserLogin(user) {
   console.log(`[BoomBoom] Connecté : ${user.email}`);
   _updateHeaderForAuth(user);
+
+  // Charger l'avatar sauvegardé
+  const savedAvatar = await window.FB.loadAvatar?.();
+  if (savedAvatar) {
+    _currentAvatarId = savedAvatar;
+    _updateHeaderForAuth(user);
+  }
 
   // Migration localStorage → Firestore (première connexion seulement)
   await window.FB.migrateFromLocalStorage(watchProgressStore, ratingsStore);

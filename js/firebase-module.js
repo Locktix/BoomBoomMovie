@@ -159,6 +159,22 @@
     return _db.collection('users').doc(_currentUser.uid);
   }
 
+  // ── Avatar ───────────────────────────────────────────────────────────────
+  async function saveAvatar(avatarId) {
+    const ref = _userRef();
+    if (!ref) return;
+    await ref.set({ avatarId: String(avatarId || '') }, { merge: true });
+  }
+
+  async function loadAvatar() {
+    const ref = _userRef();
+    if (!ref) return null;
+    try {
+      const snap = await ref.get();
+      return snap.exists ? (snap.data()?.avatarId || null) : null;
+    } catch { return null; }
+  }
+
   // ── Progression (Watch Progress) ─────────────────────────────────────────
   async function saveProgress(progressKey, data) {
     const ref = _userRef();
@@ -483,5 +499,7 @@
     teardownRealtimeSync,
     searchTmdbByQuery,
     searchTmdbById,
+    saveAvatar,
+    loadAvatar,
   };
 })();

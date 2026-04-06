@@ -259,6 +259,7 @@
     <div id="profile-logged-in" hidden>
       <p class="profile-email" id="profile-email"></p>
       <hr class="profile-sep" />
+      <button class="profile-menu-item" id="profile-change-avatar" type="button">🖼️ Changer l'avatar</button>
       <button class="profile-menu-item" id="profile-nav-stats" type="button">📊 Mes stats</button>
       <button class="profile-menu-item" id="profile-nav-requests" type="button">🎬 Demander un titre</button>
       <button class="profile-menu-item profile-menu-admin" id="profile-nav-admin" type="button" hidden>🛡️ Admin</button>
@@ -313,6 +314,17 @@
         <h2 id="roadmap-modal-title" class="roadmap-modal-title">Changelog</h2>
       </div>
       <div id="roadmap-modal-content" class="roadmap-modal-content"></div>
+    </section>
+  </div>
+
+  <!-- ===== AVATAR PICKER MODAL ===== -->
+  <div id="avatar-picker-modal" class="avatar-picker-modal" hidden aria-hidden="true">
+    <div class="avatar-picker-backdrop" data-close-avatar></div>
+    <section class="avatar-picker-panel" role="dialog" aria-modal="true" aria-labelledby="avatar-picker-title">
+      <button id="avatar-picker-close" class="avatar-picker-close" aria-label="Fermer">✕</button>
+      <h3 id="avatar-picker-title" class="avatar-picker-heading">Choisir un avatar</h3>
+      <div class="avatar-picker-grid" id="avatar-picker-grid"></div>
+      <button type="button" class="avatar-picker-save" id="avatar-picker-save">Sauvegarder</button>
     </section>
   </div>
 
