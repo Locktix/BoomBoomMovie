@@ -1758,20 +1758,13 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 2.5rem 0.8rem 0.8rem;
+  padding: 1.4rem 0.8rem 0.65rem;
   background: linear-gradient(to top,
-    rgba(0,0,0,0.96) 0%,
-    rgba(0,0,0,0.5) 55%,
+    rgba(0,0,0,0.88) 0%,
+    rgba(0,0,0,0.45) 55%,
     transparent 100%
   );
-  transform: translateY(35%);
-  transition: transform var(--transition);
   z-index: 3;
-}
-
-.card:hover .card-overlay,
-.card:focus-visible .card-overlay {
-  transform: translateY(0);
 }
 
 .card-title {
@@ -1791,6 +1784,15 @@ body {
   font-weight: 500;
   color: var(--accent);
   letter-spacing: 0.3px;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.card:hover .card-year,
+.card:focus-visible .card-year {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .card-meta {
@@ -1798,6 +1800,15 @@ body {
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.card:hover .card-meta,
+.card:focus-visible .card-meta {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .card-collection {
@@ -1832,6 +1843,15 @@ body {
   letter-spacing: 0.02em;
   line-height: 1;
   margin-top: 0.18rem;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.card:hover .card-rating,
+.card:focus-visible .card-rating {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .card-rating[hidden] {
@@ -3352,7 +3372,7 @@ body {
   }
 
   .card-overlay {
-    padding: 1.5rem 0.6rem 0.6rem;
+    padding: 1.1rem 0.6rem 0.6rem;
   }
 
   .card-title {
@@ -4221,6 +4241,81 @@ body {
   outline: 2px solid rgba(229, 160, 13, 0.85);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ── Half-star slot system ─────────────────────────────────────── */
+.rating-star-slot {
+  position: relative;
+  display: inline-block;
+  font-size: inherit;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Taille dans le widget principal */
+.rating-stars .rating-star-slot {
+  font-size: 1.35rem;
+}
+
+.rating-star-slot.ep-star-slot {
+  font-size: 0.78rem;
+}
+
+/* Conteneur lecture seule (badges, moyenne) */
+.star-display-row {
+  display: inline-flex;
+  gap: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.star-bg,
+.star-fg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  font-size: inherit;
+  line-height: 1;
+}
+
+.star-bg {
+  width: 100%;
+  color: var(--text-muted);
+}
+
+.star-fg {
+  color: var(--accent);
+  width: 0%;
+  transition: width 0.07s ease;
+}
+
+.star-half {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.star-half-left  { left: 0; }
+.star-half-right { right: 0; }
+
+.star-half:focus-visible {
+  outline: 2px solid rgba(229, 160, 13, 0.85);
+  outline-offset: 1px;
+  border-radius: 2px;
 }
 
 .rating-value-label {

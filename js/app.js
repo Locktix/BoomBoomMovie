@@ -242,14 +242,14 @@ function getRatingKey(item, mediaType) {
 function getUserRating(ratingKey) {
   if (!ratingKey) return 0;
   const entry = ratingsStore[ratingKey];
-  const value = Number(entry?.rating);
-  return Number.isInteger(value) && value >= 1 && value <= 5 ? value : 0;
+  const value = Math.round(Number(entry?.rating) * 2) / 2;
+  return Number.isFinite(value) && value >= 0.5 && value <= 5 ? value : 0;
 }
 
 function setUserRating(ratingKey, rating) {
   if (!ratingKey) return;
-  const value = Number(rating);
-  if (!Number.isInteger(value) || value < 1 || value > 5) {
+  const value = Math.round(Number(rating) * 2) / 2;
+  if (!Number.isFinite(value) || value < 0.5 || value > 5) {
     delete ratingsStore[ratingKey];
     _fbSaveRatingNow(ratingKey, null);
   } else {
@@ -259,15 +259,26 @@ function setUserRating(ratingKey, rating) {
   saveRatingsStore();
 }
 
+function _buildStarDisplayHTML(rating) {
+  if (!rating || rating <= 0) return '';
+  let html = '<span class="star-display-row" aria-hidden="true">';
+  for (let i = 1; i <= 5; i += 1) {
+    const pct = rating >= i ? 100 : rating >= i - 0.5 ? 50 : 0;
+    html += `<span class="rating-star-slot"><span class="star-bg">&#9733;</span><span class="star-fg" style="width:${pct}%">&#9733;</span></span>`;
+  }
+  html += '</span>';
+  return html;
+}
+
 function refreshRatingDecorations() {
   document.querySelectorAll('[data-rating-display-for]').forEach((el) => {
     const key = el.getAttribute('data-rating-display-for') || '';
     const rating = getUserRating(key);
     if (rating > 0) {
-      el.textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+      el.innerHTML = _buildStarDisplayHTML(rating);
       el.removeAttribute('hidden');
     } else {
-      el.textContent = '';
+      el.innerHTML = '';
       el.setAttribute('hidden', 'hidden');
     }
   });
@@ -288,38 +299,63 @@ function renderStarRatingWidget(ratingKey, containerEl) {
   stars.setAttribute('role', 'group');
   stars.setAttribute('aria-label', 'Note personnelle sur 5');
 
-  for (let i = 1; i <= 5; i += 1) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'rating-star' + (i <= currentRating ? ' active' : '');
-    btn.setAttribute('aria-label', `${i} étoile${i > 1 ? 's' : ''}`);
-    btn.textContent = i <= currentRating ? '★' : '☆';
-    btn.dataset.value = String(i);
-
-    btn.addEventListener('mouseenter', () => {
-      stars.querySelectorAll('.rating-star').forEach((s, idx) => {
-        s.textContent = idx < i ? '★' : '☆';
-        s.classList.toggle('active', idx < i);
-      });
+  function updateDisplay(hoverVal) {
+    stars.querySelectorAll('.star-fg').forEach((fg, idx) => {
+      const pos = idx + 1;
+      if (hoverVal >= pos) fg.style.width = '100%';
+      else if (hoverVal >= pos - 0.5) fg.style.width = '50%';
+      else fg.style.width = '0%';
     });
+  }
 
-    btn.addEventListener('click', () => {
-      const newRating = currentRating === i ? 0 : i;
-      setUserRating(ratingKey, newRating);
+  for (let i = 1; i <= 5; i += 1) {
+    const slot = document.createElement('span');
+    slot.className = 'rating-star-slot';
+
+    const bg = document.createElement('span');
+    bg.className = 'star-bg';
+    bg.textContent = '★';
+    bg.setAttribute('aria-hidden', 'true');
+
+    const fg = document.createElement('span');
+    fg.className = 'star-fg';
+    fg.textContent = '★';
+    fg.setAttribute('aria-hidden', 'true');
+    fg.style.width = currentRating >= i ? '100%' : currentRating >= i - 0.5 ? '50%' : '0%';
+
+    const leftBtn = document.createElement('button');
+    leftBtn.type = 'button';
+    leftBtn.className = 'star-half star-half-left';
+    leftBtn.setAttribute('aria-label', `${i - 0.5} étoile${i - 0.5 !== 1 ? 's' : ''}`);
+    leftBtn.addEventListener('mouseenter', () => updateDisplay(i - 0.5));
+    leftBtn.addEventListener('click', () => {
+      if (!window.FB?.isLoggedIn?.()) { openAuthModal('login'); return; }
+      const val = i - 0.5;
+      setUserRating(ratingKey, currentRating === val ? 0 : val);
       refreshRatingDecorations();
       renderStarRatingWidget(ratingKey, containerEl);
     });
 
-    stars.appendChild(btn);
+    const rightBtn = document.createElement('button');
+    rightBtn.type = 'button';
+    rightBtn.className = 'star-half star-half-right';
+    rightBtn.setAttribute('aria-label', `${i} étoile${i !== 1 ? 's' : ''}`);
+    rightBtn.addEventListener('mouseenter', () => updateDisplay(i));
+    rightBtn.addEventListener('click', () => {
+      if (!window.FB?.isLoggedIn?.()) { openAuthModal('login'); return; }
+      setUserRating(ratingKey, currentRating === i ? 0 : i);
+      refreshRatingDecorations();
+      renderStarRatingWidget(ratingKey, containerEl);
+    });
+
+    slot.appendChild(bg);
+    slot.appendChild(fg);
+    slot.appendChild(leftBtn);
+    slot.appendChild(rightBtn);
+    stars.appendChild(slot);
   }
 
-  stars.addEventListener('mouseleave', () => {
-    const saved = getUserRating(ratingKey);
-    stars.querySelectorAll('.rating-star').forEach((s, idx) => {
-      s.textContent = idx < saved ? '★' : '☆';
-      s.classList.toggle('active', idx < saved);
-    });
-  });
+  stars.addEventListener('mouseleave', () => updateDisplay(currentRating));
 
   const ratingValue = document.createElement('span');
   ratingValue.className = 'rating-value-label';
@@ -376,38 +412,65 @@ function renderMiniStarWidget(ratingKey, containerEl, onRate) {
   containerEl.setAttribute('role', 'group');
   containerEl.setAttribute('aria-label', "Note de l'épisode sur 5");
 
-  for (let i = 1; i <= 5; i += 1) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ep-rating-star' + (i <= currentRating ? ' active' : '');
-    btn.setAttribute('aria-label', `${i} étoile${i > 1 ? 's' : ''}`);
-    btn.textContent = i <= currentRating ? '★' : '☆';
-
-    btn.addEventListener('mouseenter', () => {
-      containerEl.querySelectorAll('.ep-rating-star').forEach((s, idx) => {
-        s.textContent = idx < i ? '★' : '☆';
-        s.classList.toggle('active', idx < i);
-      });
+  function updateDisplay(hoverVal) {
+    containerEl.querySelectorAll('.star-fg').forEach((fg, idx) => {
+      const pos = idx + 1;
+      if (hoverVal >= pos) fg.style.width = '100%';
+      else if (hoverVal >= pos - 0.5) fg.style.width = '50%';
+      else fg.style.width = '0%';
     });
+  }
 
-    btn.addEventListener('click', (e) => {
+  for (let i = 1; i <= 5; i += 1) {
+    const slot = document.createElement('span');
+    slot.className = 'rating-star-slot ep-star-slot';
+
+    const bg = document.createElement('span');
+    bg.className = 'star-bg';
+    bg.textContent = '★';
+    bg.setAttribute('aria-hidden', 'true');
+
+    const fg = document.createElement('span');
+    fg.className = 'star-fg';
+    fg.textContent = '★';
+    fg.setAttribute('aria-hidden', 'true');
+    fg.style.width = currentRating >= i ? '100%' : currentRating >= i - 0.5 ? '50%' : '0%';
+
+    const leftBtn = document.createElement('button');
+    leftBtn.type = 'button';
+    leftBtn.className = 'star-half star-half-left';
+    leftBtn.setAttribute('aria-label', `${i - 0.5} étoile${i - 0.5 !== 1 ? 's' : ''}`);
+    leftBtn.addEventListener('mouseenter', () => updateDisplay(i - 0.5));
+    leftBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const newRating = currentRating === i ? 0 : i;
-      setUserRating(ratingKey, newRating);
+      if (!window.FB?.isLoggedIn?.()) { openAuthModal('login'); return; }
+      const val = i - 0.5;
+      setUserRating(ratingKey, currentRating === val ? 0 : val);
       renderMiniStarWidget(ratingKey, containerEl, onRate);
       if (typeof onRate === 'function') onRate();
     });
 
-    containerEl.appendChild(btn);
+    const rightBtn = document.createElement('button');
+    rightBtn.type = 'button';
+    rightBtn.className = 'star-half star-half-right';
+    rightBtn.setAttribute('aria-label', `${i} étoile${i !== 1 ? 's' : ''}`);
+    rightBtn.addEventListener('mouseenter', () => updateDisplay(i));
+    rightBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!window.FB?.isLoggedIn?.()) { openAuthModal('login'); return; }
+      setUserRating(ratingKey, currentRating === i ? 0 : i);
+      renderMiniStarWidget(ratingKey, containerEl, onRate);
+      if (typeof onRate === 'function') onRate();
+    });
+
+    slot.appendChild(bg);
+    slot.appendChild(fg);
+    slot.appendChild(leftBtn);
+    slot.appendChild(rightBtn);
+    containerEl.appendChild(slot);
   }
 
-  containerEl.addEventListener('mouseleave', () => {
-    const saved = getUserRating(ratingKey);
-    containerEl.querySelectorAll('.ep-rating-star').forEach((s, idx) => {
-      s.textContent = idx < saved ? '★' : '☆';
-      s.classList.toggle('active', idx < saved);
-    });
-  });
+  containerEl.addEventListener('mouseleave', () => updateDisplay(currentRating));
 }
 
 function refreshSeriesModalAverages(contentEl, headEl, seriesItem) {
@@ -495,10 +558,10 @@ function removeWatchProgressEntry(progressKey) {
   if (window.FB?.isLoggedIn?.()) window.FB.deleteProgress(progressKey);
 }
 
-function markPlaybackCompleted(progressKey, title = '') {
+function markPlaybackCompleted(progressKey, title = '', hintDurationSeconds = 0) {
   if (!progressKey) return;
   const existing = getWatchProgressEntry(progressKey) || {};
-  const durationSeconds = Number(existing.durationSeconds) || Number(existing.positionSeconds) || 1;
+  const durationSeconds = Number(existing.durationSeconds) || Number(existing.positionSeconds) || Number(hintDurationSeconds) || 0;
   updateWatchProgressEntry(progressKey, {
     title: String(title || existing.title || '').trim(),
     positionSeconds: durationSeconds,
@@ -765,22 +828,27 @@ function getContinueWatchingItems(limit = 14) {
     .slice(0, Math.max(1, Number(limit) || 14));
 }
 
-function markMovieCompleted(item) {
+function markMovieCompleted(item, hintRuntimeSeconds = 0) {
   const key = getMovieProgressKey(item);
-  markPlaybackCompleted(key, item?.title || 'Film');
+  markPlaybackCompleted(key, item?.title || 'Film', hintRuntimeSeconds);
 }
 
 function markSeriesCompleted(seriesItem) {
   const seasons = Array.isArray(seriesItem?.seasons) ? seriesItem.seasons : [];
+  const tmdbSeriesId = getTmdbNumericId(seriesItem);
   seasons.forEach((season) => {
     const seasonNum = Number(season?.season) || 1;
     const episodes = Array.isArray(season?.episodes) ? season.episodes : [];
+    const seasonCacheKey = tmdbSeriesId ? `${tmdbSeriesId}::season-${seasonNum}` : null;
+    const tmdbEpisodes = seasonCacheKey ? (tmdbSeasonDetailsCache.get(seasonCacheKey) || []) : [];
     episodes.forEach((ep, idx) => {
       const epNum = idx + 1;
       const candidates = Array.isArray(ep?._urlCandidates) ? ep._urlCandidates : getMediaUrlCandidates(ep);
       if (!hasPlayableCandidate(candidates)) return;
       const key = getEpisodeProgressKey(seriesItem, seasonNum, epNum);
-      markPlaybackCompleted(key, `${seriesItem?.title || 'Serie'} S${seasonNum}E${epNum}`);
+      const tmdbEp = tmdbEpisodes.find((e) => Number(e?.episode_number) === epNum);
+      const hintRuntime = Number(tmdbEp?.runtime) > 0 ? Number(tmdbEp.runtime) * 60 : 0;
+      markPlaybackCompleted(key, `${seriesItem?.title || 'Serie'} S${seasonNum}E${epNum}`, hintRuntime);
     });
   });
 }
@@ -1251,10 +1319,10 @@ function renderDetailsModalContent(item, mediaType, bundle) {
     } else {
       const avg = getSeriesEpisodeRatingAverage(item);
       if (avg !== null) {
-        const rounded = Math.round(avg);
+        const halfAvg = Math.round(avg * 2) / 2;
         ratingWrap.innerHTML = `
           <span class="rating-label">Moyenne épisodes :</span>
-          <span class="rating-stars-display">${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}</span>
+          <span class="rating-stars-display">${_buildStarDisplayHTML(halfAvg)}</span>
           <span class="rating-value-label">${avg.toFixed(1)}/5</span>
         `;
       } else {
@@ -1289,6 +1357,7 @@ function renderDetailsModalContent(item, mediaType, bundle) {
 
   const markWatchedBtn = content.querySelector('[data-details-action="mark-watched"]');
   markWatchedBtn?.addEventListener('click', () => {
+    if (!window.FB?.isLoggedIn?.()) { openAuthModal('login'); return; }
     if (mediaType === 'tv') {
       if (getSeriesWatchStatus(item) === 'completed') {
         unmarkSeriesCompleted(item);
@@ -1300,7 +1369,8 @@ function renderDetailsModalContent(item, mediaType, bundle) {
       if (isProgressCompleted(getWatchProgressEntry(key))) {
         unmarkMovieCompleted(item);
       } else {
-        markMovieCompleted(item);
+        const hintRuntimeSeconds = Number(bundle?.details?.runtime || 0) * 60;
+        markMovieCompleted(item, hintRuntimeSeconds);
       }
     }
 
@@ -1308,6 +1378,8 @@ function renderDetailsModalContent(item, mediaType, bundle) {
     renderLibrary();
     refreshFiltersForActiveSection();
     applyCurrentFilters();
+    const activeSection = document.querySelector('.view.active');
+    if (activeSection?.id === 'view-stats') renderStatsView();
   });
 }
 
@@ -2861,7 +2933,7 @@ function createCard(item, isTV = false, index = 0, options = {}) {
         ${seasonBadge}
         ${collectionBadge}
       </div>
-      <div class="card-rating" data-rating-display-for="${escapeHtml(itemRatingKey)}"${currentCardRating > 0 ? '' : ' hidden'}>${currentCardRating > 0 ? '★'.repeat(currentCardRating) + '☆'.repeat(5 - currentCardRating) : ''}</div>
+      <div class="card-rating" data-rating-display-for="${escapeHtml(itemRatingKey)}"${currentCardRating > 0 ? '' : ' hidden'}>${currentCardRating > 0 ? _buildStarDisplayHTML(currentCardRating) : ''}</div>
     </div>
   `;
 
@@ -4661,9 +4733,11 @@ function onUserLogout() {
   const adminBtn = document.getElementById('profile-nav-admin');
   if (adminBtn) adminBtn.hidden = true;
 
-  // Revenir aux données localStorage
-  loadWatchProgressStore();
-  loadRatingsStore();
+  // Vider les données de la session (progress + notes) — elles appartiennent au compte
+  watchProgressStore = {};
+  ratingsStore = {};
+  localStorage.removeItem(WATCH_PROGRESS_STORE_KEY);
+  localStorage.removeItem(RATINGS_STORE_KEY);
 
   renderLibrary();
   refreshFiltersForActiveSection();
@@ -4985,7 +5059,14 @@ function _getStatsData() {
     }
     if (status === 'completed') {
       moviesSeenCount += 1;
-      const dur = Number(entry?.durationSeconds) || 0;
+      let dur = Number(entry?.durationSeconds) || 0;
+      if (dur <= 1) {
+        // durationSeconds absent ou valeur invalide (ancien bug = 1s) : fallback TMDB cache
+        const tmdbId = getTmdbNumericId(item);
+        const tmdbData = tmdbId ? tmdbDetailsCache.get(getTmdbDetailsCacheKey('movie', tmdbId)) : null;
+        const tmdbRuntime = Number(tmdbData?.runtime) || 0;
+        if (tmdbRuntime > 0) dur = tmdbRuntime * 60;
+      }
       if (dur > 0) screenTimeMoviesSeconds += dur;
       const ts = Number(entry?.updatedAt) || 0;
       if (ts > 0) recentItems.push({ title: item.title, year: item.year, type: 'Film', updatedAt: ts });
@@ -5002,15 +5083,24 @@ function _getStatsData() {
     }
 
     let latestEpTs = 0;
+    const tmdbSeriesId = getTmdbNumericId(item);
     (Array.isArray(item?.seasons) ? item.seasons : []).forEach((season) => {
       const seasonNum = Number(season?.season) || 1;
+      const seasonCacheKey = tmdbSeriesId ? `${tmdbSeriesId}::season-${seasonNum}` : null;
+      const tmdbEpisodes = seasonCacheKey ? (tmdbSeasonDetailsCache.get(seasonCacheKey) || []) : [];
       (Array.isArray(season?.episodes) ? season.episodes : []).forEach((_, idx) => {
-        const epKey   = getEpisodeProgressKey(item, seasonNum, idx + 1);
+        const epNum   = idx + 1;
+        const epKey   = getEpisodeProgressKey(item, seasonNum, epNum);
         const epEntry = getWatchProgressEntry(epKey);
         if (!epEntry) return;
         if (getWatchStatusFromEntry(epEntry) !== 'completed') return;
         episodesCompleted += 1;
-        const dur = Number(epEntry?.durationSeconds) || 0;
+        let dur = Number(epEntry?.durationSeconds) || 0;
+        if (dur <= 1) {
+          const tmdbEp = tmdbEpisodes.find((e) => Number(e?.episode_number) === epNum);
+          const tmdbRuntime = Number(tmdbEp?.runtime) || 0;
+          if (tmdbRuntime > 0) dur = tmdbRuntime * 60;
+        }
         if (dur > 0) screenTimeSeriesSeconds += dur;
         const ts = Number(epEntry?.updatedAt) || 0;
         if (ts > latestEpTs) latestEpTs = ts;
@@ -5021,8 +5111,8 @@ function _getStatsData() {
 
   // ── Notes ─────────────────────────────────────────────────────────────────────────────────
   Object.values(ratingsStore).forEach((entry) => {
-    const r = Number(entry?.rating);
-    if (Number.isInteger(r) && r >= 1 && r <= 5) { totalRatings += 1; ratingsSum += r; }
+    const r = Math.round(Number(entry?.rating) * 2) / 2;
+    if (Number.isFinite(r) && r >= 0.5 && r <= 5) { totalRatings += 1; ratingsSum += r; }
   });
 
     const avgRating      = totalRatings > 0 ? (ratingsSum / totalRatings).toFixed(1) : '—';
