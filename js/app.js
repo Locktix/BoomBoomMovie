@@ -3840,6 +3840,12 @@ function setupNav() {
   navLinks.forEach((link) => {
     link.addEventListener('click', () => navigateTo(link.dataset.view));
   });
+
+  document.getElementById('logo-home')?.addEventListener('click', (e) => {
+    // Ignore si le clic vient du badge changelog
+    if (e.target.closest('#open-roadmap')) return;
+    navigateTo('view-home');
+  });
 }
 
 function setupSearch() {
