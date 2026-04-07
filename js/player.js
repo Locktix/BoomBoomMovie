@@ -45,6 +45,11 @@ BBM.Player = {
     this.setupAutoHide();
     this.loadProgress();
 
+    // Autoplay
+    this.video.addEventListener('canplay', () => {
+      this.video.play().catch(() => {});
+    }, { once: true });
+
     // Remove loading screen
     const loader = document.getElementById('loading-screen');
     if (loader) {
@@ -172,12 +177,22 @@ BBM.Player = {
       seeking = false;
     });
 
-    // Save progress periodically
+    // Save progress periodically (every 10s)
     setInterval(() => {
       if (this.isPlaying && v.currentTime > 5) {
         this.saveProgress();
       }
-    }, 30000);
+    }, 10000);
+
+    // Save on pause
+    v.addEventListener('pause', () => {
+      if (v.currentTime > 5) this.saveProgress();
+    });
+
+    // Save when leaving page
+    window.addEventListener('beforeunload', () => {
+      if (v.currentTime > 5) this.saveProgress();
+    });
 
     // Video ended
     v.addEventListener('ended', () => {
@@ -307,16 +322,23 @@ BBM.Player = {
      ---------------------------------------- */
   async saveProgress() {
     if (!this.tmdbID || !this.video.duration) return;
+    const progress = Math.floor(this.video.currentTime);
+    const duration = Math.floor(this.video.duration);
+    // If >= 90% watched, mark as finished
+    if (duration > 0 && (progress / duration) >= 0.9) {
+      try { await BBM.API.removeContinueWatching(this.tmdbID); } catch (e) {}
+      return;
+    }
     try {
       await BBM.API.saveContinueWatching(this.tmdbID, {
-        progress: Math.floor(this.video.currentTime),
-        duration: Math.floor(this.video.duration),
+        progress,
+        duration,
         category: this.type,
         seasonNumber: this.season,
         episodeNumber: this.episode
       });
     } catch (e) {
-      // Silently fail
+      console.error('saveProgress error:', e);
     }
   },
 
@@ -325,7 +347,13 @@ BBM.Player = {
     try {
       const cw = await BBM.API.getContinueWatching();
       const entry = cw[this.tmdbID];
-      if (entry && entry.progress > 10 && entry.progress < (entry.duration - 30)) {
+      if (entry && entry.progress > 10) {
+        const pct = entry.duration > 0 ? entry.progress / entry.duration : 0;
+        // If >= 90%, remove from continue watching (considered finished)
+        if (pct >= 0.9) {
+          try { await BBM.API.removeContinueWatching(this.tmdbID); } catch (e) {}
+          return;
+        }
         // Si même épisode/film
         const sameContent = this.type === 'movie' ||
           (entry.seasonNumber === this.season && entry.episodeNumber === this.episode);

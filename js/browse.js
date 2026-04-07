@@ -295,8 +295,9 @@ BBM.Browse = {
     const container = document.getElementById('rows-container');
     container.innerHTML = '';
 
-    // Continue Watching
-    const cwEntries = Object.entries(this.continueWatching);
+    // Continue Watching (filter out >= 90% as finished)
+    const cwEntries = Object.entries(this.continueWatching)
+      .filter(([, cw]) => !(cw.duration > 0 && (cw.progress / cw.duration) >= 0.9));
     if (cwEntries.length > 0) {
       const cwItems = cwEntries
         .sort((a, b) => {

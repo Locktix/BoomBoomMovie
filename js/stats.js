@@ -58,6 +58,8 @@
       : '—';
 
     const cwEntries = Object.values(continueWatching);
+    const finished = cwEntries.filter(cw => cw.duration > 0 && (cw.progress / cw.duration) >= 0.9);
+    const inProgress = cwEntries.filter(cw => !(cw.duration > 0 && (cw.progress / cw.duration) >= 0.9));
     const totalWatchSec = cwEntries.reduce((sum, cw) => sum + (cw.progress || 0), 0);
     const watchHours = Math.floor(totalWatchSec / 3600);
     const watchMin = Math.floor((totalWatchSec % 3600) / 60);
@@ -66,7 +68,8 @@
     document.getElementById('stat-rated').textContent = numRated;
     document.getElementById('stat-avg-rating').textContent = avgRating;
     document.getElementById('stat-mylist').textContent = myList.length;
-    document.getElementById('stat-watching').textContent = cwEntries.length;
+    document.getElementById('stat-finished').textContent = finished.length;
+    document.getElementById('stat-watching').textContent = inProgress.length;
     document.getElementById('stat-watchtime').textContent = watchTimeStr;
     document.getElementById('stat-requests').textContent = requests.length;
 
@@ -171,7 +174,8 @@
 
   function renderProgress(continueWatching, tmdbCache, allItems) {
     const container = document.getElementById('stats-progress');
-    const entries = Object.entries(continueWatching);
+    const entries = Object.entries(continueWatching)
+      .filter(([, cw]) => !(cw.duration > 0 && (cw.progress / cw.duration) >= 0.9));
 
     if (entries.length === 0) {
       container.innerHTML = '<p class="stats-empty">Aucun visionnage en cours</p>';

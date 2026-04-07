@@ -246,13 +246,26 @@ BBM.API = {
   async saveContinueWatching(tmdbID, data) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
-    const key = `continueWatching.${tmdbID}`;
-    await BBM.db.collection('users').doc(user.uid).set({
-      [key]: {
-        ...data,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }
-    }, { merge: true });
+    const key = `continueWatching.${String(tmdbID)}`;
+    const ref = BBM.db.collection('users').doc(user.uid);
+    try {
+      await ref.update({
+        [key]: {
+          ...data,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }
+      });
+    } catch (e) {
+      // Document might not exist yet, use set with merge
+      await ref.set({
+        continueWatching: {
+          [String(tmdbID)]: {
+            ...data,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }
+        }
+      }, { merge: true });
+    }
   },
 
   async getContinueWatching() {
@@ -269,7 +282,7 @@ BBM.API = {
   async removeContinueWatching(tmdbID) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
-    const key = `continueWatching.${tmdbID}`;
+    const key = `continueWatching.${String(tmdbID)}`;
     await BBM.db.collection('users').doc(user.uid).update({
       [key]: firebase.firestore.FieldValue.delete()
     });
@@ -313,9 +326,14 @@ BBM.API = {
     const user = BBM.Auth.currentUser;
     if (!user) return;
     const key = `ratings.${String(tmdbID)}`;
-    await BBM.db.collection('users').doc(user.uid).update({
-      [key]: rating
-    });
+    const ref = BBM.db.collection('users').doc(user.uid);
+    try {
+      await ref.update({ [key]: rating });
+    } catch (e) {
+      await ref.set({
+        ratings: { [String(tmdbID)]: rating }
+      }, { merge: true });
+    }
   },
 
   async removeRating(tmdbID) {
