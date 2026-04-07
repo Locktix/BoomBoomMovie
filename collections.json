@@ -79,5 +79,14 @@
     "tmdbIds": [920, 49013, 260514],
     "type": "movie",
     "ordered": true
+  },
+  {
+    "id" : "x-men",
+    "label": "X-Men",
+    "icon": "🦸‍♂️",
+    "badgePrefix": "XM",
+    "tmdbIds": [36657, 36658, 36668, 49538, 127585, 246655, 320288],
+    "type": "movie",
+    "ordered": true
   }
 ]
