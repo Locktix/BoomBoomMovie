@@ -6,13 +6,13 @@ const BBM = window.BBM || {};
 
 BBM.Config = {
   firebase: {
-    apiKey: "AIzaSyCy4pjjxwcFUjB1njQLuNk8b5mrtt-ZO0c",
-    authDomain: "bbm2-f9c99.firebaseapp.com",
-    projectId: "bbm2-f9c99",
-    storageBucket: "bbm2-f9c99.firebasestorage.app",
-    messagingSenderId: "102843750343",
-    appId: "1:102843750343:web:b758153040462b6f39abe2",
-    measurementId: "G-JPPQ3DHB52"
+    apiKey: "AIzaSyCx7cA7dWH7F1W50TsWYLUQJjhVrIfmjwg",
+    authDomain: "boomboommovie.firebaseapp.com",
+    projectId: "boomboommovie",
+    storageBucket: "boomboommovie.firebasestorage.app",
+    messagingSenderId: "808365315379",
+    appId: "1:808365315379:web:d0fa8881866cbe6fe31a46",
+    measurementId: "G-2CM6YKDWMJ"
   },
 
   workerAPI: "https://liste-films-api.alanplokain.workers.dev/",
@@ -34,7 +34,8 @@ BBM.Config = {
 
   // Admin UIDs — ajoute ton UID Firebase ici
   adminUIDs: [
-    "MSkx99pXxxgpOyBKRcnKkrmPfRg2" // Alan
+    "hD6Dzha6Y2WLL5YuC95UAeoImOC3", // Alan
+    "mU5EDUS7k7N5CHf4UwULD9yg0pF3" // Pierre
   ]
 };
 
