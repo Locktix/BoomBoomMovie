@@ -2185,6 +2185,178 @@ input { font-family: inherit; outline: none; border: none; }
 }
 
 /* ============================================
+   BURGER MENU & MOBILE MENU
+   ============================================ */
+
+/* Burger button — hidden on desktop */
+.burger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background var(--bbm-duration-fast);
+  cursor: pointer;
+  gap: 5px;
+  padding: 10px 8px;
+}
+.burger-btn:hover { background: rgba(255,255,255,0.06); }
+
+.burger-line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--bbm-text);
+  border-radius: 2px;
+  transition: all var(--bbm-duration-fast) var(--bbm-ease);
+}
+
+/* Burger animation when open */
+.burger-btn.active .burger-line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.burger-btn.active .burger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.burger-btn.active .burger-line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Overlay */
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 199;
+  opacity: 0;
+  transition: opacity var(--bbm-duration) var(--bbm-ease);
+}
+.mobile-menu-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Slide-in menu */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  max-width: 85vw;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--bbm-bg);
+  border-left: 1px solid var(--bbm-border);
+  z-index: 200;
+  transform: translateX(100%);
+  transition: transform var(--bbm-duration) var(--bbm-ease);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mobile-menu.active {
+  transform: translateX(0);
+}
+
+.mobile-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--bbm-border);
+}
+
+.mobile-menu-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.85rem;
+}
+
+.mobile-username {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bbm-text-bright);
+}
+
+.mobile-menu-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  color: var(--bbm-text-secondary);
+  transition: all var(--bbm-duration-fast);
+}
+.mobile-menu-close:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--bbm-text);
+}
+
+.mobile-menu-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px;
+}
+
+.mobile-menu-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--bbm-text-secondary);
+  border-radius: var(--bbm-radius-sm);
+  transition: all var(--bbm-duration-fast);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.mobile-menu-link:hover {
+  color: var(--bbm-text);
+  background: rgba(255,255,255,0.05);
+}
+.mobile-menu-link.active {
+  color: var(--bbm-accent);
+  background: var(--bbm-accent-soft);
+}
+
+.mobile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 12px;
+}
+
+.mobile-menu-divider {
+  border: none;
+  border-top: 1px solid var(--bbm-border);
+  margin: 4px 20px;
+}
+
+.mobile-logout {
+  margin: 4px 12px 20px;
+  color: var(--bbm-danger) !important;
+}
+.mobile-logout:hover {
+  background: rgba(224, 85, 85, 0.1) !important;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 
@@ -2195,6 +2367,8 @@ input { font-family: inherit; outline: none; border: none; }
 @media (max-width: 992px) {
   .navbar { padding: 0 24px; }
   .nav-links { display: none; }
+  .nav-profile { display: none; }
+  .burger-btn { display: flex; }
   .billboard-info { left: 24px; max-width: 420px; }
   .row { padding: 0 24px; }
   .title-card { flex: 0 0 calc((100% - 36px) / 4); min-width: 150px; }

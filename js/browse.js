@@ -92,15 +92,37 @@ BBM.Browse = {
     const userName = document.getElementById('nav-username');
     if (userName) userName.textContent = BBM.Auth.getDisplayName();
 
+    // Mobile avatar & username
+    const mobileAvatar = document.getElementById('mobile-avatar');
+    if (mobileAvatar) mobileAvatar.textContent = BBM.Auth.getInitials();
+    const mobileUsername = document.getElementById('mobile-username');
+    if (mobileUsername) mobileUsername.textContent = BBM.Auth.getDisplayName();
+
     // Admin link
     const adminBtn = document.getElementById('btn-admin');
-    if (adminBtn && BBM.Config.adminUIDs && BBM.Config.adminUIDs.includes(user.uid)) {
-      adminBtn.style.display = '';
+    const mobileAdminBtn = document.getElementById('mobile-btn-admin');
+    if (BBM.Config.adminUIDs && BBM.Config.adminUIDs.includes(user.uid)) {
+      if (adminBtn) adminBtn.style.display = '';
+      if (mobileAdminBtn) mobileAdminBtn.style.display = '';
     }
 
     // Logout
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) logoutBtn.addEventListener('click', () => BBM.Auth.logout());
+    const mobileLogoutBtn = document.getElementById('mobile-btn-logout');
+    if (mobileLogoutBtn) mobileLogoutBtn.addEventListener('click', () => BBM.Auth.logout());
+
+    // Mobile request buttons — wire to same handlers as desktop
+    const mobileReqBtn = document.getElementById('mobile-btn-request');
+    if (mobileReqBtn) mobileReqBtn.addEventListener('click', () => {
+      this.closeMobileMenu();
+      document.getElementById('btn-request')?.click();
+    });
+    const mobileMyReqBtn = document.getElementById('mobile-btn-my-requests');
+    if (mobileMyReqBtn) mobileMyReqBtn.addEventListener('click', () => {
+      this.closeMobileMenu();
+      document.getElementById('btn-my-requests')?.click();
+    });
 
     // Nav links
     document.querySelectorAll('.nav-links a').forEach(link => {
@@ -113,6 +135,62 @@ BBM.Browse = {
         link.classList.add('active');
       });
     });
+
+    // --- Mobile burger menu ---
+    this.setupMobileMenu();
+  },
+
+  setupMobileMenu() {
+    const burgerBtn = document.getElementById('burger-btn');
+    const menu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const closeBtn = document.getElementById('mobile-menu-close');
+    if (!burgerBtn || !menu) return;
+
+    burgerBtn.addEventListener('click', () => this.toggleMobileMenu());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.closeMobileMenu());
+    if (overlay) overlay.addEventListener('click', () => this.closeMobileMenu());
+
+    // Mobile nav links
+    document.querySelectorAll('.mobile-menu-link[data-view]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const view = link.dataset.view;
+        this.switchView(view);
+        // Sync active state on both mobile and desktop nav
+        document.querySelectorAll('.mobile-menu-link[data-view]').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        const desktopLink = document.querySelector(`.nav-links a[data-view="${view}"]`);
+        if (desktopLink) desktopLink.classList.add('active');
+        this.closeMobileMenu();
+      });
+    });
+  },
+
+  toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const burger = document.getElementById('burger-btn');
+    const isOpen = menu.classList.contains('active');
+    if (isOpen) {
+      this.closeMobileMenu();
+    } else {
+      menu.classList.add('active');
+      overlay.classList.add('active');
+      burger.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  },
+
+  closeMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const burger = document.getElementById('burger-btn');
+    if (menu) menu.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    if (burger) burger.classList.remove('active');
+    document.body.style.overflow = '';
   },
 
   switchView(view) {

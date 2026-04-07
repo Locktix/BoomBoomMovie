@@ -34,7 +34,7 @@
         <input type="text" class="nav-search-input" id="search-input" placeholder="Titres, genres...">
       </div>
 
-      <!-- Profile -->
+      <!-- Profile (desktop) -->
       <div class="nav-profile">
         <div class="nav-profile-btn">
           <div class="nav-profile-avatar" id="nav-avatar">?</div>
@@ -51,8 +51,44 @@
           <button id="btn-logout">Se déconnecter</button>
         </div>
       </div>
+
+      <!-- Burger Menu (mobile) -->
+      <button class="burger-btn" id="burger-btn" aria-label="Menu">
+        <span class="burger-line"></span>
+        <span class="burger-line"></span>
+        <span class="burger-line"></span>
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+  <aside class="mobile-menu" id="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="mobile-menu-user">
+        <div class="nav-profile-avatar mobile-avatar" id="mobile-avatar">?</div>
+        <span class="mobile-username" id="mobile-username">Utilisateur</span>
+      </div>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Fermer">✕</button>
+    </div>
+    <nav class="mobile-menu-nav">
+      <a href="#" data-view="home" class="mobile-menu-link active">Accueil</a>
+      <a href="#" data-view="movies" class="mobile-menu-link">Films</a>
+      <a href="#" data-view="series" class="mobile-menu-link">Séries</a>
+      <a href="#" data-view="collections" class="mobile-menu-link">Collections</a>
+      <a href="#" data-view="mylist" class="mobile-menu-link">Ma Liste</a>
+      <a href="mcu.html" class="mobile-menu-link">MCU</a>
+    </nav>
+    <hr class="mobile-menu-divider">
+    <div class="mobile-menu-actions">
+      <button class="mobile-menu-link" id="mobile-btn-request">Demander un titre</button>
+      <button class="mobile-menu-link" id="mobile-btn-my-requests">Mes demandes</button>
+      <a href="stats.html" class="mobile-menu-link">Mes statistiques</a>
+      <a href="admin.html" class="mobile-menu-link" id="mobile-btn-admin" style="display:none">⚙ Admin Panel</a>
+    </div>
+    <hr class="mobile-menu-divider">
+    <button class="mobile-menu-link mobile-logout" id="mobile-btn-logout">Se déconnecter</button>
+  </aside>
 
   <!-- Main Content (Home View) -->
   <main id="browse-content" class="browse-content">
