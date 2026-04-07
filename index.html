@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Connexion</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+  <!-- Animated background orbs -->
+  <div class="login-bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="login-page" id="login-page">
+    <!-- Header -->
+    <header class="login-header">
+      <div class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></div>
+    </header>
+
+    <!-- Login Form -->
+    <div class="login-wrapper">
+      <div class="login-box">
+        <h1 id="form-title">S'identifier</h1>
+        <p class="subtitle" id="form-subtitle">Connecte-toi pour accéder à ton espace</p>
+
+        <div class="login-error" id="login-error"></div>
+
+        <form id="auth-form" autocomplete="on">
+          <!-- Nom (inscription uniquement) -->
+          <div class="form-group" id="name-group" style="display: none">
+            <input type="text" id="input-name" placeholder="Nom d'utilisateur" autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <input type="email" id="input-email" placeholder="Adresse email" autocomplete="email" required>
+          </div>
+
+          <div class="form-group">
+            <input type="password" id="input-password" placeholder="Mot de passe" autocomplete="current-password" required minlength="6">
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-submit">S'identifier</button>
+        </form>
+
+        <p class="login-toggle">
+          <span id="toggle-text">Nouveau sur BoomBoomMovie ?</span>
+          <a id="toggle-link">Inscris-toi.</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="login-footer">
+      <p>BoomBoomMovie © 2026</p>
+    </footer>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- App -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let isLogin = true;
+
+      const form = document.getElementById('auth-form');
+      const formTitle = document.getElementById('form-title');
+      const nameGroup = document.getElementById('name-group');
+      const inputName = document.getElementById('input-name');
+      const inputEmail = document.getElementById('input-email');
+      const inputPassword = document.getElementById('input-password');
+      const btnSubmit = document.getElementById('btn-submit');
+      const toggleText = document.getElementById('toggle-text');
+      const toggleLink = document.getElementById('toggle-link');
+      const errorEl = document.getElementById('login-error');
+      const subtitleEl = document.getElementById('form-subtitle');
+
+      // Rediriger si déjà connecté
+      BBM.Auth.redirectIfLoggedIn();
+
+      // Toggle Login / Register
+      toggleLink.addEventListener('click', () => {
+        isLogin = !isLogin;
+        if (isLogin) {
+          formTitle.textContent = "S'identifier";
+          subtitleEl.textContent = 'Connecte-toi pour accéder à ton espace';
+          btnSubmit.textContent = "S'identifier";
+          toggleText.textContent = 'Nouveau sur BoomBoomMovie ?';
+          toggleLink.textContent = 'Inscris-toi.';
+          nameGroup.style.display = 'none';
+          inputPassword.autocomplete = 'current-password';
+        } else {
+          formTitle.textContent = "S'inscrire";
+          subtitleEl.textContent = 'Crée ton compte en quelques secondes';
+          btnSubmit.textContent = "S'inscrire";
+          toggleText.textContent = 'Déjà un compte ?';
+          toggleLink.textContent = 'Connecte-toi.';
+          nameGroup.style.display = 'block';
+          inputPassword.autocomplete = 'new-password';
+        }
+        errorEl.classList.remove('show');
+      });
+
+      // Submit
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = inputEmail.value.trim();
+        const password = inputPassword.value;
+        const name = inputName.value.trim();
+
+        if (!email || !password) return;
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Chargement...';
+        errorEl.classList.remove('show');
+
+        try {
+          if (isLogin) {
+            await BBM.Auth.login(email, password);
+          } else {
+            await BBM.Auth.register(email, password, name);
+          }
+          window.location.href = 'browse.html';
+        } catch (err) {
+          errorEl.textContent = BBM.Auth.translateError(err.code);
+          errorEl.classList.add('show');
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = isLogin ? "S'identifier" : "S'inscrire";
+        }
+      });
+    });
+  </script>
+</body>
+</html>
