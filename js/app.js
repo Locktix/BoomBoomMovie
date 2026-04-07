@@ -2458,25 +2458,24 @@ async function showSeriesModal(seriesItem) {
 
   if (modal.dataset.requestId !== requestId) return;
 
-  let html = '';
+  const nextEpisode = getSeriesNextEpisodeCandidate(seriesItem);
+  const defaultSeason = nextEpisode?.seasonNum ?? (Number(seasons[0]?.season) || 1);
+
+  // Build per-season episode HTML + metadata
   const playableEpisodes = [];
+  const seasonHtmlMap = new Map();
+  const seasonMetaMap = new Map();
+
   seasons.forEach((season) => {
     const seasonNum = Number(season.season) || 1;
     const tmdbEpisodes = seasonEpisodesMap.get(seasonNum) || [];
     const epList = Array.isArray(season.episodes)
       ? season.episodes
       : Array.from({ length: Number(season.episodes) || 0 }, () => ({ url: '' }));
-    const epCount = epList.length;
-    html += `
-      <article class="season-card">
-        <header class="season-card-head">
-          <h4>Saison ${seasonNum}</h4>
-          <span>${epCount} episode(s) | ${season.year || ''}</span>
-          <span class="season-avg-badge" data-season-avg-for="${seasonNum}" hidden></span>
-        </header>
-        <div class="episode-list">
-    `;
 
+    seasonMetaMap.set(seasonNum, { epCount: epList.length, year: season.year || '' });
+
+    let epHtml = '';
     epList.forEach((ep, i) => {
       const epNum = i + 1;
       const code = `S${String(seasonNum).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
@@ -2505,48 +2504,86 @@ async function showSeriesModal(seriesItem) {
         : `<div class="episode-thumb-fallback">${escapeHtml(code)}</div>`;
 
       const epRatingKey = getEpisodeRatingKey(seriesItem, seasonNum, epNum);
-      html += `
-          <article class="episode-card${hasUrl ? ' episode-playable' : ''}" data-progress-key="${escapeHtml(progressKey)}" data-ep-rating-widget-key="${escapeHtml(epRatingKey)}">
-            <div class="episode-thumb-wrap">
-              ${thumbMarkup}
-            </div>
-            <div class="episode-main">
-              <p class="episode-code">${code}</p>
-              <p class="episode-title">${escapeHtml(tmdbEpisodeName || `Episode ${epNum}`)}</p>
-              <p class="episode-year">${escapeHtml(airYear)}</p>
-              <div data-ep-rating-widget="${escapeHtml(epRatingKey)}"></div>
-            </div>
-            <span class="watch-state-badge watch-state-badge-episode" data-progress-badge-for="${escapeHtml(progressKey)}" hidden></span>
-            <div class="watch-progress watch-progress-episode" data-progress-key="${escapeHtml(progressKey)}"><span class="watch-progress-fill"></span></div>
-            ${hasUrl ? '<span class="episode-play">&#9654;</span>' : ''}
-          </article>
+      epHtml += `
+        <article class="episode-card${hasUrl ? ' episode-playable' : ''}" data-progress-key="${escapeHtml(progressKey)}" data-ep-rating-widget-key="${escapeHtml(epRatingKey)}">
+          <div class="episode-thumb-wrap">
+            ${thumbMarkup}
+          </div>
+          <div class="episode-main">
+            <p class="episode-code">${code}</p>
+            <p class="episode-title">${escapeHtml(tmdbEpisodeName || `Episode ${epNum}`)}</p>
+            <p class="episode-year">${escapeHtml(airYear)}</p>
+            <div data-ep-rating-widget="${escapeHtml(epRatingKey)}"></div>
+          </div>
+          <span class="watch-state-badge watch-state-badge-episode" data-progress-badge-for="${escapeHtml(progressKey)}" hidden></span>
+          <div class="watch-progress watch-progress-episode" data-progress-key="${escapeHtml(progressKey)}"><span class="watch-progress-fill"></span></div>
+          ${hasUrl ? '<span class="episode-play">&#9654;</span>' : ''}
+        </article>
       `;
     });
 
-    html += `
-        </div>
-      </article>
-    `;
+    seasonHtmlMap.set(seasonNum, epHtml);
   });
 
-  if (!html) {
-    html = '<p class="series-empty">Aucune information d\'episodes disponible.</p>';
-  }
+  // Build tabs
+  const tabsHtml = seasons.map((season) => {
+    const sNum = Number(season.season) || 1;
+    const isActive = sNum === defaultSeason;
+    return `<button type="button" class="season-tab${isActive ? ' season-tab--active' : ''}" data-season="${sNum}" role="tab" aria-selected="${isActive ? 'true' : 'false'}">Saison ${sNum}<span class="season-avg-badge" data-season-avg-for="${sNum}" hidden></span></button>`;
+  }).join('');
+
+  const initMeta = seasonMetaMap.get(defaultSeason) || {};
+  const initMetaText = [initMeta.epCount ? `${initMeta.epCount} épisode(s)` : '', initMeta.year].filter(Boolean).join(' · ');
+
+  const html = seasons.length ? `
+    <div class="season-tabs-wrap">
+      <div class="season-tabs" role="tablist" aria-label="Saisons">${tabsHtml}</div>
+      <p class="season-tabs-meta" id="season-tabs-meta">${escapeHtml(initMetaText)}</p>
+    </div>
+    <div class="episode-list" id="season-panel">
+      ${seasonHtmlMap.get(defaultSeason) || ''}
+    </div>
+  ` : '<p class="series-empty">Aucune information d\'episodes disponible.</p>';
 
   modal._playableEpisodes = playableEpisodes;
   content.innerHTML = html;
 
-  // Wire episode star rating widgets
-  content.querySelectorAll('[data-ep-rating-widget]').forEach((wrap) => {
-    const key = wrap.getAttribute('data-ep-rating-widget') || '';
-    if (!key) return;
-    renderMiniStarWidget(key, wrap, () => refreshSeriesModalAverages(content, head, seriesItem));
+  const panel = content.querySelector('#season-panel');
+  const metaBar = content.querySelector('#season-tabs-meta');
+
+  function wireEpisodeWidgets(container) {
+    container.querySelectorAll('[data-ep-rating-widget]').forEach((wrap) => {
+      const key = wrap.getAttribute('data-ep-rating-widget') || '';
+      if (!key) return;
+      renderMiniStarWidget(key, wrap, () => refreshSeriesModalAverages(content, head, seriesItem));
+    });
+  }
+
+  // Wire season tabs
+  content.querySelectorAll('.season-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const seasonNum = Number(tab.getAttribute('data-season'));
+      content.querySelectorAll('.season-tab').forEach((t) => {
+        t.classList.toggle('season-tab--active', t === tab);
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      const meta = seasonMetaMap.get(seasonNum) || {};
+      const metaText = [meta.epCount ? `${meta.epCount} épisode(s)` : '', meta.year].filter(Boolean).join(' · ');
+      if (metaBar) metaBar.textContent = metaText;
+      if (panel) {
+        panel.innerHTML = seasonHtmlMap.get(seasonNum) || '';
+        wireEpisodeWidgets(panel);
+        refreshProgressDecorations();
+      }
+    });
   });
+
+  // Wire initial season widgets
+  if (panel) wireEpisodeWidgets(panel);
 
   // Render initial season + series averages
   refreshSeriesModalAverages(content, head, seriesItem);
 
-  const nextEpisode = getSeriesNextEpisodeCandidate(seriesItem);
   const continueIndex = nextEpisode?.progressKey
     ? playableEpisodes.findIndex((entry) => entry.progressKey === nextEpisode.progressKey)
     : -1;
