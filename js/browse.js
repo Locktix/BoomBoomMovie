@@ -723,7 +723,8 @@ BBM.Browse = {
     const container = document.createElement('div');
     container.className = 'star-rating-section';
 
-    const userRating = this.userRatings[tmdbID] || 0;
+    const id = String(tmdbID);
+    const userRating = this.userRatings[id] || 0;
     const tmdbStars = tmdbRating ? (tmdbRating / 2).toFixed(1) : null;
 
     container.innerHTML = `
@@ -753,16 +754,16 @@ BBM.Browse = {
         star.addEventListener('click', async (e) => {
           e.stopPropagation();
           const val = parseFloat(star.dataset.value);
-          const currentRating = this.userRatings[tmdbID] || 0;
+          const currentRating = this.userRatings[id] || 0;
 
           if (val === currentRating) {
             // Click same star = remove rating
-            delete this.userRatings[tmdbID];
-            await BBM.API.removeRating(tmdbID);
+            delete this.userRatings[id];
+            await BBM.API.removeRating(id);
             BBM.Toast.show('Note retirée');
           } else {
-            this.userRatings[tmdbID] = val;
-            await BBM.API.setRating(tmdbID, val);
+            this.userRatings[id] = val;
+            await BBM.API.setRating(id, val);
             BBM.Toast.show(`Noté ${val}/5 ⭐`, 'success');
           }
 
@@ -779,7 +780,7 @@ BBM.Browse = {
       });
 
       starInput.addEventListener('mouseleave', () => {
-        const current = this.userRatings[tmdbID] || 0;
+        const current = this.userRatings[id] || 0;
         this._highlightStars(starInput, current);
       });
     }

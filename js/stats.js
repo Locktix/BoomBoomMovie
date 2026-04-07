@@ -7,6 +7,7 @@
 
   firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
+    BBM.Auth.currentUser = user;
 
     // Avatar & username
     const avatar = document.getElementById('nav-avatar');

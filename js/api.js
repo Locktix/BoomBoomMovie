@@ -312,16 +312,16 @@ BBM.API = {
   async setRating(tmdbID, rating) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
-    const key = `ratings.${tmdbID}`;
-    await BBM.db.collection('users').doc(user.uid).set({
+    const key = `ratings.${String(tmdbID)}`;
+    await BBM.db.collection('users').doc(user.uid).update({
       [key]: rating
-    }, { merge: true });
+    });
   },
 
   async removeRating(tmdbID) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
-    const key = `ratings.${tmdbID}`;
+    const key = `ratings.${String(tmdbID)}`;
     await BBM.db.collection('users').doc(user.uid).update({
       [key]: firebase.firestore.FieldValue.delete()
     });
