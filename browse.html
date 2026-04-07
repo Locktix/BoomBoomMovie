@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loader"></div>
+    <span class="loader-text">Chargement</span>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+
+    <ul class="nav-links">
+      <li><a href="#" data-view="home" class="active">Accueil</a></li>
+      <li><a href="#" data-view="movies">Films</a></li>
+      <li><a href="#" data-view="series">Séries</a></li>
+      <li><a href="#" data-view="collections">Collections</a></li>
+      <li><a href="#" data-view="mylist">Ma Liste</a></li>
+      <li><a href="mcu.html" class="nav-mcu-link">MCU</a></li>
+    </ul>
+
+    <div class="nav-right">
+      <!-- Search -->
+      <div class="nav-search">
+        <span class="nav-search-icon">🔍</span>
+        <input type="text" class="nav-search-input" id="search-input" placeholder="Titres, genres...">
+      </div>
+
+      <!-- Profile -->
+      <div class="nav-profile">
+        <div class="nav-profile-btn">
+          <div class="nav-profile-avatar" id="nav-avatar">?</div>
+          <span class="nav-profile-caret">▼</span>
+        </div>
+        <div class="nav-profile-dropdown">
+          <div class="dropdown-user" id="nav-username">Utilisateur</div>
+          <hr>
+          <button id="btn-request">Demander un titre</button>
+          <button id="btn-my-requests">Mes demandes</button>
+          <a id="btn-stats" href="stats.html" class="dropdown-link">Mes statistiques</a>
+          <a id="btn-admin" href="admin.html" style="display:none">⚙ Admin Panel</a>
+          <hr>
+          <button id="btn-logout">Se déconnecter</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content (Home View) -->
+  <main id="browse-content" class="browse-content">
+    <!-- Hero / Billboard -->
+    <section class="billboard" id="billboard">
+      <!-- Dynamically rendered -->
+    </section>
+
+    <!-- Content Rows -->
+    <section class="content-rows" id="rows-container">
+      <!-- Dynamically rendered -->
+    </section>
+  </main>
+
+  <!-- Category View (Films / Séries / Ma Liste) -->
+  <div id="category-filter" class="category-filter">
+    <div class="category-filter-header">
+      <h1>Films</h1>
+    </div>
+    <div class="category-grid"></div>
+  </div>
+
+  <!-- Search Results View -->
+  <div id="search-results" style="display:none">
+    <div class="search-results">
+      <h2 class="search-results-title"></h2>
+      <div class="search-grid"></div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <!-- Dynamically rendered -->
+    </div>
+  </div>
+
+  <!-- Request Modal -->
+  <div class="request-overlay" id="request-overlay">
+    <div class="request-modal" id="request-modal">
+      <button class="modal-close" id="request-close">✕</button>
+      <h2>Demander un titre</h2>
+      <p class="request-subtitle">Recherche un film ou une série sur TMDB</p>
+      <div class="request-search-box">
+        <input type="text" id="request-search-input" placeholder="Titre du film ou de la série...">
+        <button class="btn-primary" id="request-search-btn" style="width:auto;padding:10px 24px;margin-top:0">Rechercher</button>
+      </div>
+      <div class="request-results" id="request-results"></div>
+    </div>
+  </div>
+
+  <!-- My Requests Modal -->
+  <div class="request-overlay" id="my-requests-overlay">
+    <div class="request-modal" id="my-requests-modal">
+      <button class="modal-close" id="my-requests-close">✕</button>
+      <h2>Mes demandes</h2>
+      <p class="request-subtitle">Suivi de tes demandes de contenu</p>
+      <div class="my-requests-list" id="my-requests-list">
+        <div class="loader" style="margin:30px auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collection Detail Modal -->
+  <div class="request-overlay" id="collection-overlay">
+    <div class="request-modal collection-detail-modal" id="collection-modal">
+      <button class="modal-close" id="collection-close">✕</button>
+      <div id="collection-content"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p style="color: var(--bbm-text-secondary); margin-bottom: 12px">Des questions ? Contacte-nous.</p>
+    <div class="footer-links">
+      <a href="#">FAQ</a>
+      <a href="#">Centre d'aide</a>
+      <a href="#">Conditions d'utilisation</a>
+      <a href="#">Confidentialité</a>
+    </div>
+    <p class="footer-copy">© 2026 BoomBoomMovie</p>
+  </footer>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/browse.js"></script>
+</body>
+</html>

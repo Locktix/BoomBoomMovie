@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loader"></div>
+    <span class="loader-text">Vérification</span>
+  </div>
+
+  <!-- Access Denied -->
+  <div class="admin-denied" id="admin-denied" style="display:none">
+    <h1>⛔ Accès refusé</h1>
+    <p>Tu n'as pas les droits d'administration.</p>
+    <a href="browse.html" class="btn-primary" style="display:inline-block;width:auto;padding:12px 32px;margin-top:20px">Retour</a>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="admin-page" id="admin-page" style="display:none">
+    <!-- Navbar -->
+    <nav class="navbar scrolled">
+      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+      <span class="admin-nav-badge">Admin</span>
+      <div class="nav-right" style="margin-left:auto">
+        <a href="browse.html" class="btn-info" style="padding:8px 20px;font-size:0.85rem">← Retour au site</a>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="admin-content">
+      <div class="admin-header">
+        <h1>Panel Administration</h1>
+        <p class="admin-subtitle">Gestion des demandes de contenu</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="admin-stats" id="admin-stats">
+        <div class="admin-stat-card">
+          <span class="admin-stat-number" id="stat-total">0</span>
+          <span class="admin-stat-label">Total</span>
+        </div>
+        <div class="admin-stat-card pending">
+          <span class="admin-stat-number" id="stat-pending">0</span>
+          <span class="admin-stat-label">En attente</span>
+        </div>
+        <div class="admin-stat-card approved">
+          <span class="admin-stat-number" id="stat-approved">0</span>
+          <span class="admin-stat-label">Approuvés</span>
+        </div>
+        <div class="admin-stat-card rejected">
+          <span class="admin-stat-number" id="stat-rejected">0</span>
+          <span class="admin-stat-label">Refusés</span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="admin-filters">
+        <button class="admin-filter-btn active" data-filter="all">Tout</button>
+        <button class="admin-filter-btn" data-filter="pending">En attente</button>
+        <button class="admin-filter-btn" data-filter="approved">Approuvés</button>
+        <button class="admin-filter-btn" data-filter="rejected">Refusés</button>
+      </div>
+
+      <!-- Requests List -->
+      <div class="admin-requests" id="admin-requests">
+        <div class="loader" style="margin:40px auto"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Mes Statistiques</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loader"></div>
+    <span class="loader-text">Chargement des stats</span>
+  </div>
+
+  <!-- Stats Page -->
+  <div class="stats-page" id="stats-page" style="display:none">
+    <!-- Navbar -->
+    <nav class="navbar scrolled">
+      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+      <div class="nav-right" style="margin-left:auto;display:flex;align-items:center;gap:12px">
+        <a href="browse.html" class="btn-info" style="padding:8px 20px;font-size:0.85rem">← Retour</a>
+        <div class="nav-profile-avatar" id="nav-avatar" style="width:36px;height:36px;font-size:0.85rem">?</div>
+      </div>
+    </nav>
+
+    <main class="stats-content">
+      <!-- Header -->
+      <div class="stats-header">
+        <h1>Mes Statistiques</h1>
+        <p class="stats-subtitle" id="stats-username"></p>
+      </div>
+
+      <!-- Overview Cards -->
+      <section class="stats-overview" id="stats-overview">
+        <div class="stats-card">
+          <div class="stats-card-icon">🎬</div>
+          <div class="stats-card-value" id="stat-rated">0</div>
+          <div class="stats-card-label">Titres notés</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">⭐</div>
+          <div class="stats-card-value" id="stat-avg-rating">—</div>
+          <div class="stats-card-label">Note moyenne</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">📋</div>
+          <div class="stats-card-value" id="stat-mylist">0</div>
+          <div class="stats-card-label">Dans Ma Liste</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">✅</div>
+          <div class="stats-card-value" id="stat-finished">0</div>
+          <div class="stats-card-label">Vus</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">▶️</div>
+          <div class="stats-card-value" id="stat-watching">0</div>
+          <div class="stats-card-label">En cours</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">⏱️</div>
+          <div class="stats-card-value" id="stat-watchtime">0h</div>
+          <div class="stats-card-label">Temps visionné</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">📩</div>
+          <div class="stats-card-value" id="stat-requests">0</div>
+          <div class="stats-card-label">Demandes</div>
+        </div>
+      </section>
+
+      <!-- Charts Row -->
+      <div class="stats-charts-row">
+        <!-- Ratings Distribution -->
+        <section class="stats-section">
+          <h2>Distribution des notes</h2>
+          <div class="stats-chart-bar" id="chart-ratings">
+            <!-- Built by JS -->
+          </div>
+        </section>
+
+        <!-- Genres Breakdown -->
+        <section class="stats-section">
+          <h2>Genres préférés</h2>
+          <div class="stats-genre-chart" id="chart-genres">
+            <!-- Built by JS -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Watch Progress -->
+      <section class="stats-section stats-section-full">
+        <h2>Progression de visionnage</h2>
+        <div class="stats-progress-list" id="stats-progress">
+          <!-- Built by JS -->
+        </div>
+      </section>
+
+      <!-- Ratings Timeline -->
+      <section class="stats-section stats-section-full">
+        <h2>Titres les mieux notés</h2>
+        <div class="stats-top-rated" id="stats-top-rated">
+          <!-- Built by JS -->
+        </div>
+      </section>
+
+      <!-- Requests Status -->
+      <section class="stats-section stats-section-full">
+        <h2>Mes demandes</h2>
+        <div class="stats-requests-chart" id="chart-requests">
+          <!-- Built by JS -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/stats.js"></script>
+</body>
+</html>
