@@ -2406,8 +2406,11 @@ input { font-family: inherit; outline: none; border: none; }
 
   .search-results { padding-left: 16px; padding-right: 16px; }
   .search-grid, .category-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
+  }
+  .collections-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
   }
   .category-filter-header, .category-grid { padding-left: 16px; padding-right: 16px; }
   .footer { padding: 40px 16px 20px; }
@@ -2436,6 +2439,16 @@ input { font-family: inherit; outline: none; border: none; }
   .billboard-buttons { flex-direction: column; gap: 8px; }
   .btn-play, .btn-info { width: 100%; justify-content: center; }
   .login-bg-orbs .orb { filter: blur(60px); opacity: 0.1; }
+  .search-grid, .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .collections-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .collection-card-info { padding: 8px 10px; }
+  .collection-card-name { font-size: 0.75rem; }
+  .collection-card-count { font-size: 0.65rem; }
 }
 
 /* ============================================
