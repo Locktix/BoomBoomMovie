@@ -334,7 +334,7 @@ input { font-family: inherit; outline: none; border: none; }
   display: flex; align-items: center;
   padding: 0 48px;
   z-index: 100;
-  background: transparent;
+  background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
   transition: all var(--bbm-duration-slow) var(--bbm-ease);
 }
 

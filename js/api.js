@@ -294,13 +294,20 @@ BBM.API = {
 
   search(query) {
     if (!query || !this._items) return [];
-    const q = query.toLowerCase().trim();
+    const q = query.trim();
     const results = new Map();
+    const isNumeric = /^\d+$/.test(q);
 
     this._items.forEach(item => {
-      const title = (item.seriesTitle || item.title || '').toLowerCase();
-      if (title.includes(q) && !results.has(item.tmdbID)) {
-        results.set(item.tmdbID, item);
+      if (isNumeric) {
+        if (String(item.tmdbID) === q && !results.has(item.tmdbID)) {
+          results.set(item.tmdbID, item);
+        }
+      } else {
+        const title = (item.seriesTitle || item.title || '').toLowerCase();
+        if (title.includes(q.toLowerCase()) && !results.has(item.tmdbID)) {
+          results.set(item.tmdbID, item);
+        }
       }
     });
 
@@ -384,7 +391,32 @@ BBM.API = {
      ---------------------------------------- */
 
   async searchTMDB(query, page = 1) {
-    const url = `${BBM.Config.tmdb.baseURL}/search/multi?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}&query=${encodeURIComponent(query)}&page=${page}`;
+    const q = query.trim();
+
+    // Si c'est un ID numérique, chercher directement par TMDB ID
+    if (/^\d+$/.test(q)) {
+      const id = q;
+      const results = [];
+      try {
+        const [movieRes, tvRes] = await Promise.all([
+          fetch(`${BBM.Config.tmdb.baseURL}/movie/${id}?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}`),
+          fetch(`${BBM.Config.tmdb.baseURL}/tv/${id}?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}`)
+        ]);
+        if (movieRes.ok) {
+          const movie = await movieRes.json();
+          movie.media_type = 'movie';
+          results.push(movie);
+        }
+        if (tvRes.ok) {
+          const tv = await tvRes.json();
+          tv.media_type = 'tv';
+          results.push(tv);
+        }
+      } catch (e) { /* ignore */ }
+      return results;
+    }
+
+    const url = `${BBM.Config.tmdb.baseURL}/search/multi?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}&query=${encodeURIComponent(q)}&page=${page}`;
     try {
       const res = await fetch(url);
       if (!res.ok) return [];
