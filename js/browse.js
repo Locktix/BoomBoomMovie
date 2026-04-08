@@ -506,6 +506,7 @@ BBM.Browse = {
 
     card.innerHTML = `
       <div class="title-card-img">
+        ${isContinueWatching ? `<button class="btn-remove-cw" title="Retirer de Reprendre">✕</button>` : ''}
         ${posterURL ? `<img src="${posterURL}" alt="${title}" loading="lazy">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}
         <div class="title-card-overlay">
           <div class="card-buttons">
@@ -540,6 +541,18 @@ BBM.Browse = {
       e.stopPropagation();
       this.openModal(tmdbID, isMovie ? 'movie' : 'series');
     });
+
+    // Remove from continue watching
+    const removeBtn = card.querySelector('.btn-remove-cw');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await BBM.API.removeContinueWatching(tmdbID);
+        delete this.continueWatching[tmdbID];
+        card.remove();
+        BBM.Toast.show('Retiré de Reprendre');
+      });
+    }
 
     // Click on card image -> open modal
     card.querySelector('.title-card-img').addEventListener('click', () => {
@@ -605,6 +618,8 @@ BBM.Browse = {
       : '';
 
     const inList = this.myList.includes(String(tmdbID));
+    const cw = this.continueWatching[String(tmdbID)];
+    const isWatched = cw && cw.duration > 0 && (cw.progress / cw.duration) >= 0.9;
 
     // Get available seasons from our data
     let availableSeasons = [];
@@ -630,6 +645,9 @@ BBM.Browse = {
             </button>
             <button class="btn-icon" id="modal-list" title="${inList ? 'Retirer de Ma Liste' : 'Ajouter à Ma Liste'}">
               ${inList ? '✓' : '+'}
+            </button>
+            <button class="btn-icon${isWatched ? ' watched' : ''}" id="modal-mark-watched" title="${isWatched ? 'Retirer des vus' : 'Marquer comme vu'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
           </div>
         </div>
@@ -676,6 +694,40 @@ BBM.Browse = {
 
     modal.querySelector('#modal-list').addEventListener('click', (e) => {
       this.toggleMyList(tmdbID, e.currentTarget);
+    });
+
+    modal.querySelector('#modal-mark-watched').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const currentlyWatched = btn.classList.contains('watched');
+
+      if (currentlyWatched) {
+        // Retirer des vus
+        await BBM.API.removeContinueWatching(tmdbID);
+        delete this.continueWatching[tmdbID];
+        btn.classList.remove('watched');
+        btn.title = 'Marquer comme vu';
+        BBM.Toast.show('Retiré des vus');
+      } else {
+        // Marquer comme vu
+        let durationSec = 0;
+        if (isMovie) {
+          durationSec = (tmdb.runtime || 90) * 60;
+        } else {
+          const seriesData = BBM.API.getSeriesMap().get(String(tmdbID));
+          const nbEpisodes = seriesData ? seriesData.episodes.length : (tmdb.number_of_episodes || 1);
+          const avgRuntime = tmdb.episode_run_time?.length ? tmdb.episode_run_time[0] : 45;
+          durationSec = nbEpisodes * avgRuntime * 60;
+        }
+        await BBM.API.saveContinueWatching(tmdbID, {
+          progress: durationSec,
+          duration: durationSec,
+          category: type
+        });
+        this.continueWatching[tmdbID] = { progress: durationSec, duration: durationSec, category: type };
+        btn.classList.add('watched');
+        btn.title = 'Retirer des vus';
+        BBM.Toast.show('Marqué comme vu ✓', 'success');
+      }
     });
 
     // Episodes

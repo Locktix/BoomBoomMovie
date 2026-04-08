@@ -830,6 +830,16 @@ input { font-family: inherit; outline: none; border: none; }
 }
 .btn-icon.expand { margin-left: auto; }
 
+.btn-icon.watched {
+  background: #4ade80;
+  border-color: #4ade80;
+  color: #000;
+}
+.btn-icon.watched:hover {
+  background: #f87171;
+  border-color: #f87171;
+}
+
 .title-card-overlay .card-name {
   font-size: 0.85rem;
   font-weight: 600;
@@ -885,6 +895,35 @@ input { font-family: inherit; outline: none; border: none; }
   background: var(--bbm-accent);
   border-radius: 2px;
   transition: width var(--bbm-duration) var(--bbm-ease);
+}
+
+/* Remove from continue watching */
+.btn-remove-cw {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--bbm-text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--bbm-duration-fast) var(--bbm-ease),
+              background var(--bbm-duration-fast) var(--bbm-ease);
+}
+.title-card:hover .btn-remove-cw {
+  opacity: 1;
+}
+.btn-remove-cw:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: #fff;
 }
 
 /* Skeleton */
