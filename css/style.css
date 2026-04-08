@@ -1097,17 +1097,91 @@ input { font-family: inherit; outline: none; border: none; }
   color: var(--bbm-text-bright);
 }
 
-.season-select {
-  background: var(--bbm-bg-card);
-  color: var(--bbm-text);
+/* Season Dropdown Custom */
+.season-dropdown {
+  position: relative;
+  display: inline-block;
+  min-width: 150px;
+}
+.season-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  background: #16161e;
+  color: var(--bbm-text-bright);
   border: 1px solid var(--bbm-border);
   border-radius: var(--bbm-radius-sm);
-  padding: 8px 16px;
+  padding: 10px 16px;
   font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: border-color var(--bbm-duration-fast);
+  transition: border-color var(--bbm-duration-fast), background var(--bbm-duration-fast), box-shadow var(--bbm-duration-fast);
+  outline: none;
+  font-family: inherit;
 }
-.season-select:focus { border-color: var(--bbm-accent); }
+.season-dropdown-toggle:hover {
+  border-color: var(--bbm-accent);
+  background: #1c1c26;
+}
+.season-dropdown.open .season-dropdown-toggle {
+  border-color: var(--bbm-accent);
+  box-shadow: 0 0 0 3px #2a2418;
+}
+.season-dropdown-arrow {
+  color: var(--bbm-accent);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+.season-dropdown.open .season-dropdown-arrow {
+  transform: rotate(180deg);
+}
+.season-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #16161e;
+  border: 1px solid var(--bbm-border);
+  border-radius: var(--bbm-radius-sm);
+  padding: 6px 0;
+  margin: 0;
+  list-style: none;
+  z-index: 100;
+  box-shadow: 0 8px 24px #000000;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bbm-accent) transparent;
+}
+.season-dropdown.open .season-dropdown-menu {
+  display: block;
+  animation: seasonDropIn 0.2s ease;
+}
+@keyframes seasonDropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.season-dropdown-item {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bbm-text);
+  cursor: pointer;
+  transition: background var(--bbm-duration-fast), color var(--bbm-duration-fast);
+}
+.season-dropdown-item:hover {
+  background: #1e1a10;
+  color: var(--bbm-text-bright);
+}
+.season-dropdown-item.active {
+  color: var(--bbm-accent);
+  background: #1e1a10;
+  font-weight: 700;
+}
 
 .episode-item {
   display: flex; align-items: flex-start; gap: 16px;

@@ -674,9 +674,15 @@ BBM.Browse = {
           <div class="modal-episodes" id="modal-episodes">
             <div class="modal-episodes-header">
               <h3>Épisodes</h3>
-              <select class="season-select" id="season-select">
-                ${availableSeasons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}
-              </select>
+              <div class="season-dropdown" id="season-dropdown">
+                <button class="season-dropdown-toggle" id="season-dropdown-toggle" type="button">
+                  <span class="season-dropdown-label">Saison ${availableSeasons[0]}</span>
+                  <svg class="season-dropdown-arrow" width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <ul class="season-dropdown-menu" id="season-dropdown-menu">
+                  ${availableSeasons.map((s, i) => `<li class="season-dropdown-item${i === 0 ? ' active' : ''}" data-value="${s}">Saison ${s}</li>`).join('')}
+                </ul>
+              </div>
             </div>
             <div id="episodes-list"></div>
           </div>
@@ -730,12 +736,35 @@ BBM.Browse = {
       }
     });
 
-    // Episodes
+    // Episodes - Custom Season Dropdown
     if (!isMovie && availableSeasons.length > 0) {
-      const seasonSelect = modal.querySelector('#season-select');
-      seasonSelect.addEventListener('change', () => {
-        this.renderEpisodes(tmdbID, parseInt(seasonSelect.value));
+      const dropdown = modal.querySelector('#season-dropdown');
+      const toggle = modal.querySelector('#season-dropdown-toggle');
+      const menu = modal.querySelector('#season-dropdown-menu');
+      const label = toggle.querySelector('.season-dropdown-label');
+
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
       });
+
+      menu.addEventListener('click', (e) => {
+        const item = e.target.closest('.season-dropdown-item');
+        if (!item) return;
+        const value = parseInt(item.dataset.value);
+        label.textContent = item.textContent;
+        menu.querySelectorAll('.season-dropdown-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        dropdown.classList.remove('open');
+        this.renderEpisodes(tmdbID, value);
+      });
+
+      overlay.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      });
+
       this.renderEpisodes(tmdbID, availableSeasons[0]);
     }
 
