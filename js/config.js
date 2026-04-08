@@ -35,7 +35,8 @@ BBM.Config = {
   // Admin UIDs — ajoute ton UID Firebase ici
   adminUIDs: [
     "hD6Dzha6Y2WLL5YuC95UAeoImOC3", // Alan
-    "mU5EDUS7k7N5CHf4UwULD9yg0pF3" // Pierre
+    "mU5EDUS7k7N5CHf4UwULD9yg0pF3", // Pierre
+    "blTqQi0VXfW0zEyh4MXDqe8rstD3" // Adrien
   ]
 };
 
