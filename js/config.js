@@ -36,7 +36,7 @@ BBM.Config = {
   adminUIDs: [
     "hD6Dzha6Y2WLL5YuC95UAeoImOC3", // Alan
     "mU5EDUS7k7N5CHf4UwULD9yg0pF3", // Pierre
-    "blTqQi0VXfW0zEyh4MXDqe8rstD3" // Adrien
+    "UIxKgxZPOiglZEiiv3Z0VP50OCS2" // Adrien
   ]
 };
 
