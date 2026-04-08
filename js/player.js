@@ -11,6 +11,7 @@ BBM.Player = {
   type: null,
   season: null,
   episode: null,
+  isIOS: /iPhone|iPad|iPod/.test(navigator.userAgent),
 
   /* ----------------------------------------
      Initialization
@@ -40,10 +41,19 @@ BBM.Player = {
     // Load video
     this.video.src = videoURL;
 
-    this.setupControls();
-    this.setupKeyboard();
-    this.setupAutoHide();
-    this.loadProgress();
+    // Sur iPhone/iPad, utiliser le player natif
+    if (this.isIOS) {
+      this.overlay.style.display = 'none';
+      this.video.setAttribute('controls', '');
+      this.video.setAttribute('playsinline', '');
+      this.setupIOSControls();
+      this.loadProgress();
+    } else {
+      this.setupControls();
+      this.setupKeyboard();
+      this.setupAutoHide();
+      this.loadProgress();
+    }
 
     // Autoplay
     this.video.addEventListener('canplay', () => {
@@ -56,6 +66,36 @@ BBM.Player = {
       loader.classList.add('fade-out');
       setTimeout(() => loader.style.display = 'none', 500);
     }
+  },
+
+  /* ----------------------------------------
+     iOS Native Player (save/load only)
+     ---------------------------------------- */
+  setupIOSControls() {
+    const v = this.video;
+
+    v.addEventListener('play', () => { this.isPlaying = true; });
+    v.addEventListener('pause', () => {
+      this.isPlaying = false;
+      if (v.currentTime > 5) this.saveProgress();
+    });
+
+    // Save progress periodically
+    setInterval(() => {
+      if (this.isPlaying && v.currentTime > 5) {
+        this.saveProgress();
+      }
+    }, 10000);
+
+    window.addEventListener('beforeunload', () => {
+      if (v.currentTime > 5) this.saveProgress();
+    });
+
+    v.addEventListener('ended', () => { this.onVideoEnded(); });
+
+    v.addEventListener('error', () => {
+      BBM.Toast.show('Erreur de lecture vidéo', 'error');
+    });
   },
 
   /* ----------------------------------------
