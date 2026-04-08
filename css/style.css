@@ -743,8 +743,8 @@ input { font-family: inherit; outline: none; border: none; }
    ============================================ */
 
 .title-card {
-  flex: 0 0 calc((100% - 60px) / 6);
-  min-width: 180px;
+  flex: 0 0 calc((100% - 72px) / 7);
+  min-width: 150px;
   position: relative;
   border-radius: var(--bbm-radius);
   overflow: visible;
@@ -2474,7 +2474,7 @@ input { font-family: inherit; outline: none; border: none; }
    ============================================ */
 
 @media (max-width: 1200px) {
-  .title-card { flex: 0 0 calc((100% - 48px) / 5); }
+  .title-card { flex: 0 0 calc((100% - 60px) / 6); }
 }
 
 @media (max-width: 992px) {
