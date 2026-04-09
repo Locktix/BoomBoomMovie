@@ -1563,11 +1563,86 @@ input { font-family: inherit; outline: none; border: none; }
   font-size: 0.85rem;
 }
 
-.settings-empty {
-  padding: 16px;
+/* Next Episode Overlay */
+.next-episode-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.next-episode-card {
   text-align: center;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.35);
+  max-width: 420px;
+  padding: 40px;
+}
+
+.next-episode-label {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 12px;
+}
+
+.next-episode-label span {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.next-episode-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 28px;
+  line-height: 1.4;
+}
+
+.next-episode-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-next-play {
+  padding: 12px 28px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-next-play:hover {
+  background: #e0e0e0;
+  transform: scale(1.03);
+}
+
+.btn-next-cancel {
+  padding: 12px 28px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-next-cancel:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 /* ============================================

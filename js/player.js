@@ -152,18 +152,30 @@ BBM.Player = {
       v.currentTime = Math.min(v.duration, v.currentTime + 10);
     });
 
-    // Volume
+    // Volume — restore from localStorage
     const volumeBtn = document.getElementById('btn-volume');
     const volumeSlider = document.getElementById('volume-slider');
 
+    const savedVolume = localStorage.getItem('bbm_volume');
+    const savedMuted = localStorage.getItem('bbm_muted') === 'true';
+    if (savedVolume !== null) {
+      v.volume = parseFloat(savedVolume);
+      volumeSlider.value = v.volume;
+    }
+    v.muted = savedMuted;
+    this.updateVolumeIcon();
+
     volumeBtn.addEventListener('click', () => {
       v.muted = !v.muted;
+      localStorage.setItem('bbm_muted', v.muted);
       this.updateVolumeIcon();
     });
 
     volumeSlider.addEventListener('input', () => {
       v.volume = parseFloat(volumeSlider.value);
       v.muted = false;
+      localStorage.setItem('bbm_volume', v.volume);
+      localStorage.setItem('bbm_muted', 'false');
       this.updateVolumeIcon();
     });
 
@@ -171,6 +183,21 @@ BBM.Player = {
       volumeSlider.value = v.muted ? 0 : v.volume;
       this.updateVolumeIcon();
     });
+
+    // Picture-in-Picture
+    const pipBtn = document.getElementById('btn-pip');
+    if (document.pictureInPictureEnabled) {
+      pipBtn.style.display = '';
+      pipBtn.addEventListener('click', async () => {
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          } else {
+            await v.requestPictureInPicture();
+          }
+        } catch (e) { /* ignore */ }
+      });
+    }
 
     // Fullscreen
     document.getElementById('btn-fullscreen').addEventListener('click', () => {
@@ -328,9 +355,6 @@ BBM.Player = {
   setupSettings() {
     const btn = document.getElementById('btn-settings');
     const panel = document.getElementById('settings-panel');
-    const audioSection = document.getElementById('settings-audio');
-    const subsSection = document.getElementById('settings-subs');
-    const emptyMsg = document.getElementById('settings-empty');
     const v = this.video;
 
     // Toggle panel
@@ -358,9 +382,24 @@ BBM.Player = {
 
   refreshSettingsPanel() {
     const v = this.video;
+    const speedSection = document.getElementById('settings-speed');
     const audioSection = document.getElementById('settings-audio');
     const subsSection = document.getElementById('settings-subs');
-    const emptyMsg = document.getElementById('settings-empty');
+
+    // --- Playback Speed ---
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+    speedSection.innerHTML = '<div class="settings-section-title">Vitesse</div>';
+    speeds.forEach(speed => {
+      const label = speed === 1 ? 'Normal' : speed + 'x';
+      const item = document.createElement('div');
+      item.className = 'settings-item' + (v.playbackRate === speed ? ' active' : '');
+      item.innerHTML = `<span class="settings-item-check"></span><span>${label}</span>`;
+      item.addEventListener('click', () => {
+        v.playbackRate = speed;
+        this.refreshSettingsPanel();
+      });
+      speedSection.appendChild(item);
+    });
     let hasAny = false;
 
     // --- Audio Tracks ---
@@ -428,8 +467,6 @@ BBM.Player = {
       subsSection.classList.remove('has-tracks');
       subsSection.innerHTML = '';
     }
-
-    emptyMsg.style.display = hasAny ? 'none' : 'block';
   },
 
   /* ----------------------------------------
@@ -596,7 +633,7 @@ BBM.Player = {
       } catch (e) { /* ignore */ }
     }
 
-    // Pour les séries, proposer l'épisode suivant (simple redirect)
+    // Pour les séries, afficher l'overlay épisode suivant
     if (this.type === 'series' && this.tmdbID) {
       await BBM.API.fetchAllItems();
       const series = BBM.API.getSeriesMap().get(String(this.tmdbID));
@@ -606,13 +643,43 @@ BBM.Player = {
         );
         if (currentIdx >= 0 && currentIdx < series.episodes.length - 1) {
           const next = series.episodes[currentIdx + 1];
-          const title = `${series.seriesTitle} - S${String(next.seasonNumber).padStart(2, '0')}E${String(next.episodeNumber).padStart(2, '0')}`;
-          setTimeout(() => {
-            window.location.href = `watch.html?v=${encodeURIComponent(next.url)}&title=${encodeURIComponent(title)}&tmdbid=${this.tmdbID}&type=series&s=${next.seasonNumber}&e=${next.episodeNumber}`;
-          }, 3000);
+          const nextTitle = `${series.seriesTitle} — S${String(next.seasonNumber).padStart(2, '0')}E${String(next.episodeNumber).padStart(2, '0')}`;
+          const nextURL = `watch.html?v=${encodeURIComponent(next.url)}&title=${encodeURIComponent(nextTitle)}&tmdbid=${this.tmdbID}&type=series&s=${next.seasonNumber}&e=${next.episodeNumber}`;
+          this.showNextEpisode(nextTitle, nextURL);
         }
       }
     }
+  },
+
+  showNextEpisode(title, url) {
+    const overlay = document.getElementById('next-episode-overlay');
+    const titleEl = document.getElementById('next-ep-title');
+    const countdownEl = document.getElementById('next-ep-countdown');
+    const playBtn = document.getElementById('next-ep-play');
+    const cancelBtn = document.getElementById('next-ep-cancel');
+
+    titleEl.textContent = title;
+    overlay.style.display = '';
+    let seconds = 10;
+    countdownEl.textContent = seconds;
+
+    const goNext = () => {
+      clearInterval(timer);
+      window.location.href = url;
+    };
+
+    const timer = setInterval(() => {
+      seconds--;
+      countdownEl.textContent = seconds;
+      if (seconds <= 0) goNext();
+    }, 1000);
+
+    playBtn.addEventListener('click', goNext);
+
+    cancelBtn.addEventListener('click', () => {
+      clearInterval(timer);
+      overlay.style.display = 'none';
+    });
   },
 
   /* ----------------------------------------
