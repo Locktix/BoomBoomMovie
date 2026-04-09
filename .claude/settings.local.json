@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"accessibility\\\\|aria-\\\\|role=\\\\|tabindex\" \"C:\\\\Users\\\\Alan\\\\Documents\\\\GitHub\\\\BoomBoomMovie\"/*.html)"
+    ]
+  }
+}

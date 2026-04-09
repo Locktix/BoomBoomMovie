@@ -59,6 +59,11 @@ BBM.Player = {
       this.loadProgress();
     }
 
+    // Episode navigation (séries uniquement)
+    if (this.type === 'series' && this.tmdbID) {
+      this.setupEpisodeNav();
+    }
+
     // Autoplay
     this.video.addEventListener('canplay', () => {
       this.video.play().catch(() => {});
@@ -318,6 +323,46 @@ BBM.Player = {
     v.addEventListener('error', () => {
       BBM.Toast.show('Erreur de lecture vidéo', 'error');
     });
+  },
+
+  /* ----------------------------------------
+     Episode Navigation (Prev / Next)
+     ---------------------------------------- */
+  async setupEpisodeNav() {
+    await BBM.API.fetchAllItems();
+    const series = BBM.API.getSeriesMap().get(String(this.tmdbID));
+    if (!series) return;
+
+    const currentIdx = series.episodes.findIndex(
+      e => e.seasonNumber === this.season && e.episodeNumber === this.episode
+    );
+    if (currentIdx < 0) return;
+
+    const buildURL = (ep) => {
+      const title = `${series.seriesTitle} - S${String(ep.seasonNumber).padStart(2, '0')}E${String(ep.episodeNumber).padStart(2, '0')}`;
+      return `watch.html?v=${encodeURIComponent(ep.url)}&title=${encodeURIComponent(title)}&tmdbid=${this.tmdbID}&type=series&s=${ep.seasonNumber}&e=${ep.episodeNumber}`;
+    };
+
+    const goToEpisode = (url) => {
+      this.saveProgress();
+      window.location.href = url;
+    };
+
+    // Previous episode
+    if (currentIdx > 0) {
+      const prevBtn = document.getElementById('btn-prev-ep');
+      const prev = series.episodes[currentIdx - 1];
+      prevBtn.style.display = '';
+      prevBtn.addEventListener('click', () => goToEpisode(buildURL(prev)));
+    }
+
+    // Next episode
+    if (currentIdx < series.episodes.length - 1) {
+      const nextBtn = document.getElementById('btn-next-ep');
+      const next = series.episodes[currentIdx + 1];
+      nextBtn.style.display = '';
+      nextBtn.addEventListener('click', () => goToEpisode(buildURL(next)));
+    }
   },
 
   /* ----------------------------------------

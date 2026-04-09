@@ -1447,6 +1447,7 @@ input { font-family: inherit; outline: none; border: none; }
   transform: scale(1.1);
 }
 .player-controls-row .ctrl-btn svg { width: 20px; height: 20px; }
+.player-controls-row .episode-nav-btn svg { width: 16px; height: 16px; }
 
 .player-time {
   font-size: 0.82rem;
