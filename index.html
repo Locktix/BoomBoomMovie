@@ -6,6 +6,10 @@
   <title>BoomBoomMovie — Connexion</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d4a843">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
   <!-- Animated background orbs -->
@@ -46,6 +50,10 @@
           <button type="submit" class="btn-primary" id="btn-submit">S'identifier</button>
         </form>
 
+        <p class="login-forgot" id="forgot-wrap">
+          <a id="forgot-link">Mot de passe oublié ?</a>
+        </p>
+
         <p class="login-toggle">
           <span id="toggle-text">Nouveau sur BoomBoomMovie ?</span>
           <a id="toggle-link">Inscris-toi.</a>
@@ -84,6 +92,9 @@
       const errorEl = document.getElementById('login-error');
       const subtitleEl = document.getElementById('form-subtitle');
 
+      const forgotLink = document.getElementById('forgot-link');
+      const forgotWrap = document.getElementById('forgot-wrap');
+
       // Rediriger si déjà connecté
       BBM.Auth.redirectIfLoggedIn();
 
@@ -98,6 +109,7 @@
           toggleLink.textContent = 'Inscris-toi.';
           nameGroup.style.display = 'none';
           inputPassword.autocomplete = 'current-password';
+          forgotWrap.style.display = '';
         } else {
           formTitle.textContent = "S'inscrire";
           subtitleEl.textContent = 'Crée ton compte en quelques secondes';
@@ -106,6 +118,7 @@
           toggleLink.textContent = 'Connecte-toi.';
           nameGroup.style.display = 'block';
           inputPassword.autocomplete = 'new-password';
+          forgotWrap.style.display = 'none';
         }
         errorEl.classList.remove('show');
       });
@@ -135,6 +148,34 @@
           errorEl.classList.add('show');
           btnSubmit.disabled = false;
           btnSubmit.textContent = isLogin ? "S'identifier" : "S'inscrire";
+        }
+      });
+
+      // Mot de passe oublié
+      forgotLink.addEventListener('click', async () => {
+        const email = inputEmail.value.trim();
+        if (!email) {
+          errorEl.textContent = 'Entre ton adresse email ci-dessus, puis clique ici.';
+          errorEl.classList.add('show');
+          inputEmail.focus();
+          return;
+        }
+        forgotLink.style.pointerEvents = 'none';
+        forgotLink.textContent = 'Envoi en cours...';
+        try {
+          await BBM.Auth.resetPassword(email);
+          errorEl.textContent = '';
+          errorEl.classList.remove('show');
+          forgotLink.textContent = 'Email envoyé !';
+          setTimeout(() => {
+            forgotLink.textContent = 'Mot de passe oublié ?';
+            forgotLink.style.pointerEvents = '';
+          }, 4000);
+        } catch (err) {
+          errorEl.textContent = BBM.Auth.translateError(err.code);
+          errorEl.classList.add('show');
+          forgotLink.textContent = 'Mot de passe oublié ?';
+          forgotLink.style.pointerEvents = '';
         }
       });
     });

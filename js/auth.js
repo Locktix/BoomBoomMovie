@@ -28,6 +28,11 @@ BBM.Auth = {
     return cred.user;
   },
 
+  /** Réinitialisation du mot de passe */
+  async resetPassword(email) {
+    await BBM.auth.sendPasswordResetEmail(email);
+  },
+
   /** Déconnexion */
   async logout() {
     await BBM.auth.signOut();
