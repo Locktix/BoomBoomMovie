@@ -11,7 +11,8 @@ BBM.Player = {
   type: null,
   season: null,
   episode: null,
-  isIOS: /iPhone|iPad|iPod/.test(navigator.userAgent),
+  isMobile: /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)),
 
   /* ----------------------------------------
      Initialization
@@ -41,14 +42,16 @@ BBM.Player = {
     // Load video
     this.video.src = videoURL;
 
-    // Sur iPhone/iPad, utiliser le player natif
-    if (this.isIOS) {
+    // Sur mobile/tablette, utiliser le player natif du navigateur
+    if (this.isMobile) {
       this.overlay.style.display = 'none';
       this.video.setAttribute('controls', '');
       this.video.setAttribute('playsinline', '');
-      this.setupIOSControls();
+      this.video.setAttribute('webkit-playsinline', '');
+      this.setupNativeControls();
       this.loadProgress();
     } else {
+      this.video.setAttribute('playsinline', '');
       this.setupControls();
       this.setupKeyboard();
       this.setupAutoHide();
@@ -69,9 +72,9 @@ BBM.Player = {
   },
 
   /* ----------------------------------------
-     iOS Native Player (save/load only)
+     Native Player — Mobile/Tablet (save/load only)
      ---------------------------------------- */
-  setupIOSControls() {
+  setupNativeControls() {
     const v = this.video;
 
     v.addEventListener('play', () => { this.isPlaying = true; });
@@ -180,41 +183,85 @@ BBM.Player = {
     const progressBuffered = document.getElementById('progress-buffered');
     const timeDisplay = document.getElementById('player-time');
 
-    v.addEventListener('timeupdate', () => {
-      if (!v.duration) return;
-      const pct = (v.currentTime / v.duration) * 100;
+    // Seek state
+    let seeking = false;
+    let lastVisualPct = 0;
+
+    const updateProgressUI = (pct) => {
+      lastVisualPct = pct;
       progressFilled.style.width = pct + '%';
       progressThumb.style.left = pct + '%';
+    };
+
+    v.addEventListener('timeupdate', () => {
+      // Ne pas écraser la barre pendant un seek ou si les données sont invalides
+      if (seeking) return;
+      if (!v.duration || isNaN(v.duration) || isNaN(v.currentTime)) return;
+      // Ignorer les sauts brusques à 0 pendant le buffering
+      if (v.currentTime === 0 && lastVisualPct > 5 && !v.paused) return;
+      const pct = (v.currentTime / v.duration) * 100;
+      updateProgressUI(pct);
       timeDisplay.textContent = `${this.formatTime(v.currentTime)} / ${this.formatTime(v.duration)}`;
     });
 
     v.addEventListener('progress', () => {
-      if (v.buffered.length > 0 && v.duration) {
+      if (v.buffered.length > 0 && v.duration && !isNaN(v.duration)) {
         const buffPct = (v.buffered.end(v.buffered.length - 1) / v.duration) * 100;
         progressBuffered.style.width = buffPct + '%';
       }
     });
 
-    // Seek
-    let seeking = false;
+    // Seek — mise à jour visuelle instantanée, seek vidéo en différé
+    let seekRAF = null;
 
-    const seek = (e) => {
+    const seekFromX = (clientX) => {
       const rect = progressBar.getBoundingClientRect();
-      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      v.currentTime = pct * v.duration;
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      // Mise à jour visuelle immédiate (pas de lag)
+      updateProgressUI(pct * 100);
+      if (v.duration && !isNaN(v.duration)) {
+        timeDisplay.textContent = `${this.formatTime(pct * v.duration)} / ${this.formatTime(v.duration)}`;
+        // Throttle le seek réel pour éviter de surcharger le décodeur
+        if (seekRAF) cancelAnimationFrame(seekRAF);
+        seekRAF = requestAnimationFrame(() => {
+          v.currentTime = pct * v.duration;
+        });
+      }
     };
 
     progressBar.addEventListener('mousedown', (e) => {
       seeking = true;
-      seek(e);
+      seekFromX(e.clientX);
     });
 
     document.addEventListener('mousemove', (e) => {
-      if (seeking) seek(e);
+      if (seeking) seekFromX(e.clientX);
     });
 
     document.addEventListener('mouseup', () => {
+      if (seeking) {
+        seeking = false;
+        seekRAF = null;
+      }
+    });
+
+    // Touch support for progress bar
+    progressBar.addEventListener('touchstart', (e) => {
+      seeking = true;
+      seekFromX(e.touches[0].clientX);
+      e.preventDefault();
+    }, { passive: false });
+
+    progressBar.addEventListener('touchmove', (e) => {
+      if (seeking) {
+        seekFromX(e.touches[0].clientX);
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    progressBar.addEventListener('touchend', () => {
       seeking = false;
+      seekRAF = null;
     });
 
     // Save progress periodically (every 10s)
@@ -328,10 +375,22 @@ BBM.Player = {
      ---------------------------------------- */
   toggleFullscreen() {
     const container = document.querySelector('.player-container');
-    if (!document.fullscreenElement) {
-      container.requestFullscreen?.() || container.webkitRequestFullscreen?.();
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!isFullscreen) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      } else if (container.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      } else if (this.video.webkitEnterFullscreen) {
+        // Safari iOS fallback (video element only)
+        this.video.webkitEnterFullscreen();
+      }
     } else {
-      document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
     }
   },
 
@@ -364,9 +423,17 @@ BBM.Player = {
     if (!this.tmdbID || !this.video.duration) return;
     const progress = Math.floor(this.video.currentTime);
     const duration = Math.floor(this.video.duration);
-    // If >= 90% watched, mark as finished
+    // If >= 90% watched, mark as fully watched (progress = duration)
     if (duration > 0 && (progress / duration) >= 0.9) {
-      try { await BBM.API.removeContinueWatching(this.tmdbID); } catch (e) {}
+      try {
+        await BBM.API.saveContinueWatching(this.tmdbID, {
+          progress: duration,
+          duration,
+          category: this.type,
+          seasonNumber: this.season,
+          episodeNumber: this.episode
+        });
+      } catch (e) {}
       return;
     }
     try {
@@ -389,11 +456,8 @@ BBM.Player = {
       const entry = cw[this.tmdbID];
       if (entry && entry.progress > 10) {
         const pct = entry.duration > 0 ? entry.progress / entry.duration : 0;
-        // If >= 90%, remove from continue watching (considered finished)
-        if (pct >= 0.9) {
-          try { await BBM.API.removeContinueWatching(this.tmdbID); } catch (e) {}
-          return;
-        }
+        // If >= 90%, already watched — start from beginning
+        if (pct >= 0.9) return;
         // Si même épisode/film
         const sameContent = this.type === 'movie' ||
           (entry.seasonNumber === this.season && entry.episodeNumber === this.episode);
@@ -407,10 +471,17 @@ BBM.Player = {
   },
 
   async onVideoEnded() {
-    // Supprimer de "reprendre" si terminé
-    if (this.tmdbID) {
+    // Marquer comme vu (progress = duration)
+    if (this.tmdbID && this.video.duration) {
+      const duration = Math.floor(this.video.duration);
       try {
-        await BBM.API.removeContinueWatching(this.tmdbID);
+        await BBM.API.saveContinueWatching(this.tmdbID, {
+          progress: duration,
+          duration,
+          category: this.type,
+          seasonNumber: this.season,
+          episodeNumber: this.episode
+        });
       } catch (e) { /* ignore */ }
     }
 
