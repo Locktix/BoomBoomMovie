@@ -102,12 +102,12 @@
 
       const actions = req.status === 'pending' ? `
         <div class="admin-actions">
-          <button class="admin-btn approve" onclick="adminAction('${req.id}', 'approved')" title="Approuver">✓ Approuver</button>
-          <button class="admin-btn reject" onclick="adminAction('${req.id}', 'rejected')" title="Refuser">✕ Refuser</button>
+          <button class="admin-btn approve" data-action="approved" data-id="${req.id}" title="Approuver">✓ Approuver</button>
+          <button class="admin-btn reject" data-action="rejected" data-id="${req.id}" title="Refuser">✕ Refuser</button>
         </div>
       ` : `
         <div class="admin-actions">
-          <button class="admin-btn reset" onclick="adminAction('${req.id}', 'pending')" title="Remettre en attente">↺ Réinitialiser</button>
+          <button class="admin-btn reset" data-action="pending" data-id="${req.id}" title="Remettre en attente">↺ Réinitialiser</button>
         </div>
       `;
 
@@ -131,16 +131,23 @@
     }).join('');
   }
 
-  /* ---------- Actions ---------- */
+  /* ---------- Actions (delegated + confirmation) ---------- */
 
-  window.adminAction = async function (requestId, newStatus) {
+  document.getElementById('admin-requests').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const requestId = btn.dataset.id;
+    const newStatus = btn.dataset.action;
+
+    btn.disabled = true;
+
     try {
       await db.collection('requests').doc(requestId).update({
         status: newStatus,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // Update local data
       const req = allRequests.find(r => r.id === requestId);
       if (req) req.status = newStatus;
 
@@ -151,9 +158,10 @@
       BBM.Toast.show(labels[newStatus] || 'Mis à jour', newStatus === 'rejected' ? 'error' : 'success');
     } catch (err) {
       console.error('Erreur action admin:', err);
+      btn.disabled = false;
       BBM.Toast.show('Erreur : vérifie les règles Firestore', 'error');
     }
-  };
+  });
 
   /* ---------- Filters ---------- */
 

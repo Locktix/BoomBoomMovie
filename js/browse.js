@@ -37,6 +37,7 @@ BBM.Browse = {
       const uniqueItems = this.getUniqueItems(items);
       this.tmdbCache = await BBM.API.batchFetchTMDB(uniqueItems);
 
+      this.setupLazyLoad();
       this.renderHero();
       this.renderRows();
       this.showLoading(false);
@@ -73,6 +74,31 @@ BBM.Browse = {
       loader.classList.add('fade-out');
       setTimeout(() => { loader.style.display = 'none'; }, 500);
     }
+  },
+
+  /* ----------------------------------------
+     Lazy Loading Images
+     ---------------------------------------- */
+  setupLazyLoad() {
+    this._lazyObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+          }
+          this._lazyObserver.unobserve(img);
+        }
+      });
+    }, { rootMargin: '200px' });
+  },
+
+  observeLazyImages(container) {
+    if (!this._lazyObserver) return;
+    container.querySelectorAll('img[data-src]').forEach(img => {
+      this._lazyObserver.observe(img);
+    });
   },
 
   /* ----------------------------------------
@@ -275,6 +301,7 @@ BBM.Browse = {
       if (!tmdb) return;
       grid.appendChild(this.createCard(String(id), tmdb));
     });
+    this.observeLazyImages(grid);
   },
 
   /* ----------------------------------------
@@ -348,6 +375,7 @@ BBM.Browse = {
 
     container.style.display = 'block';
     this.currentView = 'search';
+    this.observeLazyImages(grid);
   },
 
   /* ----------------------------------------
@@ -516,6 +544,7 @@ BBM.Browse = {
     });
 
     parent.appendChild(row);
+    this.observeLazyImages(row);
   },
 
   /* ----------------------------------------
@@ -554,7 +583,7 @@ BBM.Browse = {
       <div class="title-card-img">
         ${watchedBadge}
         ${isContinueWatching ? `<button class="btn-remove-cw" title="Retirer de Reprendre">✕</button>` : ''}
-        ${posterURL ? `<img src="${posterURL}" alt="${title}" loading="lazy">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}
+        ${posterURL ? `<img data-src="${posterURL}" alt="${title}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}
         <div class="title-card-overlay">
           <div class="card-buttons">
             <button class="btn-icon accent btn-play-card" title="Lecture">▶</button>

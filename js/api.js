@@ -53,6 +53,7 @@ BBM.API = {
 
     this._items = merged;
     this._processItems();
+    this._buildSearchIndex();
     return this._items;
   },
 
@@ -325,26 +326,54 @@ BBM.API = {
      Search
      ---------------------------------------- */
 
+  /** Build search index for fast lookup */
+  _buildSearchIndex() {
+    this._searchIndex = [];
+    const seen = new Set();
+    this._items.forEach(item => {
+      if (seen.has(item.tmdbID)) return;
+      seen.add(item.tmdbID);
+      const title = (item.seriesTitle || item.title || '').toLowerCase();
+      // Split into searchable tokens (words)
+      const tokens = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/);
+      this._searchIndex.push({ item, title, tokens, id: String(item.tmdbID) });
+    });
+  },
+
   search(query) {
     if (!query || !this._items) return [];
     const q = query.trim();
-    const results = new Map();
     const isNumeric = /^\d+$/.test(q);
 
-    this._items.forEach(item => {
-      if (isNumeric) {
-        if (String(item.tmdbID) === q && !results.has(item.tmdbID)) {
-          results.set(item.tmdbID, item);
-        }
-      } else {
-        const title = (item.seriesTitle || item.title || '').toLowerCase();
-        if (title.includes(q.toLowerCase()) && !results.has(item.tmdbID)) {
-          results.set(item.tmdbID, item);
-        }
-      }
+    if (isNumeric) {
+      const entry = (this._searchIndex || []).find(e => e.id === q);
+      return entry ? [entry.item] : [];
+    }
+
+    // Normalize query: remove accents, lowercase, split into words
+    const qNorm = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const qTokens = qNorm.split(/\s+/).filter(Boolean);
+
+    if (!this._searchIndex) this._buildSearchIndex();
+
+    // Score each entry: exact start > word start > contains
+    const scored = [];
+    this._searchIndex.forEach(entry => {
+      const titleNorm = entry.title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      // All query tokens must match somewhere
+      const allMatch = qTokens.every(qt => titleNorm.includes(qt));
+      if (!allMatch) return;
+
+      let score = 0;
+      if (titleNorm.startsWith(qNorm)) score = 3;
+      else if (entry.tokens.some(t => t.startsWith(qNorm))) score = 2;
+      else score = 1;
+
+      scored.push({ item: entry.item, score });
     });
 
-    return Array.from(results.values());
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map(s => s.item);
   },
 
   /* ----------------------------------------
