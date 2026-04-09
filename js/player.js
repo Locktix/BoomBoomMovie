@@ -55,6 +55,7 @@ BBM.Player = {
       this.setupControls();
       this.setupKeyboard();
       this.setupAutoHide();
+      this.setupSettings();
       this.loadProgress();
     }
 
@@ -319,6 +320,116 @@ BBM.Player = {
         this.overlay.classList.add('hidden');
       }, 3000);
     });
+  },
+
+  /* ----------------------------------------
+     Settings Panel (Audio / Subtitles)
+     ---------------------------------------- */
+  setupSettings() {
+    const btn = document.getElementById('btn-settings');
+    const panel = document.getElementById('settings-panel');
+    const audioSection = document.getElementById('settings-audio');
+    const subsSection = document.getElementById('settings-subs');
+    const emptyMsg = document.getElementById('settings-empty');
+    const v = this.video;
+
+    // Toggle panel
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = panel.classList.contains('open');
+      if (isOpen) {
+        panel.classList.remove('open');
+      } else {
+        this.refreshSettingsPanel();
+        panel.classList.add('open');
+      }
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (!panel.contains(e.target) && e.target !== btn) {
+        panel.classList.remove('open');
+      }
+    });
+
+    // Detect tracks once video metadata is loaded
+    v.addEventListener('loadedmetadata', () => this.refreshSettingsPanel());
+  },
+
+  refreshSettingsPanel() {
+    const v = this.video;
+    const audioSection = document.getElementById('settings-audio');
+    const subsSection = document.getElementById('settings-subs');
+    const emptyMsg = document.getElementById('settings-empty');
+    let hasAny = false;
+
+    // --- Audio Tracks ---
+    const audioTracks = v.audioTracks;
+    if (audioTracks && audioTracks.length > 1) {
+      hasAny = true;
+      audioSection.classList.add('has-tracks');
+      audioSection.innerHTML = '<div class="settings-section-title">Audio</div>';
+      for (let i = 0; i < audioTracks.length; i++) {
+        const track = audioTracks[i];
+        const label = track.label || track.language || `Piste ${i + 1}`;
+        const lang = track.language ? ` (${track.language.toUpperCase()})` : '';
+        const item = document.createElement('div');
+        item.className = 'settings-item' + (track.enabled ? ' active' : '');
+        item.innerHTML = `<span class="settings-item-check"></span><span>${label}${lang}</span>`;
+        item.addEventListener('click', () => {
+          for (let j = 0; j < audioTracks.length; j++) {
+            audioTracks[j].enabled = (j === i);
+          }
+          this.refreshSettingsPanel();
+        });
+        audioSection.appendChild(item);
+      }
+    } else {
+      audioSection.classList.remove('has-tracks');
+      audioSection.innerHTML = '';
+    }
+
+    // --- Subtitle / Text Tracks ---
+    const textTracks = v.textTracks;
+    if (textTracks && textTracks.length > 0) {
+      hasAny = true;
+      subsSection.classList.add('has-tracks');
+      subsSection.innerHTML = '<div class="settings-section-title">Sous-titres</div>';
+
+      // Option "Off"
+      const allDisabled = Array.from(textTracks).every(t => t.mode === 'disabled' || t.mode === 'hidden');
+      const offItem = document.createElement('div');
+      offItem.className = 'settings-item' + (allDisabled ? ' active' : '');
+      offItem.innerHTML = '<span class="settings-item-check"></span><span>Désactivés</span>';
+      offItem.addEventListener('click', () => {
+        for (let j = 0; j < textTracks.length; j++) {
+          textTracks[j].mode = 'disabled';
+        }
+        this.refreshSettingsPanel();
+      });
+      subsSection.appendChild(offItem);
+
+      for (let i = 0; i < textTracks.length; i++) {
+        const track = textTracks[i];
+        const label = track.label || track.language || `Piste ${i + 1}`;
+        const lang = track.language ? ` (${track.language.toUpperCase()})` : '';
+        const item = document.createElement('div');
+        item.className = 'settings-item' + (track.mode === 'showing' ? ' active' : '');
+        item.innerHTML = `<span class="settings-item-check"></span><span>${label}${lang}</span>`;
+        item.addEventListener('click', () => {
+          for (let j = 0; j < textTracks.length; j++) {
+            textTracks[j].mode = (j === i) ? 'showing' : 'disabled';
+          }
+          this.refreshSettingsPanel();
+        });
+        subsSection.appendChild(item);
+      }
+    } else {
+      subsSection.classList.remove('has-tracks');
+      subsSection.innerHTML = '';
+    }
+
+    emptyMsg.style.display = hasAny ? 'none' : 'block';
   },
 
   /* ----------------------------------------
