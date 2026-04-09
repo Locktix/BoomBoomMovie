@@ -3,16 +3,17 @@
    ============================================ */
 
 const BBM_CHANGELOG = {
-  currentVersion: '3.2.0',
+  currentVersion: '2.9.0',
 
   versions: [
     {
-      version: '3.2.0',
+      version: '2.9.0',
       date: '2026-04-09',
       title: 'Pages légales & Lazy Loading',
       type: 'minor',
       changes: [
         { type: 'new', text: 'Pages FAQ, Centre d\'aide, Conditions d\'utilisation et Confidentialité' },
+        { type: 'new', text: 'Page Changelog avec timeline visuelle' },
         { type: 'new', text: 'Lazy loading des images avec IntersectionObserver — chargement plus rapide' },
         { type: 'improved', text: 'Recherche améliorée : ignore les accents, scoring par pertinence, multi-mots' },
         { type: 'improved', text: 'Admin : actions par délégation d\'événements au lieu de onclick inline' },
@@ -20,7 +21,7 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '3.1.0',
+      version: '2.8.0',
       date: '2026-04-09',
       title: 'Tri, Badges & Progression',
       type: 'minor',
@@ -34,10 +35,10 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '3.0.0',
+      version: '2.7.0',
       date: '2026-04-09',
       title: 'PWA, Accessibilité & Mot de passe oublié',
-      type: 'major',
+      type: 'minor',
       changes: [
         { type: 'new', text: 'PWA : site installable sur mobile et desktop avec Service Worker' },
         { type: 'new', text: 'Cache intelligent : assets statiques + images TMDB en cache offline' },
@@ -48,7 +49,7 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '2.5.0',
+      version: '2.6.0',
       date: '2026-04-09',
       title: 'Player — Épisodes & Features',
       type: 'minor',
@@ -62,7 +63,7 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '2.4.0',
+      version: '2.5.0',
       date: '2026-04-09',
       title: 'Player — Optimisations',
       type: 'minor',
@@ -77,7 +78,7 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '2.3.0',
+      version: '2.4.0',
       date: '2026-04-09',
       title: 'Double API & Déduplication',
       type: 'minor',
@@ -88,7 +89,7 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '2.2.0',
+      version: '2.3.0',
       date: '2026-04-08',
       title: 'UI & Gestion du visionnage',
       type: 'minor',
@@ -100,7 +101,7 @@ const BBM_CHANGELOG = {
       ]
     },
     {
-      version: '2.1.0',
+      version: '2.2.0',
       date: '2026-04-07',
       title: 'Menu mobile',
       type: 'minor',
