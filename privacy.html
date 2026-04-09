@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Confidentialité</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d4a843">
+</head>
+<body>
+  <div class="legal-page">
+    <header class="legal-header">
+      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+    </header>
+
+    <main class="legal-content">
+      <h1>Politique de confidentialité</h1>
+      <p class="legal-updated">Dernière mise à jour : avril 2026</p>
+
+      <section>
+        <h2>En bref</h2>
+        <p>BoomBoomMovie respecte ta vie privée. On ne collecte que le strict nécessaire au fonctionnement du site. Pas de cookies, pas de tracking, pas de revente de données. Point.</p>
+      </section>
+
+      <section>
+        <h2>Données collectées</h2>
+        <p>Les seules données stockées sont celles nécessaires au fonctionnement du service :</p>
+
+        <h3>Données de compte</h3>
+        <ul>
+          <li><strong>Email</strong> — utilisé pour la création de compte et la connexion</li>
+          <li><strong>Nom d'utilisateur</strong> — choisi à l'inscription, affiché dans l'interface</li>
+          <li><strong>Date de création</strong> du compte</li>
+        </ul>
+
+        <h3>Données d'utilisation</h3>
+        <ul>
+          <li><strong>Progression de lecture</strong> — position dans chaque film/épisode, pour reprendre là où tu t'es arrêté</li>
+          <li><strong>Ma Liste</strong> — les titres que tu as ajoutés à ta liste personnelle</li>
+          <li><strong>Notes</strong> — les notes (étoiles) que tu attribues aux titres</li>
+          <li><strong>Demandes de contenu</strong> — les titres que tu demandes à ajouter au catalogue</li>
+          <li><strong>Volume</strong> — ton réglage de volume est sauvegardé localement dans ton navigateur (localStorage)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Ce qu'on ne collecte PAS</h2>
+        <ul>
+          <li>Aucun cookie (ni first-party, ni tiers)</li>
+          <li>Aucun traceur analytique (pas de Google Analytics, pas de Matomo, rien)</li>
+          <li>Aucune adresse IP stockée</li>
+          <li>Aucune donnée de géolocalisation</li>
+          <li>Aucun historique de navigation en dehors du site</li>
+          <li>Aucune donnée personnelle supplémentaire (nom réel, téléphone, adresse...)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Stockage des données</h2>
+        <p>Toutes les données utilisateur sont stockées sur <strong>Firebase</strong> (Google Cloud Platform), hébergé dans des datacenters européens. Firebase gère l'authentification et la base de données Firestore.</p>
+        <p>Les données mises en cache (métadonnées TMDB, images) sont stockées localement dans le <strong>localStorage</strong> de ton navigateur et dans le <strong>cache du Service Worker</strong>. Ces données restent sur ton appareil et ne sont jamais envoyées à un serveur tiers.</p>
+      </section>
+
+      <section>
+        <h2>Partage des données</h2>
+        <p>Tes données ne sont partagées avec personne. Jamais. Il n'y a aucun partenaire commercial, aucun annonceur, aucun service tiers qui reçoit tes informations.</p>
+        <p>Les seules communications externes sont :</p>
+        <ul>
+          <li><strong>Firebase/Google</strong> — pour l'authentification et le stockage (nécessaire au fonctionnement)</li>
+          <li><strong>TMDB</strong> — pour récupérer les métadonnées des films et séries (affiches, descriptions). Aucune donnée utilisateur n'est envoyée à TMDB.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Durée de conservation</h2>
+        <p>Tes données sont conservées tant que ton compte existe. Si tu souhaites supprimer ton compte et toutes les données associées, contacte-nous via le dépôt GitHub du projet.</p>
+      </section>
+
+      <section>
+        <h2>Tes droits</h2>
+        <p>Tu peux à tout moment :</p>
+        <ul>
+          <li>Consulter tes données (progression, liste, notes) directement dans l'interface</li>
+          <li>Supprimer tes données d'utilisation (retirer des listes, effacer la progression, retirer les notes)</li>
+          <li>Demander la suppression complète de ton compte en ouvrant une issue sur <a href="https://github.com/Locktix/BoomBoomMovie" target="_blank" rel="noopener" style="color: var(--bbm-accent)">GitHub</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Modifications</h2>
+        <p>Cette politique peut être mise à jour. En cas de changement significatif, la date de mise à jour en haut de cette page sera modifiée.</p>
+      </section>
+    </main>
+
+    <footer class="legal-footer">
+      <p>© 2026 BoomBoomMovie</p>
+    </footer>
+  </div>
+</body>
+</html>
