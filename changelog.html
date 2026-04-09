@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Changelog</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d4a843">
+</head>
+<body>
+  <div class="legal-page">
+    <header class="legal-header">
+      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+    </header>
+
+    <main class="legal-content changelog-page">
+      <div class="changelog-header">
+        <h1>Changelog</h1>
+        <div class="changelog-version-badge" id="current-version"></div>
+      </div>
+      <p class="legal-updated">Historique de toutes les mises à jour de BoomBoomMovie.</p>
+
+      <!-- Timeline -->
+      <div class="changelog-timeline" id="changelog-timeline"></div>
+    </main>
+
+    <footer class="legal-footer">
+      <p>© 2026 BoomBoomMovie — <a href="https://github.com/Locktix/BoomBoomMovie" target="_blank" rel="noopener" style="color: var(--bbm-accent)">GitHub</a></p>
+    </footer>
+  </div>
+
+  <script src="js/changelog-data.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const timeline = document.getElementById('changelog-timeline');
+      const versionBadge = document.getElementById('current-version');
+
+      versionBadge.textContent = 'v' + BBM_CHANGELOG.currentVersion;
+
+      BBM_CHANGELOG.versions.forEach((release, i) => {
+        const entry = document.createElement('div');
+        entry.className = 'changelog-entry' + (i === 0 ? ' latest' : '');
+
+        const typeIcons = { new: '+', improved: '~', fix: '!' };
+        const typeLabels = { new: 'Nouveau', improved: 'Amélioré', fix: 'Corrigé' };
+
+        const changesHTML = release.changes.map(c => `
+          <li class="changelog-change ${c.type}">
+            <span class="changelog-change-tag ${c.type}">${typeLabels[c.type]}</span>
+            <span>${c.text}</span>
+          </li>
+        `).join('');
+
+        const dateFormatted = new Date(release.date + 'T00:00:00').toLocaleDateString('fr-FR', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+
+        entry.innerHTML = `
+          <div class="changelog-dot ${release.type}"></div>
+          <div class="changelog-card">
+            <div class="changelog-card-header">
+              <div class="changelog-card-title">
+                <span class="changelog-badge ${release.type}">v${release.version}</span>
+                <h2>${release.title}</h2>
+              </div>
+              <time class="changelog-date">${dateFormatted}</time>
+            </div>
+            <ul class="changelog-changes">${changesHTML}</ul>
+          </div>
+        `;
+
+        timeline.appendChild(entry);
+      });
+    });
+  </script>
+</body>
+</html>
