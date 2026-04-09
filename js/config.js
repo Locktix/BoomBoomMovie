@@ -16,6 +16,7 @@ BBM.Config = {
   },
 
   workerAPI: "https://liste-films-api.alanplokain.workers.dev/",
+  workerAPI2: "https://boomboommovie.handdor.be/api.php",
 
   tmdb: {
     apiKey: "05fa26f220d025af589338dc695b75ad",
