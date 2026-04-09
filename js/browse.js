@@ -226,18 +226,55 @@ BBM.Browse = {
     const container = document.getElementById('category-filter');
     const header = container.querySelector('.category-filter-header h1');
     const grid = container.querySelector('.category-grid');
+    const sortSelect = document.getElementById('sort-select');
 
     header.textContent = title;
-    grid.innerHTML = '';
+    sortSelect.value = 'default';
 
-    tmdbIDs.forEach(id => {
-      const tmdb = this.tmdbCache.get(String(id));
-      if (!tmdb) return;
-      const card = this.createCard(String(id), tmdb);
-      grid.appendChild(card);
-    });
+    // Store current IDs for re-sorting
+    this._categoryIDs = [...new Set(tmdbIDs)];
+    this._renderCategoryGrid();
+
+    // Sort handler
+    sortSelect.onchange = () => this._renderCategoryGrid();
 
     container.classList.add('active');
+  },
+
+  _renderCategoryGrid() {
+    const grid = document.querySelector('.category-grid');
+    const sortSelect = document.getElementById('sort-select');
+    const sortBy = sortSelect.value;
+    grid.innerHTML = '';
+
+    let ids = [...this._categoryIDs];
+
+    if (sortBy !== 'default') {
+      ids.sort((a, b) => {
+        const ta = this.tmdbCache.get(String(a));
+        const tb = this.tmdbCache.get(String(b));
+        if (!ta || !tb) return 0;
+        switch (sortBy) {
+          case 'title-asc':
+            return (ta.title || ta.name || '').localeCompare(tb.title || tb.name || '', 'fr');
+          case 'title-desc':
+            return (tb.title || tb.name || '').localeCompare(ta.title || ta.name || '', 'fr');
+          case 'rating-desc':
+            return (tb.vote_average || 0) - (ta.vote_average || 0);
+          case 'year-desc':
+            return (tb.release_date || tb.first_air_date || '').localeCompare(ta.release_date || ta.first_air_date || '');
+          case 'year-asc':
+            return (ta.release_date || ta.first_air_date || '').localeCompare(tb.release_date || tb.first_air_date || '');
+          default: return 0;
+        }
+      });
+    }
+
+    ids.forEach(id => {
+      const tmdb = this.tmdbCache.get(String(id));
+      if (!tmdb) return;
+      grid.appendChild(this.createCard(String(id), tmdb));
+    });
   },
 
   /* ----------------------------------------
@@ -497,15 +534,25 @@ BBM.Browse = {
     const genres = (tmdb.genres || []).slice(0, 3);
     const inList = this.myList.includes(String(tmdbID));
 
+    // Watched badge + progress bar
+    const cw = this.continueWatching[tmdbID];
+    const isWatched = cw && (cw.allWatched || (cw.duration > 0 && (cw.progress / cw.duration) >= 0.9));
     let progressHTML = '';
-    if (isContinueWatching && this.continueWatching[tmdbID]) {
-      const cw = this.continueWatching[tmdbID];
+    if (isContinueWatching && cw && !isWatched) {
       const pct = cw.duration ? Math.min(100, Math.round((cw.progress / cw.duration) * 100)) : 0;
-      progressHTML = `<div class="watch-progress"><div class="watch-progress-bar" style="width: ${pct}%"></div></div>`;
+      const remaining = cw.duration - cw.progress;
+      const remMin = Math.ceil(remaining / 60);
+      const remLabel = remMin >= 60 ? `${Math.floor(remMin / 60)}h${String(remMin % 60).padStart(2, '0')} restantes` : `${remMin} min restantes`;
+      progressHTML = `
+        <div class="watch-progress-info">${remLabel}</div>
+        <div class="watch-progress"><div class="watch-progress-bar" style="width: ${pct}%"></div></div>`;
     }
+
+    const watchedBadge = isWatched && !isContinueWatching ? '<div class="watched-badge">VU</div>' : '';
 
     card.innerHTML = `
       <div class="title-card-img">
+        ${watchedBadge}
         ${isContinueWatching ? `<button class="btn-remove-cw" title="Retirer de Reprendre">✕</button>` : ''}
         ${posterURL ? `<img src="${posterURL}" alt="${title}" loading="lazy">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}
         <div class="title-card-overlay">
@@ -619,7 +666,7 @@ BBM.Browse = {
 
     const inList = this.myList.includes(String(tmdbID));
     const cw = this.continueWatching[String(tmdbID)];
-    const isWatched = cw && cw.duration > 0 && (cw.progress / cw.duration) >= 0.9;
+    const isWatched = cw && (cw.allWatched || (cw.duration > 0 && (cw.progress / cw.duration) >= 0.9));
 
     // Get available seasons from our data
     let availableSeasons = [];
@@ -709,10 +756,15 @@ BBM.Browse = {
       if (currentlyWatched) {
         // Retirer des vus
         await BBM.API.removeContinueWatching(tmdbID);
-        delete this.continueWatching[tmdbID];
+        delete this.continueWatching[String(tmdbID)];
         btn.classList.remove('watched');
         btn.title = 'Marquer comme vu';
         BBM.Toast.show('Retiré des vus');
+        // Re-render episodes to remove watched badges
+        if (!isMovie && availableSeasons.length > 0) {
+          const activeSeason = modal.querySelector('.season-dropdown-item.active');
+          if (activeSeason) this.renderEpisodes(tmdbID, parseInt(activeSeason.dataset.value));
+        }
       } else {
         // Marquer comme vu
         let durationSec = 0;
@@ -724,15 +776,22 @@ BBM.Browse = {
           const avgRuntime = tmdb.episode_run_time?.length ? tmdb.episode_run_time[0] : 45;
           durationSec = nbEpisodes * avgRuntime * 60;
         }
-        await BBM.API.saveContinueWatching(tmdbID, {
+        const watchData = {
           progress: durationSec,
           duration: durationSec,
-          category: type
-        });
-        this.continueWatching[tmdbID] = { progress: durationSec, duration: durationSec, category: type };
+          category: type,
+          allWatched: !isMovie
+        };
+        await BBM.API.saveContinueWatching(tmdbID, watchData);
+        this.continueWatching[String(tmdbID)] = watchData;
         btn.classList.add('watched');
         btn.title = 'Retirer des vus';
         BBM.Toast.show('Marqué comme vu ✓', 'success');
+        // Re-render episodes to show watched badges
+        if (!isMovie && availableSeasons.length > 0) {
+          const activeSeason = modal.querySelector('.season-dropdown-item.active');
+          if (activeSeason) this.renderEpisodes(tmdbID, parseInt(activeSeason.dataset.value));
+        }
       }
     });
 
@@ -792,6 +851,10 @@ BBM.Browse = {
 
     listEl.innerHTML = '';
 
+    // Check episode watch status from continueWatching
+    const cw = this.continueWatching[String(tmdbID)];
+    const allWatched = cw && (cw.allWatched || (cw.duration > 0 && (cw.progress / cw.duration) >= 0.9 && !cw.seasonNumber));
+
     episodes.forEach(ep => {
       const tmdbEp = seasonData?.episodes?.find(e => e.episode_number === ep.episodeNumber);
       const epTitle = tmdbEp?.name || `Épisode ${ep.episodeNumber}`;
@@ -799,8 +862,23 @@ BBM.Browse = {
       const epStill = tmdbEp?.still_path ? BBM.API.getStillURL(tmdbEp.still_path) : null;
       const epRuntime = tmdbEp?.runtime ? `${tmdbEp.runtime} min` : '';
 
+      // Episode watch state
+      let epWatchedClass = '';
+      let epProgressHTML = '';
+      if (allWatched) {
+        epWatchedClass = ' episode-watched';
+      } else if (cw && cw.seasonNumber === ep.seasonNumber && cw.episodeNumber === ep.episodeNumber) {
+        const pct = cw.duration > 0 ? cw.progress / cw.duration : 0;
+        if (pct >= 0.9) {
+          epWatchedClass = ' episode-watched';
+        } else if (cw.progress > 10) {
+          epProgressHTML = `<div class="episode-progress"><div class="episode-progress-bar" style="width:${Math.round(pct * 100)}%"></div></div>`;
+          epWatchedClass = ' episode-in-progress';
+        }
+      }
+
       const item = document.createElement('div');
-      item.className = 'episode-item';
+      item.className = 'episode-item' + epWatchedClass;
       item.innerHTML = `
         <div class="episode-number">${ep.episodeNumber}</div>
         <div class="episode-thumb">
@@ -808,6 +886,7 @@ BBM.Browse = {
           <div class="play-overlay">
             <svg viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
           </div>
+          ${epWatchedClass === ' episode-watched' ? '<div class="episode-watched-badge">VU</div>' : ''}
         </div>
         <div class="episode-details">
           <div class="episode-details-header">
@@ -815,6 +894,7 @@ BBM.Browse = {
             <span class="episode-duration">${epRuntime}</span>
           </div>
           <p class="episode-overview">${epOverview}</p>
+          ${epProgressHTML}
         </div>
       `;
 

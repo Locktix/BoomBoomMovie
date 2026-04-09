@@ -924,11 +924,18 @@ select:focus-visible {
 .title-card-overlay .card-genres span:last-child::after { content: ''; }
 
 /* Continue watching bar */
+/* Watch progress info (time remaining) */
+.watch-progress-info {
+  font-size: 0.7rem;
+  color: var(--bbm-text-secondary);
+  margin-top: 6px;
+}
+
 .watch-progress {
   height: 3px;
   background: rgba(255,255,255,0.1);
   border-radius: 2px;
-  margin-top: 8px;
+  margin-top: 4px;
   overflow: hidden;
 }
 .watch-progress-bar {
@@ -936,6 +943,21 @@ select:focus-visible {
   background: var(--bbm-accent);
   border-radius: 2px;
   transition: width var(--bbm-duration) var(--bbm-ease);
+}
+
+/* Watched badge on cards */
+.watched-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(74, 222, 128, 0.9);
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 5;
 }
 
 /* Remove from continue watching */
@@ -1245,6 +1267,7 @@ select:focus-visible {
 }
 
 .episode-thumb {
+  position: relative;
   width: 140px; min-width: 140px;
   aspect-ratio: 16 / 9;
   border-radius: var(--bbm-radius-sm);
@@ -1280,6 +1303,41 @@ select:focus-visible {
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Episode watched state */
+.episode-watched { opacity: 0.55; }
+.episode-watched .episode-title::after {
+  content: ' — VU';
+  font-size: 0.7rem;
+  color: #4ade80;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+.episode-watched-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(74, 222, 128, 0.9);
+  color: #000;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.episode-progress {
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.episode-progress-bar {
+  height: 100%;
+  background: var(--bbm-accent);
+  border-radius: 2px;
 }
 
 /* ============================================
@@ -1327,6 +1385,11 @@ select:focus-visible {
 
 .category-filter-header {
   padding: 24px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 .category-filter-header h1 {
   font-family: var(--bbm-font-display);
@@ -1334,6 +1397,25 @@ select:focus-visible {
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--bbm-text-bright);
+}
+
+.category-sort select {
+  background: var(--bbm-bg-input);
+  color: var(--bbm-text);
+  border: 1px solid var(--bbm-border);
+  border-radius: var(--bbm-radius-xs);
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-family: var(--bbm-font);
+  cursor: pointer;
+  transition: border-color var(--bbm-duration-fast);
+}
+.category-sort select:hover {
+  border-color: var(--bbm-border-hover);
+}
+.category-sort select option {
+  background: var(--bbm-bg);
+  color: var(--bbm-text);
 }
 
 .category-grid {
