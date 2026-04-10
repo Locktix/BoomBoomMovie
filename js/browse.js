@@ -831,7 +831,7 @@ BBM.Browse = {
           <div class="modal-cast-scroll">
             ${castMembers.map(c => {
               const profileURL = BBM.API.getProfileURL(c.profile_path);
-              return `<div class="modal-cast-card">
+              return `<div class="modal-cast-card" data-person-id="${c.id}" role="button" tabindex="0">
                 <div class="modal-cast-photo">
                   ${profileURL ? `<img data-src="${profileURL}" alt="${c.name}">` : `<div class="modal-cast-placeholder">${c.name.charAt(0)}</div>`}
                 </div>
@@ -876,6 +876,13 @@ BBM.Browse = {
         this.openTrailer(trailer.key);
       });
     }
+
+    // Cast card clicks → actor filmography
+    modal.querySelectorAll('.modal-cast-card[data-person-id]').forEach(card => {
+      card.addEventListener('click', () => {
+        this.openActorPanel(card.dataset.personId);
+      });
+    });
 
     // Lazy-load cast images
     this.observeLazyImages(modal);
@@ -1080,6 +1087,91 @@ BBM.Browse = {
       overlay.classList.remove('active');
       overlay.querySelector('#trailer-iframe').src = '';
     }
+  },
+
+  /* ----------------------------------------
+     Actor Filmography Panel
+     ---------------------------------------- */
+  async openActorPanel(personID) {
+    const person = await BBM.API.getPersonCredits(personID);
+    if (!person) {
+      BBM.Toast.show('Impossible de charger la filmographie', 'error');
+      return;
+    }
+
+    const profileURL = BBM.API.getProfileURL(person.profile_path);
+    const credits = (person.combined_credits?.cast || [])
+      .filter(c => c.poster_path && (c.media_type === 'movie' || c.media_type === 'tv'))
+      .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+    // Check which titles are available in our catalog
+    const allItems = BBM.API._items || [];
+    const availableIDs = new Set(allItems.map(i => String(i.tmdbID)));
+
+    let overlay = document.getElementById('actor-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'actor-overlay';
+      overlay.className = 'actor-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    overlay.innerHTML = `
+      <div class="actor-panel">
+        <button class="modal-close" id="actor-close">&#10005;</button>
+        <div class="actor-header">
+          <div class="actor-header-photo">
+            ${profileURL ? `<img src="${profileURL}" alt="${person.name}">` : `<div class="modal-cast-placeholder">${person.name.charAt(0)}</div>`}
+          </div>
+          <div class="actor-header-info">
+            <h2>${person.name}</h2>
+            ${person.birthday ? `<p class="actor-meta">${person.birthday}${person.deathday ? ' — ' + person.deathday : ''}</p>` : ''}
+            ${person.place_of_birth ? `<p class="actor-meta">${person.place_of_birth}</p>` : ''}
+          </div>
+        </div>
+        ${person.biography ? `<p class="actor-bio">${person.biography}</p>` : ''}
+        <h3 class="actor-section-title">Filmographie <span class="actor-count">${credits.length}</span></h3>
+        <div class="actor-filmography">
+          ${credits.map(c => {
+            const title = c.title || c.name || '';
+            const year = (c.release_date || c.first_air_date || '').substring(0, 4);
+            const poster = BBM.API.getPosterURL(c.poster_path, 'w185');
+            const isAvailable = availableIDs.has(String(c.id));
+            const type = c.media_type === 'movie' ? 'movie' : 'series';
+            return `<div class="actor-film-card${isAvailable ? ' available' : ''}" data-tmdbid="${c.id}" data-type="${type}" ${isAvailable ? 'role="button" tabindex="0"' : ''}>
+              <div class="actor-film-poster">
+                ${poster ? `<img data-src="${poster}" alt="${title}">` : '<div style="width:100%;height:100%;background:#333"></div>'}
+                ${isAvailable ? '<div class="actor-film-badge">Disponible</div>' : ''}
+              </div>
+              <div class="actor-film-title">${title}</div>
+              <div class="actor-film-year">${year} · ${c.character || (c.media_type === 'movie' ? 'Film' : 'Série')}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    // Events
+    overlay.querySelector('#actor-close').addEventListener('click', () => this.closeActorPanel());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) this.closeActorPanel();
+    });
+
+    // Click on available titles → open modal
+    overlay.querySelectorAll('.actor-film-card.available').forEach(card => {
+      card.addEventListener('click', () => {
+        this.closeActorPanel();
+        this.openModal(card.dataset.tmdbid, card.dataset.type);
+      });
+    });
+
+    this.observeLazyImages(overlay);
+    overlay.classList.add('active');
+  },
+
+  closeActorPanel() {
+    const overlay = document.getElementById('actor-overlay');
+    if (overlay) overlay.classList.remove('active');
   },
 
   /* ----------------------------------------

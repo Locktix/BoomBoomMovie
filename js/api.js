@@ -198,6 +198,40 @@ BBM.API = {
     }
   },
 
+  /** Fetch TMDB person credits (filmography) */
+  async getPersonCredits(personID) {
+    const cacheKey = `tmdb_person_${personID}`;
+
+    if (this._cache[cacheKey]) return this._cache[cacheKey];
+
+    try {
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Date.now() - parsed._cachedAt < BBM.Config.cacheTTL) {
+          this._cache[cacheKey] = parsed;
+          return parsed;
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    const url = `${BBM.Config.tmdb.baseURL}/person/${personID}?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}&append_to_response=combined_credits`;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      data._cachedAt = Date.now();
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch (e) { /* full */ }
+      this._cache[cacheKey] = data;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  },
+
   /** Batch fetch TMDB data avec concurrency limit */
   async batchFetchTMDB(items, concurrency = 6) {
     const results = new Map();
