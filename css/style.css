@@ -2760,6 +2760,27 @@ select:focus-visible {
    RESPONSIVE
    ============================================ */
 
+/* Large screens (1600px+) — 9 cards per row */
+@media (min-width: 1600px) {
+  .title-card { flex: 0 0 calc((100% - 96px) / 9); }
+  .search-grid,
+  .category-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+/* Ultrawide screens (2200px+) — 11 cards per row */
+@media (min-width: 2200px) {
+  .title-card { flex: 0 0 calc((100% - 120px) / 11); }
+  .search-grid,
+  .category-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+
+/* Super ultrawide (2800px+) — 14 cards per row */
+@media (min-width: 2800px) {
+  .title-card { flex: 0 0 calc((100% - 156px) / 14); }
+  .search-grid,
+  .category-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+
 @media (max-width: 1200px) {
   .title-card { flex: 0 0 calc((100% - 60px) / 6); }
 }
