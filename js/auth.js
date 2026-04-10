@@ -70,6 +70,18 @@ BBM.Auth = {
     });
   },
 
+  /** Vérifier si l'utilisateur est admin (champ admin: true dans Firestore) */
+  async isAdmin() {
+    const user = this.currentUser;
+    if (!user) return false;
+    try {
+      const doc = await BBM.db.collection('users').doc(user.uid).get();
+      return doc.exists && doc.data().admin === true;
+    } catch (e) {
+      return false;
+    }
+  },
+
   /** Obtenir les initiales pour l'avatar */
   getInitials() {
     const user = BBM.Auth.currentUser;

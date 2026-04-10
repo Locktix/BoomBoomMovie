@@ -134,9 +134,13 @@ BBM.Browse = {
     // Admin link
     const adminBtn = document.getElementById('btn-admin');
     const mobileAdminBtn = document.getElementById('mobile-btn-admin');
-    if (BBM.Config.adminUIDs && BBM.Config.adminUIDs.includes(user.uid)) {
-      if (adminBtn) adminBtn.style.display = '';
-      if (mobileAdminBtn) mobileAdminBtn.style.display = '';
+    if (user) {
+      BBM.Auth.isAdmin().then(isAdmin => {
+        if (isAdmin) {
+          if (adminBtn) adminBtn.style.display = '';
+          if (mobileAdminBtn) mobileAdminBtn.style.display = '';
+        }
+      });
     }
 
     // Logout

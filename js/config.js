@@ -31,14 +31,7 @@ BBM.Config = {
   profileSize: "w185",
 
   // Cache TTL (24h)
-  cacheTTL: 24 * 60 * 60 * 1000,
-
-  // Admin UIDs — ajoute ton UID Firebase ici
-  adminUIDs: [
-    "hD6Dzha6Y2WLL5YuC95UAeoImOC3", // Alan
-    "mU5EDUS7k7N5CHf4UwULD9yg0pF3", // Pierre
-    "UIxKgxZPOiglZEiiv3Z0VP50OCS2" // Adrien
-  ]
+  cacheTTL: 24 * 60 * 60 * 1000
 };
 
 /*

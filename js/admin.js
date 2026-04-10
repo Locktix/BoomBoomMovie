@@ -22,7 +22,9 @@
     }
 
     // Check admin
-    if (!BBM.Config.adminUIDs || !BBM.Config.adminUIDs.includes(user.uid)) {
+    BBM.Auth.currentUser = user;
+    const isAdmin = await BBM.Auth.isAdmin();
+    if (!isAdmin) {
       loading.style.display = 'none';
       denied.style.display = 'flex';
       return;
