@@ -236,6 +236,11 @@ BBM.API = {
     return `${BBM.Config.tmdb.imageBase}/w300${path}`;
   },
 
+  getProfileURL(path) {
+    if (!path) return null;
+    return `${BBM.Config.tmdb.imageBase}/${BBM.Config.profileSize}${path}`;
+  },
+
   /* ----------------------------------------
      Firestore — My List
      ---------------------------------------- */

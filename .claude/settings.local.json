@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -n \"accessibility\\\\|aria-\\\\|role=\\\\|tabindex\" \"C:\\\\Users\\\\Alan\\\\Documents\\\\GitHub\\\\BoomBoomMovie\"/*.html)"
+      "Bash(grep -n \"accessibility\\\\|aria-\\\\|role=\\\\|tabindex\" \"C:\\\\Users\\\\Alan\\\\Documents\\\\GitHub\\\\BoomBoomMovie\"/*.html)",
+      "Bash(grep -n \"async openModal\\\\|showCategory\\\\|setupKeyboard\\\\|batchFetchTMDB\" /c/Users/Alan/Documents/GitHub/BoomBoomMovie/js/*.js)"
     ]
   }
 }

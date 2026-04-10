@@ -209,6 +209,18 @@ BBM.Player = {
       this.toggleFullscreen();
     });
 
+    // Shortcuts overlay
+    document.getElementById('btn-shortcuts')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleShortcuts();
+    });
+    document.getElementById('shortcuts-close')?.addEventListener('click', () => {
+      this.toggleShortcuts();
+    });
+    document.getElementById('shortcuts-overlay')?.addEventListener('click', (e) => {
+      if (e.target.id === 'shortcuts-overlay') this.toggleShortcuts();
+    });
+
     // Progress bar
     const progressBar = document.getElementById('player-progress');
     const progressFilled = document.getElementById('progress-filled');
@@ -551,8 +563,14 @@ BBM.Player = {
           this.video.muted = !this.video.muted;
           this.updateVolumeIcon();
           break;
+        case '?':
+          e.preventDefault();
+          this.toggleShortcuts();
+          break;
         case 'Escape':
-          if (document.fullscreenElement) {
+          if (this._shortcutsOpen) {
+            this.toggleShortcuts();
+          } else if (document.fullscreenElement) {
             document.exitFullscreen();
           } else {
             this.saveProgress();
@@ -561,6 +579,19 @@ BBM.Player = {
           break;
       }
     });
+  },
+
+  toggleShortcuts() {
+    const overlay = document.getElementById('shortcuts-overlay');
+    if (!overlay) return;
+    this._shortcutsOpen = !this._shortcutsOpen;
+    overlay.classList.toggle('active', this._shortcutsOpen);
+    if (this._shortcutsOpen) {
+      this._wasPlayingBeforeShortcuts = !this.video.paused;
+      if (!this.video.paused) this.video.pause();
+    } else if (this._wasPlayingBeforeShortcuts) {
+      this.video.play();
+    }
   },
 
   /* ----------------------------------------

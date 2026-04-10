@@ -239,6 +239,7 @@ BBM.Browse = {
     browseContent.style.display = 'none';
     categoryFilter.classList.remove('active');
     searchResults.style.display = 'none';
+    document.getElementById('genre-filters').innerHTML = '';
 
     switch (view) {
       case 'home':
@@ -262,20 +263,71 @@ BBM.Browse = {
   showCategory(title, tmdbIDs) {
     const container = document.getElementById('category-filter');
     const header = container.querySelector('.category-filter-header h1');
-    const grid = container.querySelector('.category-grid');
     const sortSelect = document.getElementById('sort-select');
 
     header.textContent = title;
     sortSelect.value = 'default';
+    this._activeGenre = null;
 
     // Store current IDs for re-sorting
     this._categoryIDs = [...new Set(tmdbIDs)];
+
+    // Build genre filters (Films / Séries only, not Ma Liste)
+    this._buildGenreFilters(title);
+
     this._renderCategoryGrid();
 
     // Sort handler
     sortSelect.onchange = () => this._renderCategoryGrid();
 
     container.classList.add('active');
+  },
+
+  _buildGenreFilters(title) {
+    const filtersEl = document.getElementById('genre-filters');
+    filtersEl.innerHTML = '';
+
+    if (title !== 'Films' && title !== 'Séries') return;
+
+    // Collect all genres from current items
+    const genreSet = new Map();
+    this._categoryIDs.forEach(id => {
+      const tmdb = this.tmdbCache.get(String(id));
+      if (!tmdb || !tmdb.genres) return;
+      tmdb.genres.forEach(g => {
+        genreSet.set(g.id, g.name);
+      });
+    });
+
+    if (genreSet.size === 0) return;
+
+    // Sort genres alphabetically
+    const genres = Array.from(genreSet.entries()).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+
+    // "Tous" button
+    const allBtn = document.createElement('button');
+    allBtn.className = 'genre-btn active';
+    allBtn.textContent = 'Tous';
+    allBtn.addEventListener('click', () => {
+      this._activeGenre = null;
+      filtersEl.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+      allBtn.classList.add('active');
+      this._renderCategoryGrid();
+    });
+    filtersEl.appendChild(allBtn);
+
+    genres.forEach(([id, name]) => {
+      const btn = document.createElement('button');
+      btn.className = 'genre-btn';
+      btn.textContent = name;
+      btn.addEventListener('click', () => {
+        this._activeGenre = id;
+        filtersEl.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this._renderCategoryGrid();
+      });
+      filtersEl.appendChild(btn);
+    });
   },
 
   _renderCategoryGrid() {
@@ -285,6 +337,14 @@ BBM.Browse = {
     grid.innerHTML = '';
 
     let ids = [...this._categoryIDs];
+
+    // Filter by genre
+    if (this._activeGenre) {
+      ids = ids.filter(id => {
+        const tmdb = this.tmdbCache.get(String(id));
+        return tmdb?.genres?.some(g => g.id === this._activeGenre);
+      });
+    }
 
     if (sortBy !== 'default') {
       ids.sort((a, b) => {
@@ -695,7 +755,7 @@ BBM.Browse = {
     const rating = tmdb.vote_average ? Math.round(tmdb.vote_average * 10) : null;
     const runtime = isMovie && tmdb.runtime ? `${Math.floor(tmdb.runtime / 60)}h ${tmdb.runtime % 60}min` : null;
     const seasons = !isMovie ? (tmdb.number_of_seasons || 0) : 0;
-    const cast = tmdb.credits?.cast?.slice(0, 10).map(c => c.name).join(', ') || '';
+    const castMembers = tmdb.credits?.cast?.slice(0, 12) || [];
     const genres = (tmdb.genres || []).map(g => g.name).join(', ');
     const director = isMovie
       ? tmdb.credits?.crew?.find(c => c.job === 'Director')?.name || ''
@@ -703,6 +763,11 @@ BBM.Browse = {
     const creators = !isMovie
       ? (tmdb.created_by || []).map(c => c.name).join(', ')
       : '';
+
+    // Trailer YouTube
+    const trailer = (tmdb.videos?.results || []).find(v =>
+      v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+    );
 
     const inList = this.myList.includes(String(tmdbID));
     const cw = this.continueWatching[String(tmdbID)];
@@ -736,6 +801,10 @@ BBM.Browse = {
             <button class="btn-icon${isWatched ? ' watched' : ''}" id="modal-mark-watched" title="${isWatched ? 'Retirer des vus' : 'Marquer comme vu'}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
+            ${trailer ? `<button class="btn-trailer" id="modal-trailer" title="Bande-annonce">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
+              Bande-annonce
+            </button>` : ''}
           </div>
         </div>
       </div>
@@ -751,12 +820,27 @@ BBM.Browse = {
         <div class="modal-columns">
           <div class="modal-overview">${tmdb.overview || 'Aucune description disponible.'}</div>
           <div class="modal-details-list">
-            ${cast ? `<p>Casting : <span>${cast}</span></p>` : ''}
             ${genres ? `<p>Genres : <span>${genres}</span></p>` : ''}
             ${director ? `<p>Réalisateur : <span>${director}</span></p>` : ''}
             ${creators ? `<p>Créateurs : <span>${creators}</span></p>` : ''}
           </div>
         </div>
+        ${castMembers.length > 0 ? `
+        <div class="modal-cast">
+          <h3 class="modal-cast-title">Casting</h3>
+          <div class="modal-cast-scroll">
+            ${castMembers.map(c => {
+              const profileURL = BBM.API.getProfileURL(c.profile_path);
+              return `<div class="modal-cast-card">
+                <div class="modal-cast-photo">
+                  ${profileURL ? `<img data-src="${profileURL}" alt="${c.name}">` : `<div class="modal-cast-placeholder">${c.name.charAt(0)}</div>`}
+                </div>
+                <div class="modal-cast-name">${c.name}</div>
+                <div class="modal-cast-role">${c.character || ''}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
         ${!isMovie && availableSeasons.length > 0 ? `
           <div class="modal-episodes" id="modal-episodes">
             <div class="modal-episodes-header">
@@ -784,6 +868,17 @@ BBM.Browse = {
       this.closeModal();
       this.playTitle(tmdbID, type);
     });
+
+    // Trailer
+    const trailerBtn = modal.querySelector('#modal-trailer');
+    if (trailerBtn) {
+      trailerBtn.addEventListener('click', () => {
+        this.openTrailer(trailer.key);
+      });
+    }
+
+    // Lazy-load cast images
+    this.observeLazyImages(modal);
 
     modal.querySelector('#modal-list').addEventListener('click', (e) => {
       this.toggleMyList(tmdbID, e.currentTarget);
@@ -951,6 +1046,40 @@ BBM.Browse = {
     const overlay = document.getElementById('modal-overlay');
     overlay.classList.remove('active');
     document.body.style.overflow = '';
+    this.closeTrailer();
+  },
+
+  /* ----------------------------------------
+     Trailer
+     ---------------------------------------- */
+  openTrailer(youtubeKey) {
+    let overlay = document.getElementById('trailer-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'trailer-overlay';
+      overlay.className = 'trailer-overlay';
+      overlay.innerHTML = `
+        <div class="trailer-wrapper">
+          <button class="trailer-close" id="trailer-close">✕</button>
+          <iframe id="trailer-iframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#trailer-close').addEventListener('click', () => this.closeTrailer());
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) this.closeTrailer();
+      });
+    }
+    overlay.querySelector('#trailer-iframe').src = `https://www.youtube.com/embed/${youtubeKey}?autoplay=1&rel=0`;
+    overlay.classList.add('active');
+  },
+
+  closeTrailer() {
+    const overlay = document.getElementById('trailer-overlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.querySelector('#trailer-iframe').src = '';
+    }
   },
 
   /* ----------------------------------------
