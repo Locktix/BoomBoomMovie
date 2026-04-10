@@ -41,6 +41,13 @@ BBM.Browse = {
       this.renderHero();
       this.renderRows();
       this.showLoading(false);
+
+      // Auto-approve pending requests whose content is now available
+      BBM.API.checkAndAutoApproveRequests().then(approved => {
+        approved.forEach(req => {
+          BBM.Toast.show(`🎬 "${req.title}" que vous avez demandé est maintenant disponible !`, 'success', 5000);
+        });
+      }).catch(e => console.warn('Auto-approve check failed:', e));
     } catch (err) {
       console.error('Init error:', err);
       this.showLoading(false);

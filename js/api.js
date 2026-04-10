@@ -448,6 +448,37 @@ BBM.API = {
     }
   },
 
+  /** Vérifie les demandes "pending" de l'utilisateur et auto-approuve
+      celles dont le tmdbID est désormais disponible dans le catalogue.
+      Retourne la liste des demandes nouvellement approuvées. */
+  async checkAndAutoApproveRequests() {
+    const user = BBM.Auth.currentUser;
+    if (!user) return [];
+
+    const pending = (await this.getMyRequests()).filter(r => r.status === 'pending');
+    if (pending.length === 0) return [];
+
+    // Ensemble des tmdbID disponibles (films + séries)
+    const availableIDs = new Set();
+    (this._items || []).forEach(i => availableIDs.add(String(i.tmdbID)));
+
+    const approved = [];
+    for (const req of pending) {
+      if (availableIDs.has(String(req.tmdbID))) {
+        try {
+          await BBM.db.collection('requests').doc(req.id).update({
+            status: 'approved',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          approved.push(req);
+        } catch (e) {
+          console.warn('Auto-approve failed for', req.id, e);
+        }
+      }
+    }
+    return approved;
+  },
+
   /* ----------------------------------------
      TMDB — Search (pour les requêtes utilisateur)
      ---------------------------------------- */
