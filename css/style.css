@@ -2515,6 +2515,34 @@ select:focus-visible {
   border: 1px solid rgba(224, 85, 85, 0.25);
 }
 
+.my-requests-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.my-request-item {
+  position: relative;
+}
+
+.btn-delete-request {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--bbm-text-muted);
+  cursor: pointer;
+  transition: all var(--bbm-duration-fast) var(--bbm-ease);
+}
+.btn-delete-request:hover {
+  background: rgba(224, 85, 85, 0.1);
+  border-color: rgba(224, 85, 85, 0.3);
+  color: var(--bbm-danger);
+}
+
 /* ============================================
    COLLECTIONS
    ============================================ */

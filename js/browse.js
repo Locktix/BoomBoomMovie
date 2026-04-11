@@ -1596,10 +1596,39 @@ BBM.Browse = {
     document.body.style.overflow = 'hidden';
     list.innerHTML = '<div class="loader" style="margin:30px auto"></div>';
 
-    const requests = await BBM.API.getMyRequests();
+    this._myRequests = await BBM.API.getMyRequests();
+    this._myRequestsFilter = 'all';
+
+    // Reset filter buttons
+    document.querySelectorAll('#my-requests-filters .genre-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === 'all');
+    });
+
+    // Setup filter buttons (once)
+    if (!this._myRequestsFiltersReady) {
+      this._myRequestsFiltersReady = true;
+      document.querySelectorAll('#my-requests-filters .genre-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this._myRequestsFilter = btn.dataset.filter;
+          document.querySelectorAll('#my-requests-filters .genre-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this._renderMyRequests();
+        });
+      });
+    }
+
+    this._renderMyRequests();
+  },
+
+  _renderMyRequests() {
+    const list = document.getElementById('my-requests-list');
+    const filter = this._myRequestsFilter || 'all';
+    const requests = filter === 'all'
+      ? this._myRequests
+      : this._myRequests.filter(r => r.status === filter);
 
     if (requests.length === 0) {
-      list.innerHTML = '<p style="text-align:center;color:var(--bbm-text-muted);padding:30px">Aucune demande pour le moment</p>';
+      list.innerHTML = '<p style="text-align:center;color:var(--bbm-text-muted);padding:30px">Aucune demande à afficher</p>';
       return;
     }
 
@@ -1625,7 +1654,23 @@ BBM.Browse = {
           <span class="request-result-meta">${req.type === 'movie' ? 'Film' : 'Série'}${dateStr ? ` · ${dateStr}` : ''}</span>
         </div>
         <span class="request-status ${st.cls}">${st.label}</span>
+        <button class="btn-delete-request" title="Supprimer cette demande">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
       `;
+
+      el.querySelector('.btn-delete-request').addEventListener('click', async () => {
+        if (!confirm(`Supprimer la demande "${req.title}" ?`)) return;
+        try {
+          await BBM.db.collection('requests').doc(req.id).delete();
+          this._myRequests = this._myRequests.filter(r => r.id !== req.id);
+          this._renderMyRequests();
+          BBM.Toast.show('Demande supprimée');
+        } catch (e) {
+          BBM.Toast.show('Erreur lors de la suppression', 'error');
+        }
+      });
+
       list.appendChild(el);
     });
   }
