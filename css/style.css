@@ -980,6 +980,21 @@ select:focus-visible {
   z-index: 5;
 }
 
+.new-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--bbm-accent);
+  color: var(--bbm-bg-deep);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.4);
+}
+
 /* Remove from continue watching */
 .btn-remove-cw {
   position: absolute;

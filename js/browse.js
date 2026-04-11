@@ -653,9 +653,11 @@ BBM.Browse = {
     }
 
     const watchedBadge = isWatched && !isContinueWatching ? '<div class="watched-badge">VU</div>' : '';
+    const isNew = !isWatched && BBM.API.isNewlyAdded(tmdbID);
 
     card.innerHTML = `
       <div class="title-card-img">
+        ${isNew ? '<div class="new-badge">NOUVEAU</div>' : ''}
         ${watchedBadge}
         ${isContinueWatching ? `<button class="btn-remove-cw" title="Retirer de Reprendre">✕</button>` : ''}
         ${posterURL ? `<img data-src="${posterURL}" alt="${title}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}

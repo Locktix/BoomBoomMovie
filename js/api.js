@@ -104,6 +104,14 @@ BBM.API = {
   },
 
   /** Récemment ajoutés */
+  isNewlyAdded(tmdbID) {
+    if (!this._items) return false;
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return this._items.some(i =>
+      String(i.tmdbID) === String(tmdbID) && i.createdAt && new Date(i.createdAt).getTime() > sevenDaysAgo
+    );
+  },
+
   getRecentlyAdded(limit = 20) {
     if (!this._items) return [];
     const unique = new Map();
