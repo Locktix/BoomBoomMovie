@@ -173,6 +173,10 @@ BBM.Browse = {
       });
     });
 
+    // Random pick
+    const randomBtn = document.getElementById('btn-random');
+    if (randomBtn) randomBtn.addEventListener('click', () => this.pickRandom());
+
     // --- Mobile burger menu ---
     this.setupMobileMenu();
   },
@@ -1172,6 +1176,23 @@ BBM.Browse = {
   closeActorPanel() {
     const overlay = document.getElementById('actor-overlay');
     if (overlay) overlay.classList.remove('active');
+  },
+
+  /* ----------------------------------------
+     Random Pick
+     ---------------------------------------- */
+  pickRandom() {
+    const candidates = [];
+    this.tmdbCache.forEach((data, tmdbID) => {
+      if (data.poster_path) {
+        candidates.push({ tmdbID, data });
+      }
+    });
+    if (candidates.length === 0) return;
+
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    const isMovie = !!pick.data.title;
+    this.openModal(pick.tmdbID, isMovie ? 'movie' : 'series');
   },
 
   /* ----------------------------------------

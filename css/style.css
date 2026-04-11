@@ -424,6 +424,26 @@ select:focus-visible {
   gap: 12px;
 }
 
+/* Random Button */
+.nav-random-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  color: var(--bbm-text);
+  cursor: pointer;
+  transition: all var(--bbm-duration-fast) var(--bbm-ease);
+  position: relative;
+}
+.nav-random-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--bbm-accent);
+}
+.nav-random-btn:active {
+  transform: rotate(180deg);
+}
+
 /* Search */
 .nav-search {
   position: relative;
