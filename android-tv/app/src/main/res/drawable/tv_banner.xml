@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TV Banner: 320x180dp, affiché dans le launcher Android TV -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fond sombre -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#0a0a0f" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <!-- Barre accent en bas -->
+    <item android:bottom="0dp" android:top="164dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#d4a843" />
+            <corners android:bottomLeftRadius="8dp" android:bottomRightRadius="8dp" />
+        </shape>
+    </item>
+    <!-- Texte via un vector drawable n'est pas possible facilement,
+         on utilise le bitmap approach ci-dessous -->
+</layer-list>
