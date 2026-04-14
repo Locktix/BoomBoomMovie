@@ -3897,6 +3897,197 @@ select:focus-visible {
   position: relative;
   flex-shrink: 0;
 }
+
+/* ============================================
+   TV / D-PAD NAVIGATION
+   ============================================ */
+
+/* Focus ring for TV navigation */
+.tv-mode .tv-focused {
+  outline: 3px solid var(--bbm-accent) !important;
+  outline-offset: 4px !important;
+  border-radius: var(--bbm-radius) !important;
+  box-shadow: 0 0 0 6px rgba(212, 168, 67, 0.25),
+              0 0 30px rgba(212, 168, 67, 0.15) !important;
+  z-index: 50 !important;
+}
+
+/* Card focus — scale up and show overlay */
+.tv-mode .title-card.tv-focused {
+  transform: scale(1.08) translateY(-8px);
+  z-index: 50 !important;
+  transition: transform var(--bbm-duration) var(--bbm-ease),
+              z-index 0ms 0ms;
+}
+
+.tv-mode .title-card.tv-focused .title-card-img img {
+  transform: scale(1.05);
+  filter: brightness(0.6);
+}
+
+.tv-mode .title-card.tv-focused .title-card-overlay {
+  opacity: 1;
+}
+
+/* Billboard buttons */
+.tv-mode .btn-play.tv-focused {
+  background: var(--bbm-accent-hover) !important;
+  transform: scale(1.05) translateY(-2px);
+}
+
+.tv-mode .btn-info.tv-focused {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: var(--bbm-accent) !important;
+  transform: scale(1.05) translateY(-2px);
+}
+
+/* Navbar links */
+.tv-mode .nav-links a.tv-focused {
+  color: var(--bbm-accent) !important;
+}
+
+/* Genre filter buttons */
+.tv-mode .genre-btn.tv-focused {
+  background: var(--bbm-accent) !important;
+  color: var(--bbm-bg-deep) !important;
+  border-color: var(--bbm-accent) !important;
+}
+
+/* Modal buttons */
+.tv-mode .modal-close.tv-focused {
+  background: rgba(255, 255, 255, 0.15) !important;
+  outline-offset: 2px !important;
+}
+
+.tv-mode .modal-episode-item.tv-focused {
+  background: var(--bbm-bg-card-hover) !important;
+  border-color: var(--bbm-accent) !important;
+}
+
+.tv-mode .modal-season-tab.tv-focused {
+  color: var(--bbm-accent) !important;
+  border-bottom-color: var(--bbm-accent) !important;
+}
+
+.tv-mode .modal-cast-card.tv-focused {
+  transform: scale(1.08);
+}
+
+/* Player controls */
+.tv-mode .ctrl-btn.tv-focused,
+.tv-mode .player-center-btn.tv-focused {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 50% !important;
+  transform: scale(1.15);
+}
+
+.tv-mode #player-back.tv-focused {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-radius: var(--bbm-radius-sm) !important;
+}
+
+/* Next episode buttons */
+.tv-mode .btn-next-play.tv-focused {
+  background: var(--bbm-accent-hover) !important;
+  transform: scale(1.05);
+}
+
+.tv-mode .btn-next-cancel.tv-focused {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Input fields focus */
+.tv-mode input.tv-focused,
+.tv-mode select.tv-focused {
+  background: var(--bbm-bg-input-focus) !important;
+  border-color: var(--bbm-accent) !important;
+}
+
+/* Footer links */
+.tv-mode .footer-links a.tv-focused {
+  color: var(--bbm-accent) !important;
+}
+
+/* Login page buttons */
+.tv-mode .btn-primary.tv-focused {
+  background: var(--bbm-accent-hover) !important;
+  transform: scale(1.03) translateY(-2px);
+}
+
+/* Random button */
+.tv-mode .nav-random-btn.tv-focused {
+  color: var(--bbm-accent) !important;
+  background: var(--bbm-accent-soft) !important;
+  border-radius: 50% !important;
+}
+
+/* Sort select */
+.tv-mode #sort-select.tv-focused {
+  border-color: var(--bbm-accent) !important;
+  background: var(--bbm-bg-input-focus) !important;
+}
+
+/* Request result items */
+.tv-mode .request-result-item .btn-primary.tv-focused {
+  transform: scale(1.05);
+}
+
+/* TV mode: disable hover effects (no mouse) */
+.tv-mode .title-card:hover {
+  transform: none;
+  z-index: auto;
+}
+.tv-mode .title-card:hover .title-card-img img {
+  transform: none;
+  filter: none;
+}
+.tv-mode .title-card:hover .title-card-overlay {
+  opacity: 0;
+}
+
+/* Keep overlay on focused card even though hover disabled */
+.tv-mode .title-card.tv-focused:hover .title-card-overlay {
+  opacity: 1;
+}
+
+/* Smooth transitions for focus changes */
+.tv-mode * {
+  transition-property: outline, outline-offset, box-shadow, transform, background, color, border-color, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: var(--bbm-ease);
+}
+
+/* TV mode: hide cursor */
+.tv-mode {
+  cursor: none;
+}
+.tv-mode * {
+  cursor: none;
+}
+
+/* TV-specific: slightly larger tap targets */
+.tv-mode .genre-btn {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+}
+
+.tv-mode .btn-icon {
+  width: 40px;
+  height: 40px;
+}
+
+/* TV mode: keep row scroll buttons always visible */
+.tv-mode .row-btn {
+  opacity: 0.6;
+}
+
+/* Scrollbar hidden on TV */
+.tv-mode ::-webkit-scrollbar {
+  display: none;
+}
+.tv-mode {
+  scrollbar-width: none;
+}
 .stats-donut-hole {
   position: absolute;
   inset: 20%;

@@ -3,7 +3,7 @@
    Cache-first for static assets, network-first for API
    ============================================ */
 
-const CACHE_NAME = 'bbm-v2';
+const CACHE_NAME = 'bbm-v3';
 const STATIC_ASSETS = [
   './',
   'index.html',
@@ -27,6 +27,7 @@ const STATIC_ASSETS = [
   'js/admin.js',
   'js/mcu.js',
   'js/stats.js',
+  'js/tv-nav.js',
   'manifest.json'
 ];
 
