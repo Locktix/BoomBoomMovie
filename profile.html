@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Mon Profil</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d4a843">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loader"></div>
+    <span class="loader-text">Chargement</span>
+  </div>
+
+  <div class="profile-page" id="profile-page" style="display:none">
+    <!-- Navbar -->
+    <nav class="navbar scrolled">
+      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+      <div class="nav-right" style="margin-left:auto;display:flex;align-items:center;gap:12px">
+        <a href="browse.html" class="btn-info" style="padding:8px 20px;font-size:0.85rem">← Retour</a>
+        <div class="nav-profile-avatar" id="nav-avatar" style="width:36px;height:36px;font-size:0.85rem">?</div>
+      </div>
+    </nav>
+
+    <main class="profile-content">
+      <div class="profile-header">
+        <div class="profile-avatar-large" id="profile-avatar">?</div>
+        <h1 id="profile-display-name">Utilisateur</h1>
+        <p class="profile-email" id="profile-email">email@example.com</p>
+        <p class="profile-member-since" id="profile-since">Membre depuis —</p>
+      </div>
+
+      <div class="profile-sections">
+        <!-- Modifier le profil -->
+        <section class="profile-section">
+          <h2>Modifier le profil</h2>
+          <form id="form-profile" autocomplete="off">
+            <div class="profile-field">
+              <label for="input-display-name">Nom d'utilisateur</label>
+              <input type="text" id="input-display-name" placeholder="Ton pseudo" maxlength="30">
+            </div>
+            <button type="submit" class="btn-primary" id="btn-save-profile">Enregistrer</button>
+          </form>
+        </section>
+
+        <!-- Changer l'email -->
+        <section class="profile-section">
+          <h2>Changer l'email</h2>
+          <form id="form-email" autocomplete="off">
+            <div class="profile-field">
+              <label for="input-new-email">Nouvel email</label>
+              <input type="email" id="input-new-email" placeholder="nouvel@email.com" required>
+            </div>
+            <div class="profile-field">
+              <label for="input-email-password">Mot de passe actuel</label>
+              <input type="password" id="input-email-password" placeholder="Confirme ton mot de passe" required>
+            </div>
+            <button type="submit" class="btn-primary">Mettre à jour l'email</button>
+          </form>
+        </section>
+
+        <!-- Changer le mot de passe -->
+        <section class="profile-section">
+          <h2>Changer le mot de passe</h2>
+          <form id="form-password" autocomplete="off">
+            <div class="profile-field">
+              <label for="input-current-password">Mot de passe actuel</label>
+              <input type="password" id="input-current-password" placeholder="Mot de passe actuel" required>
+            </div>
+            <div class="profile-field">
+              <label for="input-new-password">Nouveau mot de passe</label>
+              <input type="password" id="input-new-password" placeholder="Minimum 6 caractères" required minlength="6">
+            </div>
+            <button type="submit" class="btn-primary">Changer le mot de passe</button>
+          </form>
+        </section>
+
+        <!-- Zone danger -->
+        <section class="profile-section profile-danger">
+          <h2>Zone dangereuse</h2>
+          <p>La suppression de ton compte est irréversible. Toutes tes données seront perdues.</p>
+          <button class="btn-danger" id="btn-delete-account">Supprimer mon compte</button>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+  /* ============================================
+     BoomBoomMovie — Profile Page
+     ============================================ */
+  (function () {
+    'use strict';
+
+    // Toast helper (standalone for this page)
+    function toast(msg, type) {
+      var c = document.getElementById('toast-container');
+      if (!c) return;
+      var t = document.createElement('div');
+      t.className = 'toast ' + (type || 'success');
+      t.textContent = msg;
+      c.appendChild(t);
+      requestAnimationFrame(function () { t.classList.add('show'); });
+      setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 400); }, 3000);
+    }
+
+    firebase.auth().onAuthStateChanged(async function (user) {
+      if (!user) { window.location.href = 'index.html'; return; }
+      BBM.Auth.currentUser = user;
+
+      // Populate UI
+      var avatar = document.getElementById('nav-avatar');
+      if (avatar) avatar.textContent = BBM.Auth.getInitials();
+      document.getElementById('profile-avatar').textContent = BBM.Auth.getInitials();
+      document.getElementById('profile-display-name').textContent = BBM.Auth.getDisplayName();
+      document.getElementById('profile-email').textContent = user.email;
+      document.getElementById('input-display-name').value = user.displayName || '';
+
+      // Member since
+      try {
+        var doc = await BBM.db.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data().createdAt) {
+          var d = doc.data().createdAt.toDate();
+          document.getElementById('profile-since').textContent = 'Membre depuis ' + d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        }
+      } catch (e) {}
+
+      // Hide loader
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('profile-page').style.display = 'block';
+
+      // --- Update display name ---
+      document.getElementById('form-profile').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var newName = document.getElementById('input-display-name').value.trim();
+        if (!newName) { toast('Le nom ne peut pas être vide', 'error'); return; }
+        try {
+          await user.updateProfile({ displayName: newName });
+          await BBM.db.collection('users').doc(user.uid).update({ displayName: newName });
+          document.getElementById('profile-display-name').textContent = newName;
+          document.getElementById('profile-avatar').textContent = newName.charAt(0).toUpperCase();
+          if (avatar) avatar.textContent = newName.charAt(0).toUpperCase();
+          toast('Nom mis à jour');
+        } catch (err) {
+          toast(BBM.Auth.translateError(err.code) || err.message, 'error');
+        }
+      });
+
+      // --- Update email ---
+      document.getElementById('form-email').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var newEmail = document.getElementById('input-new-email').value.trim();
+        var password = document.getElementById('input-email-password').value;
+        if (!newEmail || !password) return;
+        try {
+          // Re-authenticate
+          var cred = firebase.auth.EmailAuthProvider.credential(user.email, password);
+          await user.reauthenticateWithCredential(cred);
+          await user.updateEmail(newEmail);
+          await BBM.db.collection('users').doc(user.uid).update({ email: newEmail });
+          document.getElementById('profile-email').textContent = newEmail;
+          document.getElementById('input-email-password').value = '';
+          toast('Email mis à jour');
+        } catch (err) {
+          toast(BBM.Auth.translateError(err.code) || err.message, 'error');
+        }
+      });
+
+      // --- Update password ---
+      document.getElementById('form-password').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var currentPw = document.getElementById('input-current-password').value;
+        var newPw = document.getElementById('input-new-password').value;
+        if (!currentPw || !newPw) return;
+        if (newPw.length < 6) { toast('Le mot de passe doit faire au moins 6 caractères', 'error'); return; }
+        try {
+          var cred = firebase.auth.EmailAuthProvider.credential(user.email, currentPw);
+          await user.reauthenticateWithCredential(cred);
+          await user.updatePassword(newPw);
+          document.getElementById('input-current-password').value = '';
+          document.getElementById('input-new-password').value = '';
+          toast('Mot de passe modifié');
+        } catch (err) {
+          toast(BBM.Auth.translateError(err.code) || err.message, 'error');
+        }
+      });
+
+      // --- Delete account ---
+      document.getElementById('btn-delete-account').addEventListener('click', async function () {
+        if (!confirm('Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.')) return;
+        if (!confirm('Dernière chance ! Toutes tes données seront supprimées définitivement.')) return;
+        try {
+          await BBM.db.collection('users').doc(user.uid).delete();
+          await user.delete();
+          window.location.href = 'index.html';
+        } catch (err) {
+          if (err.code === 'auth/requires-recent-login') {
+            toast('Reconnecte-toi avant de supprimer ton compte', 'error');
+          } else {
+            toast(err.message, 'error');
+          }
+        }
+      });
+    });
+  })();
+  </script>
+  <script src="js/tv-nav.js"></script>
+</body>
+</html>

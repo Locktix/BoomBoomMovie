@@ -42,6 +42,12 @@ BBM.Browse = {
       this.renderRows();
       this.showLoading(false);
 
+      // Deep link: ?tmdbid=XXX opens modal directly
+      this.handleDeepLink();
+
+      // Notify new content since last visit
+      this.notifyNewContent();
+
       // Auto-approve pending requests whose content is now available
       BBM.API.checkAndAutoApproveRequests().then(approved => {
         approved.forEach(req => {
@@ -67,6 +73,64 @@ BBM.Browse = {
       }
     });
     return Array.from(map.values());
+  },
+
+  /* ----------------------------------------
+     Deep Link — ?tmdbid=XXX
+     ---------------------------------------- */
+  handleDeepLink() {
+    const params = new URLSearchParams(window.location.search);
+    const tmdbID = params.get('tmdbid');
+    if (!tmdbID) return;
+
+    // Clean URL without reload
+    window.history.replaceState({}, '', 'browse.html');
+
+    const data = this.tmdbCache.get(String(tmdbID));
+    if (data) {
+      const type = data.title ? 'movie' : 'series';
+      setTimeout(() => this.openModal(tmdbID, type), 300);
+    }
+  },
+
+  /* ----------------------------------------
+     New Content Notifications
+     ---------------------------------------- */
+  notifyNewContent() {
+    const STORAGE_KEY = 'bbm_last_visit';
+    const now = Date.now();
+    const lastVisit = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+    localStorage.setItem(STORAGE_KEY, String(now));
+
+    // Skip first visit
+    if (!lastVisit) return;
+
+    const recent = BBM.API.getRecentlyAdded(50);
+    const newItems = recent.filter(item => {
+      if (!item.createdAt) return false;
+      return new Date(item.createdAt).getTime() > lastVisit;
+    });
+
+    if (newItems.length === 0) return;
+
+    // Group: show a summary toast
+    const uniqueNew = new Map();
+    newItems.forEach(item => {
+      if (!uniqueNew.has(item.tmdbID)) {
+        const tmdb = this.tmdbCache.get(String(item.tmdbID));
+        if (tmdb) uniqueNew.set(item.tmdbID, tmdb.title || tmdb.name || 'Titre');
+      }
+    });
+
+    const count = uniqueNew.size;
+    if (count === 0) return;
+
+    if (count <= 3) {
+      const titles = Array.from(uniqueNew.values());
+      BBM.Toast.show(`🆕 Nouveau : ${titles.join(', ')}`, 'success', 6000);
+    } else {
+      BBM.Toast.show(`🆕 ${count} nouveaux titres ajoutés depuis ta dernière visite !`, 'success', 5000);
+    }
   },
 
   /* ----------------------------------------
@@ -536,6 +600,9 @@ BBM.Browse = {
     const recent = BBM.API.getRecentlyAdded(20).map(i => i.tmdbID);
     this.renderRow(container, 'Récemment ajoutés', recent);
 
+    // Recommandé pour toi (basé sur les notes)
+    this.renderRecommendationsRow(container);
+
     // Films
     const movieIDs = BBM.API.getMovies().map(m => m.tmdbID);
     if (movieIDs.length > 0) {
@@ -575,6 +642,44 @@ BBM.Browse = {
       .map(([name, ids]) => ({ name, ids: [...new Set(ids)] }))
       .sort((a, b) => b.ids.length - a.ids.length)
       .slice(0, 5);
+  },
+
+  renderRecommendationsRow(container) {
+    if (!this.userRatings || Object.keys(this.userRatings).length < 2) return;
+
+    // Score genres by user ratings (weight = rating value)
+    const genreScores = new Map();
+    const ratedIDs = new Set(Object.keys(this.userRatings));
+
+    for (const [tmdbID, rating] of Object.entries(this.userRatings)) {
+      if (rating < 3) continue; // only consider titles rated 3+
+      const data = this.tmdbCache.get(String(tmdbID));
+      if (!data || !data.genres) continue;
+      data.genres.forEach(g => {
+        genreScores.set(g.id, (genreScores.get(g.id) || 0) + rating);
+      });
+    }
+
+    if (genreScores.size === 0) return;
+
+    // Score every unrated title by summing its genre scores
+    const candidates = [];
+    this.tmdbCache.forEach((data, id) => {
+      if (ratedIDs.has(id)) return; // skip already rated
+      if (!data.genres) return;
+      let score = 0;
+      data.genres.forEach(g => { score += genreScores.get(g.id) || 0; });
+      // Bonus for higher TMDB rating
+      if (data.vote_average) score += data.vote_average * 0.5;
+      if (score > 0) candidates.push({ id, score });
+    });
+
+    candidates.sort((a, b) => b.score - a.score);
+    const recoIDs = candidates.slice(0, 20).map(c => c.id);
+
+    if (recoIDs.length >= 3) {
+      this.renderRow(container, 'Recommandé pour toi', recoIDs);
+    }
   },
 
   renderRow(parent, title, tmdbIDs, isContinueWatching = false) {

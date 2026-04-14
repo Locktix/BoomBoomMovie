@@ -3,7 +3,7 @@
    Cache-first for static assets, network-first for API
    ============================================ */
 
-const CACHE_NAME = 'bbm-v3';
+const CACHE_NAME = 'bbm-v4';
 const STATIC_ASSETS = [
   './',
   'index.html',
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   'terms.html',
   'privacy.html',
   'changelog.html',
+  'profile.html',
   'css/style.css',
   'js/changelog-data.js',
   'js/config.js',

@@ -4705,3 +4705,46 @@ select:focus-visible {
   .changelog-card-title h2 { font-size: 0.95rem; }
   .changelog-change { font-size: 0.82rem; }
 }
+
+/* ============================================
+   PROFILE PAGE
+   ============================================ */
+.profile-page { min-height: 100vh; background: var(--bbm-bg-deep); }
+.profile-content { max-width: 600px; margin: 0 auto; padding: 100px 24px 60px; }
+.profile-header { text-align: center; margin-bottom: 40px; }
+.profile-avatar-large {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--bbm-accent); color: var(--bbm-bg-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: 700; margin: 0 auto 16px;
+}
+.profile-header h1 { font-size: 1.5rem; margin-bottom: 4px; }
+.profile-email { color: var(--bbm-text-secondary); font-size: 0.9rem; }
+.profile-member-since { color: var(--bbm-text-muted); font-size: 0.8rem; margin-top: 4px; }
+
+.profile-sections { display: flex; flex-direction: column; gap: 28px; }
+.profile-section {
+  background: var(--bbm-bg-card); border: 1px solid var(--bbm-border);
+  border-radius: var(--bbm-radius); padding: 24px;
+}
+.profile-section h2 { font-size: 1.05rem; margin-bottom: 16px; color: var(--bbm-text); }
+.profile-field { margin-bottom: 14px; }
+.profile-field label { display: block; font-size: 0.8rem; color: var(--bbm-text-secondary); margin-bottom: 6px; }
+.profile-field input {
+  width: 100%; padding: 10px 14px; font-size: 0.9rem;
+  background: var(--bbm-bg-input); border: 1px solid var(--bbm-border);
+  border-radius: var(--bbm-radius-sm); color: var(--bbm-text);
+  transition: border-color var(--bbm-duration) var(--bbm-ease);
+}
+.profile-field input:focus { border-color: var(--bbm-accent); outline: none; }
+
+.profile-danger { border-color: rgba(230, 57, 70, 0.3); }
+.profile-danger h2 { color: #e63946; }
+.profile-danger p { color: var(--bbm-text-secondary); font-size: 0.85rem; margin-bottom: 16px; }
+.btn-danger {
+  padding: 10px 24px; font-size: 0.85rem; font-weight: 600;
+  background: transparent; border: 1px solid #e63946; color: #e63946;
+  border-radius: var(--bbm-radius-sm); cursor: pointer;
+  transition: all var(--bbm-duration) var(--bbm-ease);
+}
+.btn-danger:hover { background: #e63946; color: #fff; }
