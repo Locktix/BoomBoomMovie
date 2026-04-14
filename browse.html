@@ -28,6 +28,7 @@
       <li><a href="#" data-view="series">Séries</a></li>
       <li><a href="#" data-view="collections">Collections</a></li>
       <li><a href="#" data-view="mylist">Ma Liste</a></li>
+      <li><a href="#" data-view="history">Historique</a></li>
       <li><a href="mcu.html" class="nav-mcu-link">MCU</a></li>
     </ul>
 
@@ -91,6 +92,7 @@
       <a href="#" data-view="series" class="mobile-menu-link">Séries</a>
       <a href="#" data-view="collections" class="mobile-menu-link">Collections</a>
       <a href="#" data-view="mylist" class="mobile-menu-link">Ma Liste</a>
+      <a href="#" data-view="history" class="mobile-menu-link">Historique</a>
       <a href="mcu.html" class="mobile-menu-link">MCU</a>
     </nav>
     <hr class="mobile-menu-divider">
@@ -141,6 +143,25 @@
   <div id="search-results" style="display:none">
     <div class="search-results">
       <h2 class="search-results-title"></h2>
+      <div class="search-filters" id="search-filters">
+        <select id="search-filter-type">
+          <option value="all">Tous</option>
+          <option value="movie">Films</option>
+          <option value="tv">Séries</option>
+        </select>
+        <select id="search-filter-genre">
+          <option value="all">Tous les genres</option>
+        </select>
+        <select id="search-filter-year">
+          <option value="all">Toutes les années</option>
+        </select>
+        <select id="search-sort">
+          <option value="relevance">Pertinence</option>
+          <option value="title-asc">Titre A-Z</option>
+          <option value="rating-desc">Meilleure note</option>
+          <option value="year-desc">Plus récent</option>
+        </select>
+      </div>
       <div class="search-grid"></div>
     </div>
   </div>
@@ -205,7 +226,7 @@
       <a href="privacy.html">Confidentialité</a>
       <a href="changelog.html">Changelog</a>
     </div>
-    <p class="footer-copy">© 2026 BoomBoomMovie · <a href="changelog.html" style="color: var(--bbm-text-muted)">v2.9.0</a></p>
+    <p class="footer-copy">© 2026 BoomBoomMovie · <a href="changelog.html" style="color: var(--bbm-text-muted)">v3.0.0</a></p>
   </footer>
 
   <!-- Firebase SDK -->

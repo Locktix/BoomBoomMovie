@@ -4,6 +4,8 @@
    ============================================ */
 
 const CACHE_NAME = 'bbm-v4';
+const IMAGE_CACHE = 'bbm-images-v1';
+const MAX_IMAGE_CACHE = 500;
 const STATIC_ASSETS = [
   './',
   'index.html',
@@ -45,7 +47,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== IMAGE_CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -63,18 +65,34 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cache-first for TMDB images
+  // Cache-first for TMDB images with LRU eviction
   if (url.hostname.includes('image.tmdb.org')) {
     e.respondWith(
-      caches.match(e.request).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(res => {
+      caches.open(IMAGE_CACHE).then(async (cache) => {
+        const cached = await cache.match(e.request);
+        if (cached) {
+          // Re-put to refresh LRU order
+          cache.put(e.request, cached.clone());
+          return cached;
+        }
+        try {
+          const res = await fetch(e.request);
           if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+            cache.put(e.request, res.clone());
+            // Evict oldest entries if over limit
+            cache.keys().then(keys => {
+              if (keys.length > MAX_IMAGE_CACHE) {
+                const toDelete = keys.length - MAX_IMAGE_CACHE;
+                for (let i = 0; i < toDelete; i++) {
+                  cache.delete(keys[i]);
+                }
+              }
+            });
           }
           return res;
-        }).catch(() => cached);
+        } catch (err) {
+          return cached || new Response('', { status: 408 });
+        }
       })
     );
     return;

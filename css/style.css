@@ -1664,8 +1664,30 @@ select:focus-visible {
 .search-results-title {
   font-size: 1rem;
   color: var(--bbm-text-secondary);
-  margin-bottom: 28px;
+  margin-bottom: 16px;
   font-weight: 400;
+}
+
+.search-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.search-filters select {
+  background: var(--bbm-bg-card);
+  color: var(--bbm-text);
+  border: 1px solid var(--bbm-border);
+  border-radius: var(--bbm-radius-sm);
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color var(--bbm-duration-fast) var(--bbm-ease);
+}
+.search-filters select:hover,
+.search-filters select:focus {
+  border-color: var(--bbm-accent);
+  outline: none;
 }
 
 .search-grid {
@@ -3409,6 +3431,54 @@ select:focus-visible {
   margin-top: 4px;
 }
 
+/* Admin Global Stats */
+.admin-global-stats {
+  margin-bottom: 32px;
+}
+.admin-section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bbm-text-bright);
+  margin-bottom: 16px;
+}
+.admin-subsection-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bbm-text-secondary);
+  margin: 20px 0 12px;
+}
+.admin-top-requested {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-top-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bbm-bg-card);
+  border-radius: var(--bbm-radius-sm);
+}
+.admin-top-poster {
+  width: 40px;
+  height: 60px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.admin-top-title {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--bbm-text);
+}
+.admin-top-count {
+  font-size: 0.8rem;
+  color: var(--bbm-accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Filters */
 .admin-filters {
   display: flex;
@@ -4310,6 +4380,50 @@ select:focus-visible {
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Activity Feed */
+.stats-activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bbm-bg-card);
+  border-radius: var(--bbm-radius-sm);
+  transition: background var(--bbm-duration-fast) var(--bbm-ease);
+}
+.activity-item:hover {
+  background: var(--bbm-bg-elevated);
+}
+.activity-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.activity-poster {
+  width: 36px;
+  height: 54px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.activity-text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--bbm-text-secondary);
+}
+.activity-text strong {
+  color: var(--bbm-text);
+}
+.activity-time {
+  font-size: 0.75rem;
+  color: var(--bbm-text-muted);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 

@@ -35,6 +35,7 @@
 
     await loadRequests();
     setupFilters();
+    loadGlobalStats();
   });
 
   /* ---------- Load All Requests ---------- */
@@ -164,6 +165,47 @@
       BBM.Toast.show('Erreur : vérifie les règles Firestore', 'error');
     }
   });
+
+  /* ---------- Global Stats ---------- */
+
+  async function loadGlobalStats() {
+    try {
+      const allItems = await BBM.API.fetchAllItems();
+      const movies = BBM.API.getMovies();
+      const series = BBM.API.getSeries();
+
+      document.getElementById('gstat-catalog').textContent = new Set(allItems.map(i => i.tmdbID)).size;
+      document.getElementById('gstat-movies').textContent = movies.length;
+      document.getElementById('gstat-series').textContent = BBM.API.getSeriesMap().size;
+
+      // Unique requesters
+      const requesters = new Set(allRequests.map(r => r.requestedBy).filter(Boolean));
+      document.getElementById('gstat-requesters').textContent = requesters.size;
+
+      // Top requested titles (count by tmdbID)
+      const titleCounts = {};
+      allRequests.forEach(r => {
+        const key = r.tmdbID || '?';
+        if (!titleCounts[key]) titleCounts[key] = { title: r.title || `#${key}`, poster: r.posterPath, count: 0 };
+        titleCounts[key].count++;
+      });
+      const top = Object.values(titleCounts).sort((a, b) => b.count - a.count).slice(0, 5);
+      const topContainer = document.getElementById('admin-top-requested');
+      if (top.length > 0) {
+        topContainer.innerHTML = '<h3 class="admin-subsection-title">Titres les plus demandés</h3>' +
+          top.map(t => {
+            const poster = t.poster ? `${BBM.Config.tmdb.imageBase}/w92${t.poster}` : '';
+            return `<div class="admin-top-item">
+              ${poster ? `<img src="${poster}" alt="" class="admin-top-poster">` : '<div class="admin-no-poster" style="width:40px;height:60px">?</div>'}
+              <span class="admin-top-title">${t.title}</span>
+              <span class="admin-top-count">${t.count} demande${t.count > 1 ? 's' : ''}</span>
+            </div>`;
+          }).join('');
+      }
+    } catch (e) {
+      console.warn('Global stats error:', e);
+    }
+  }
 
   /* ---------- Filters ---------- */
 

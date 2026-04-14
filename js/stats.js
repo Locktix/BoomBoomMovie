@@ -46,6 +46,7 @@
     renderProgress(continueWatching, tmdbCache, allItems);
     renderTopRated(ratings, tmdbCache);
     renderRequestsChart(requests);
+    renderActivity(continueWatching, requests, tmdbCache);
   });
 
   /* ---------- Overview Cards ---------- */
@@ -288,6 +289,67 @@
         </div>
       </div>
     `;
+  }
+
+  /* ---------- Recent Activity Feed ---------- */
+
+  function renderActivity(continueWatching, requests, tmdbCache) {
+    const container = document.getElementById('stats-activity');
+    const events = [];
+
+    // Watch events
+    Object.entries(continueWatching).forEach(([tmdbID, cw]) => {
+      const ts = cw.updatedAt?.toMillis ? cw.updatedAt.toMillis() : (cw.updatedAt?.seconds ? cw.updatedAt.seconds * 1000 : 0);
+      if (!ts) return;
+      const data = tmdbCache.get(String(tmdbID)) || tmdbCache.get(Number(tmdbID));
+      const title = data ? (data.title || data.name) : `#${tmdbID}`;
+      const finished = cw.duration > 0 && (cw.progress / cw.duration) >= 0.9;
+      const epInfo = cw.season ? ` S${cw.season}E${cw.episode}` : '';
+      events.push({
+        ts,
+        icon: finished ? '✅' : '▶️',
+        text: finished ? `A terminé <strong>${title}</strong>${epInfo}` : `A regardé <strong>${title}</strong>${epInfo}`,
+        poster: data?.poster_path ? BBM.API.getPosterURL(data.poster_path, 'w92') : null
+      });
+    });
+
+    // Request events
+    requests.forEach(req => {
+      const ts = req.createdAt?.toMillis ? req.createdAt.toMillis() : (req.createdAt?.seconds ? req.createdAt.seconds * 1000 : 0);
+      if (!ts) return;
+      events.push({
+        ts,
+        icon: req.status === 'approved' ? '🎬' : req.status === 'rejected' ? '❌' : '📩',
+        text: `A demandé <strong>${req.title || '?'}</strong>`,
+        poster: req.posterPath ? `${BBM.Config.tmdb.imageBase}/w92${req.posterPath}` : null
+      });
+    });
+
+    if (events.length === 0) {
+      container.innerHTML = '<p class="stats-empty">Aucune activité récente</p>';
+      return;
+    }
+
+    events.sort((a, b) => b.ts - a.ts);
+
+    const formatDate = (ts) => {
+      const d = new Date(ts);
+      const now = Date.now();
+      const diff = now - ts;
+      if (diff < 60000) return 'À l\'instant';
+      if (diff < 3600000) return `Il y a ${Math.floor(diff / 60000)} min`;
+      if (diff < 86400000) return `Il y a ${Math.floor(diff / 3600000)}h`;
+      return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    };
+
+    container.innerHTML = events.slice(0, 20).map(ev => `
+      <div class="activity-item">
+        <span class="activity-icon">${ev.icon}</span>
+        ${ev.poster ? `<img class="activity-poster" src="${ev.poster}" alt="" loading="lazy">` : ''}
+        <div class="activity-text">${ev.text}</div>
+        <span class="activity-time">${formatDate(ev.ts)}</span>
+      </div>
+    `).join('');
   }
 
   /* ---------- Toast ---------- */

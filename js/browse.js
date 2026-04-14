@@ -325,6 +325,9 @@ BBM.Browse = {
       case 'mylist':
         this.showCategory('Ma Liste', this.myList);
         break;
+      case 'history':
+        this.showHistory();
+        break;
     }
   },
 
@@ -444,6 +447,50 @@ BBM.Browse = {
   },
 
   /* ----------------------------------------
+     Watch History
+     ---------------------------------------- */
+  async showHistory() {
+    const container = document.getElementById('category-filter');
+    const header = container.querySelector('.category-filter-header h1');
+    const sortSelect = document.getElementById('sort-select');
+    const grid = document.querySelector('.category-grid');
+    const filtersEl = document.getElementById('genre-filters');
+
+    header.textContent = 'Historique';
+    sortSelect.value = 'default';
+    this._activeGenre = null;
+    filtersEl.innerHTML = '';
+    grid.innerHTML = '<div class="loader" style="margin:40px auto;grid-column:1/-1"></div>';
+    container.classList.add('active');
+
+    const cw = await BBM.API.getContinueWatching();
+    const entries = Object.entries(cw);
+
+    // Sort by most recent
+    entries.sort((a, b) => {
+      const ta = a[1].updatedAt?.toMillis ? a[1].updatedAt.toMillis() : (a[1].updatedAt?.seconds ? a[1].updatedAt.seconds * 1000 : 0);
+      const tb = b[1].updatedAt?.toMillis ? b[1].updatedAt.toMillis() : (b[1].updatedAt?.seconds ? b[1].updatedAt.seconds * 1000 : 0);
+      return tb - ta;
+    });
+
+    const ids = entries.map(([id]) => id);
+    this._categoryIDs = ids;
+    grid.innerHTML = '';
+
+    if (ids.length === 0) {
+      grid.innerHTML = '<div class="no-results" style="grid-column:1/-1"><p>Aucun historique de visionnage</p></div>';
+      return;
+    }
+
+    ids.forEach(id => {
+      const tmdb = this.tmdbCache.get(String(id));
+      if (!tmdb) return;
+      grid.appendChild(this.createCard(String(id), tmdb));
+    });
+    this.observeLazyImages(grid);
+  },
+
+  /* ----------------------------------------
      Search
      ---------------------------------------- */
   setupSearch() {
@@ -484,13 +531,79 @@ BBM.Browse = {
   },
 
   performSearch(query) {
-    const results = BBM.API.search(query);
+    let results = BBM.API.search(query);
     const container = document.getElementById('search-results');
     const grid = container.querySelector('.search-grid');
     const titleEl = container.querySelector('.search-results-title');
 
     document.getElementById('browse-content').style.display = 'none';
     document.getElementById('category-filter').classList.remove('active');
+
+    // Populate genre & year dropdowns once
+    if (!this._searchFiltersBuilt) {
+      this._searchFiltersBuilt = true;
+      const genres = new Set();
+      const years = new Set();
+      this.tmdbCache.forEach(data => {
+        (data.genres || []).forEach(g => genres.add(g.name));
+        const y = (data.release_date || data.first_air_date || '').slice(0, 4);
+        if (y) years.add(y);
+      });
+      const genreSelect = document.getElementById('search-filter-genre');
+      [...genres].sort().forEach(g => {
+        genreSelect.insertAdjacentHTML('beforeend', `<option value="${g}">${g}</option>`);
+      });
+      const yearSelect = document.getElementById('search-filter-year');
+      [...years].sort((a, b) => b - a).forEach(y => {
+        yearSelect.insertAdjacentHTML('beforeend', `<option value="${y}">${y}</option>`);
+      });
+      // Bind filter change events
+      container.querySelector('.search-filters').addEventListener('change', () => {
+        const q = document.getElementById('search-input').value.trim();
+        if (q.length >= 2) this.performSearch(q);
+      });
+    }
+
+    // Apply filters
+    const typeFilter = document.getElementById('search-filter-type').value;
+    const genreFilter = document.getElementById('search-filter-genre').value;
+    const yearFilter = document.getElementById('search-filter-year').value;
+    const sortBy = document.getElementById('search-sort').value;
+
+    results = results.filter(item => {
+      const tmdb = this.tmdbCache.get(String(item.tmdbID));
+      if (!tmdb) return false;
+      if (typeFilter !== 'all') {
+        const isMovie = !!tmdb.title;
+        if (typeFilter === 'movie' && !isMovie) return false;
+        if (typeFilter === 'tv' && isMovie) return false;
+      }
+      if (genreFilter !== 'all') {
+        if (!(tmdb.genres || []).some(g => g.name === genreFilter)) return false;
+      }
+      if (yearFilter !== 'all') {
+        const y = (tmdb.release_date || tmdb.first_air_date || '').slice(0, 4);
+        if (y !== yearFilter) return false;
+      }
+      return true;
+    });
+
+    // Sort
+    if (sortBy !== 'relevance') {
+      results.sort((a, b) => {
+        const ta = this.tmdbCache.get(String(a.tmdbID));
+        const tb = this.tmdbCache.get(String(b.tmdbID));
+        if (!ta || !tb) return 0;
+        if (sortBy === 'title-asc') return (ta.title || ta.name || '').localeCompare(tb.title || tb.name || '');
+        if (sortBy === 'rating-desc') return (tb.vote_average || 0) - (ta.vote_average || 0);
+        if (sortBy === 'year-desc') {
+          const ya = (ta.release_date || ta.first_air_date || '').slice(0, 4);
+          const yb = (tb.release_date || tb.first_air_date || '').slice(0, 4);
+          return yb.localeCompare(ya);
+        }
+        return 0;
+      });
+    }
 
     titleEl.textContent = results.length > 0
       ? `Résultats pour "${query}"`
@@ -501,7 +614,7 @@ BBM.Browse = {
     if (results.length === 0) {
       grid.innerHTML = `<div class="no-results" style="grid-column: 1 / -1">
         <p>Aucun résultat pour "${query}"</p>
-        <p style="font-size: 0.9rem; margin-top: 8px; color: var(--bbm-text-muted)">Essaie un autre titre</p>
+        <p style="font-size: 0.9rem; margin-top: 8px; color: var(--bbm-text-muted)">Essaie un autre titre ou ajuste les filtres</p>
       </div>`;
     } else {
       results.forEach(item => {
@@ -917,6 +1030,9 @@ BBM.Browse = {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
               Bande-annonce
             </button>` : ''}
+            <button class="btn-icon" id="modal-share" title="Partager">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -988,6 +1104,22 @@ BBM.Browse = {
         this.openTrailer(trailer.key);
       });
     }
+
+    // Share
+    modal.querySelector('#modal-share').addEventListener('click', async () => {
+      const shareURL = `${location.origin}${location.pathname}?tmdbid=${tmdbID}`;
+      const shareData = { title: `${title} — BoomBoomMovie`, url: shareURL };
+      if (navigator.share) {
+        try { await navigator.share(shareData); } catch (e) { /* cancelled */ }
+      } else {
+        try {
+          await navigator.clipboard.writeText(shareURL);
+          BBM.Toast.show('Lien copié !', 'success');
+        } catch (e) {
+          BBM.Toast.show('Impossible de copier le lien', 'error');
+        }
+      }
+    });
 
     // Cast card clicks → actor filmography
     modal.querySelectorAll('.modal-cast-card[data-person-id]').forEach(card => {
