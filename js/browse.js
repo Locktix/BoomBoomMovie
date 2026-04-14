@@ -629,6 +629,7 @@ BBM.Browse = {
     const card = document.createElement('div');
     card.className = 'title-card';
     card.dataset.tmdbid = tmdbID;
+    card.dataset.title = tmdb.title || tmdb.name || 'Sans titre';
 
     const isMovie = !!tmdb.title;
     const title = tmdb.title || tmdb.name || 'Sans titre';
