@@ -131,10 +131,13 @@
 
   function renderRows(filter = 'all') {
     const rowsEl = document.getElementById('tv-rows');
+    const hero = document.getElementById('tv-hero');
     rowsEl.innerHTML = '';
 
-    // Continue watching
     if (filter === 'all') {
+      // Home: rows view with hero
+      hero.style.display = '';
+
       const cwRow = buildContinueWatchingRow();
       if (cwRow) rowsEl.appendChild(cwRow);
 
@@ -142,17 +145,63 @@
       if (myListRow) rowsEl.appendChild(myListRow);
 
       rowsEl.appendChild(buildRow('Récemment ajoutés', BBM.API.getRecentlyAdded(25)));
-    }
+      rowsEl.appendChild(buildRow('Films populaires', withTmdb(state.movies).slice(0, 25)));
+      rowsEl.appendChild(buildRow('Séries populaires', withTmdb(state.series).slice(0, 25)));
 
-    if (filter === 'all' || filter === 'movies') {
-      const movies = withTmdb(state.movies).slice(0, 40);
-      rowsEl.appendChild(buildRow('Films', movies));
+      // Genre rows for variety
+      buildGenreRows().forEach(row => rowsEl.appendChild(row));
+    } else {
+      // Films / Séries: full grid, hide hero
+      hero.style.display = 'none';
+      const source = filter === 'movies' ? state.movies : state.series;
+      const title = filter === 'movies' ? 'Tous les films' : 'Toutes les séries';
+      renderGrid(rowsEl, title, withTmdb(source));
     }
+  }
 
-    if (filter === 'all' || filter === 'series') {
-      const series = withTmdb(state.series).slice(0, 40);
-      rowsEl.appendChild(buildRow('Séries', series));
-    }
+  function renderGrid(container, title, items) {
+    const header = document.createElement('div');
+    header.className = 'tv-grid-header';
+    header.innerHTML = `
+      <h1 class="tv-grid-title">${title}</h1>
+      <span class="tv-grid-count">${items.length}</span>
+    `;
+    container.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'tv-grid';
+    items.forEach(item => {
+      const card = buildCard(item);
+      if (card) grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  }
+
+  function buildGenreRows() {
+    const allItems = [...state.movies, ...state.series];
+    const seen = new Set(); // avoid duplicate entries per tmdbID per genre
+    const genreMap = new Map(); // id → { name, items }
+
+    allItems.forEach(item => {
+      const tmdb = state.tmdbCache.get(item.tmdbID);
+      if (!tmdb || !tmdb.genres) return;
+      tmdb.genres.forEach(g => {
+        const key = `${g.id}_${item.tmdbID}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        if (!genreMap.has(g.id)) genreMap.set(g.id, { name: g.name, items: [] });
+        genreMap.get(g.id).items.push(item);
+      });
+    });
+
+    const top = [...genreMap.values()]
+      .filter(g => g.items.length >= 5)
+      .sort((a, b) => b.items.length - a.items.length)
+      .slice(0, 6);
+
+    return top
+      .map(g => buildRow(g.name, withTmdb(g.items).slice(0, 25)))
+      .filter(Boolean);
   }
 
   function withTmdb(items) {
