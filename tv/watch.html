@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie TV — Lecture</title>
+  <link rel="stylesheet" href="css/tv.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <style>body { overflow: hidden; }</style>
+</head>
+<body>
+  <div class="tv-loading" id="tv-loading">
+    <div class="tv-spinner"></div>
+    <div class="tv-loading-text">Préparation de la lecture…</div>
+  </div>
+
+  <div class="tv-player-page">
+    <video id="tv-video" class="tv-video" preload="auto" playsinline></video>
+
+    <div class="tv-player-overlay" id="tv-overlay">
+      <div class="tv-player-header">
+        <button class="tv-btn tv-focusable" id="btn-back">← Retour</button>
+        <div class="tv-player-title" id="tv-title">Lecture</div>
+      </div>
+
+      <div class="tv-player-controls">
+        <div class="tv-player-buttons">
+          <button class="tv-player-btn tv-focusable" id="btn-prev-ep" style="display:none" title="Épisode précédent">
+            <svg viewBox="0 0 24 24"><rect x="5" y="5" width="3" height="14"/><polygon points="21,5 10,12 21,19"/></svg>
+          </button>
+
+          <button class="tv-player-btn tv-focusable" id="btn-rewind" title="-10s">
+            <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+          </button>
+
+          <button class="tv-player-btn primary tv-focusable" id="btn-playpause" title="Lecture / Pause">
+            <svg viewBox="0 0 24 24" id="icon-play"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>
+
+          <button class="tv-player-btn tv-focusable" id="btn-forward" title="+10s">
+            <svg viewBox="0 0 24 24"><path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62C15.23 11.22 13.46 10.5 11.5 10.5c-3.54 0-6.55 2.31-7.6 5.5L1.53 15.22C2.92 11.03 6.85 8 11.5 8z"/></svg>
+          </button>
+
+          <button class="tv-player-btn tv-focusable" id="btn-next-ep" style="display:none" title="Épisode suivant">
+            <svg viewBox="0 0 24 24"><polygon points="3,5 14,12 3,19"/><rect x="16" y="5" width="3" height="14"/></svg>
+          </button>
+        </div>
+
+        <div class="tv-player-progress-wrap">
+          <span id="time-current">00:00</span>
+          <div class="tv-progress-bar tv-focusable" id="progress-bar" tabindex="0" role="slider" aria-label="Progression">
+            <div class="tv-progress-fill" id="progress-fill"></div>
+          </div>
+          <span id="time-total">00:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Shared modules -->
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+
+  <!-- TV modules -->
+  <script src="js/tv-core.js"></script>
+  <script src="js/tv-player.js"></script>
+</body>
+</html>

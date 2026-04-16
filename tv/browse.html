@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie TV</title>
+  <link rel="stylesheet" href="css/tv.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+  <div class="tv-loading" id="tv-loading">
+    <div class="tv-spinner"></div>
+    <div class="tv-loading-text">Chargement du catalogue…</div>
+  </div>
+
+  <!-- Top bar -->
+  <header class="tv-topbar">
+    <div class="tv-logo">Boom<span class="accent">Boom</span>Movie</div>
+    <nav class="tv-topbar-nav">
+      <button class="tv-nav-btn tv-focusable" data-filter="all">Accueil</button>
+      <button class="tv-nav-btn tv-focusable" data-filter="movies">Films</button>
+      <button class="tv-nav-btn tv-focusable" data-filter="series">Séries</button>
+      <button class="tv-nav-btn tv-focusable" id="btn-logout">Déconnexion</button>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="tv-hero" id="tv-hero">
+    <div class="tv-hero-bg" id="tv-hero-bg"></div>
+    <div class="tv-hero-fade"></div>
+    <div class="tv-hero-content">
+      <h1 class="tv-hero-title" id="tv-hero-title">Chargement…</h1>
+      <div class="tv-hero-meta" id="tv-hero-meta"></div>
+      <p class="tv-hero-overview" id="tv-hero-overview"></p>
+      <div class="tv-hero-actions">
+        <button class="tv-btn primary tv-focusable" id="hero-play">
+          ▶ Lire
+        </button>
+        <button class="tv-btn tv-focusable" id="hero-info">
+          Plus d'infos
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rows -->
+  <main class="tv-rows" id="tv-rows"></main>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Shared modules -->
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+
+  <!-- TV modules -->
+  <script src="js/tv-core.js"></script>
+  <script src="js/tv-home.js"></script>
+</body>
+</html>

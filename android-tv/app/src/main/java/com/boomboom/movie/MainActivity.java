@@ -20,7 +20,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-    private static final String SITE_URL = "https://boomboommovie.live/browse.html";
+    private static final String SITE_URL = "https://boomboommovie.live/tv/";
     private WebView webView;
     private FrameLayout errorView;
 

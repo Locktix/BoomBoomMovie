@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(grep -n \"accessibility\\\\|aria-\\\\|role=\\\\|tabindex\" \"C:\\\\Users\\\\Alan\\\\Documents\\\\GitHub\\\\BoomBoomMovie\"/*.html)",
-      "Bash(grep -n \"async openModal\\\\|showCategory\\\\|setupKeyboard\\\\|batchFetchTMDB\" /c/Users/Alan/Documents/GitHub/BoomBoomMovie/js/*.js)"
+      "Bash(grep -n \"async openModal\\\\|showCategory\\\\|setupKeyboard\\\\|batchFetchTMDB\" /c/Users/Alan/Documents/GitHub/BoomBoomMovie/js/*.js)",
+      "Bash(python -m http.server 8765)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/tv/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/tv/index.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/tv/browse.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/tv/watch.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8765/tv/css/tv.css)",
+      "Bash(kill %1)",
+      "Bash(jobs -p)",
+      "Bash(xargs -r kill)"
     ]
   }
 }
