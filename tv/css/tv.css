@@ -410,8 +410,8 @@ input.tv-focusable:focus {
 
 .tv-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 28px 24px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 28px 20px;
   padding: 20px var(--tv-side-pad) 80px;
 }
 
