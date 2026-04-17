@@ -11,6 +11,8 @@ BBM.TV = BBM.TV || {};
 BBM.TV.Nav = {
   _active: true,
   _backHandlers: [],
+  _lastKey: null,
+  _lastKeyAt: 0,
 
   init() {
     document.addEventListener('keydown', (e) => this.handleKey(e));
@@ -42,6 +44,18 @@ BBM.TV.Nav = {
     if (!this._active) return;
 
     const key = e.key;
+
+    // Dedupe : sur certaines Android TV / projecteurs (ex. Toptro), la WebView
+    // auto-traduit les D-pad en KeyboardEvent ET notre pont natif en injecte un
+    // synthétique — d'où 2 events par appui. On ignore le doublon à < 50 ms.
+    const now = Date.now();
+    if (this._lastKey === key && (now - this._lastKeyAt) < 50) {
+      e.preventDefault();
+      return;
+    }
+    this._lastKey = key;
+    this._lastKeyAt = now;
+
     const active = document.activeElement;
     const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
 
