@@ -103,6 +103,12 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onPageFinished(WebView view, String url) {
+                // Assure que la WebView garde le focus pour recevoir les D-pad events
+                webView.requestFocus();
+            }
+
+            @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 if (failingUrl.equals(SITE_URL)) {
                     showError();
@@ -159,6 +165,43 @@ public class MainActivity extends Activity {
             return super.onKeyDown(keyCode, event);
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    /**
+     * Pont D-pad → JS KeyboardEvent.
+     * Sur les vieilles WebView (projecteurs Android bas de gamme type Toptro, vieux Android 9
+     * sans Play Store / WebView pas à jour), les KEYCODE_DPAD_* ne sont pas traduits en
+     * ArrowUp/Down/Left/Right côté JS. On les injecte manuellement.
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (webView == null || webView.getVisibility() != View.VISIBLE) {
+            return super.dispatchKeyEvent(event);
+        }
+
+        String jsKey = null;
+        switch (event.getKeyCode()) {
+            case KeyEvent.KEYCODE_DPAD_UP:    jsKey = "ArrowUp"; break;
+            case KeyEvent.KEYCODE_DPAD_DOWN:  jsKey = "ArrowDown"; break;
+            case KeyEvent.KEYCODE_DPAD_LEFT:  jsKey = "ArrowLeft"; break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT: jsKey = "ArrowRight"; break;
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+            case KeyEvent.KEYCODE_ENTER:      jsKey = "Enter"; break;
+        }
+
+        if (jsKey == null) {
+            return super.dispatchKeyEvent(event);
+        }
+
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            String js =
+                "(function(k){" +
+                "var opts={key:k,code:k,bubbles:true,cancelable:true};" +
+                "document.dispatchEvent(new KeyboardEvent('keydown',opts));" +
+                "})('" + jsKey + "');";
+            webView.evaluateJavascript(js, null);
+        }
+        return true;
     }
 
     @Override
