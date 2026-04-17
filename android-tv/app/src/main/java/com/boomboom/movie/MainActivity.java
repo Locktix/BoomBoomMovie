@@ -7,8 +7,10 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -144,6 +146,14 @@ public class MainActivity extends Activity {
                     customView = null;
                 }
             }
+
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage msg) {
+                // Pont console JS → logcat pour debug (adb logcat | grep BBM-JS)
+                Log.i("BBM-JS", "[" + msg.messageLevel() + "] " + msg.message()
+                        + " @ " + msg.sourceId() + ":" + msg.lineNumber());
+                return true;
+            }
         });
 
         // Background noir pour éviter le flash blanc
@@ -180,25 +190,33 @@ public class MainActivity extends Activity {
         }
 
         String jsKey = null;
-        switch (event.getKeyCode()) {
-            case KeyEvent.KEYCODE_DPAD_UP:    jsKey = "ArrowUp"; break;
-            case KeyEvent.KEYCODE_DPAD_DOWN:  jsKey = "ArrowDown"; break;
-            case KeyEvent.KEYCODE_DPAD_LEFT:  jsKey = "ArrowLeft"; break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT: jsKey = "ArrowRight"; break;
+        int code = event.getKeyCode();
+        switch (code) {
+            case KeyEvent.KEYCODE_DPAD_UP:        jsKey = "ArrowUp"; break;
+            case KeyEvent.KEYCODE_DPAD_DOWN:      jsKey = "ArrowDown"; break;
+            case KeyEvent.KEYCODE_DPAD_LEFT:      jsKey = "ArrowLeft"; break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:     jsKey = "ArrowRight"; break;
+            // "OK" peut remonter sous différents codes selon les télécommandes
+            // (D-pad center, Enter physique, gamepad A, numpad enter, select).
             case KeyEvent.KEYCODE_DPAD_CENTER:
-            case KeyEvent.KEYCODE_ENTER:      jsKey = "Enter"; break;
+            case KeyEvent.KEYCODE_ENTER:
+            case KeyEvent.KEYCODE_NUMPAD_ENTER:
+            case KeyEvent.KEYCODE_BUTTON_A:
+            case KeyEvent.KEYCODE_BUTTON_SELECT:  jsKey = "Enter"; break;
         }
 
         if (jsKey == null) {
             return super.dispatchKeyEvent(event);
         }
 
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+        // Filtre auto-repeat pour éviter les volées rapides
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
             String js =
-                "(function(k){" +
+                "(function(k,c){" +
+                "window.__bbmLastKey=c;" +
                 "var opts={key:k,code:k,bubbles:true,cancelable:true};" +
                 "document.dispatchEvent(new KeyboardEvent('keydown',opts));" +
-                "})('" + jsKey + "');";
+                "})('" + jsKey + "'," + code + ");";
             webView.evaluateJavascript(js, null);
         }
         return true;

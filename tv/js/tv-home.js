@@ -14,21 +14,51 @@
   };
 
   // ----------------------------------------
+  // Diag helpers (panneau en bas-droite, révélé si blocage)
+  // ----------------------------------------
+  const Diag = {
+    el:    () => document.getElementById('tv-diag'),
+    auth:  (t) => { const e = document.getElementById('tv-diag-auth'); if (e) e.textContent = '🔑 Auth : ' + t; },
+    api:   (t) => { const e = document.getElementById('tv-diag-api');  if (e) e.textContent = '📡 API : '  + t; },
+    err:   (t) => { const e = document.getElementById('tv-diag-err');  if (e) e.textContent = t || ''; if (t) Diag.show(); },
+    show:  ()  => { const e = Diag.el(); if (e) e.style.display = 'block'; }
+  };
+
+  // Touches reçues — utile pour identifier le keycode du bouton OK
+  document.addEventListener('keydown', (e) => {
+    const k = document.getElementById('tv-diag-key');
+    if (k) k.textContent = `⌨️ Dernière touche : ${e.key} (code=${e.code}, native=${window.__bbmLastKey ?? '-'})`;
+  }, true);
+
+  // Si la page reste bloquée > 6s, on révèle le diag automatiquement
+  const diagTimer = setTimeout(() => Diag.show(), 6000);
+
+  // ----------------------------------------
   // Entry
   // ----------------------------------------
   BBM.auth.onAuthStateChanged(async (user) => {
     if (!user) {
+      Diag.auth('pas connecté → redirection login');
+      Diag.show();
       window.location.href = 'index.html';
       return;
     }
+    Diag.auth(`connecté (${user.email})`);
     state.user = user;
     BBM.Auth.currentUser = user;
     try {
+      Diag.api('chargement du catalogue…');
       await loadCatalog();
+      Diag.api(`OK — ${state.movies.length} films, ${state.series.length} séries`);
       await loadUserData();
       render();
+      clearTimeout(diagTimer);
+      // Si tout est OK, on masque le diag après 2s
+      setTimeout(() => { const e = Diag.el(); if (e) e.style.display = 'none'; }, 2000);
     } catch (err) {
       console.error('TV home init failed:', err);
+      Diag.api('ÉCHEC');
+      Diag.err('⚠️ ' + (err.message || 'Impossible de charger le catalogue.'));
       document.getElementById('tv-hero-title').textContent = 'Erreur de chargement';
       document.getElementById('tv-hero-overview').textContent = err.message || 'Impossible de charger le catalogue.';
     } finally {

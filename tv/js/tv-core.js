@@ -72,7 +72,15 @@ BBM.TV.Nav = {
         // Let form submit naturally
         return;
       }
-      if (active && active.click) {
+      // Si rien de focalisable n'a le focus (ex : page qui vient de charger,
+      // focus sur <body>), on place le focus sur le 1er élément au lieu de rien
+      // faire — évite l'impression que « OK ne marche pas ».
+      if (!active || active === document.body || !active.classList?.contains('tv-focusable')) {
+        e.preventDefault();
+        this.focusFirst();
+        return;
+      }
+      if (active.click) {
         e.preventDefault();
         active.click();
       }
