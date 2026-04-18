@@ -32,7 +32,8 @@
       "Bash(node -c js/browse.js)",
       "Bash(node -c js/api.js)",
       "Bash(xargs -r kill echo \"done\")",
-      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS:',o,'==',c,':',o===c\\);\")"
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS:',o,'==',c,':',o===c\\);\")",
+      "Bash(node -c js/config.js)"
     ]
   }
 }

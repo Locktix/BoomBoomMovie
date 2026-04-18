@@ -14,34 +14,22 @@ BBM.API = {
   async fetchAllItems() {
     if (this._items) return this._items;
 
-    const [res1, res2] = await Promise.allSettled([
-      fetch(BBM.Config.workerAPI),
-      fetch(BBM.Config.workerAPI2)
-    ]);
-
-    let items1 = [], items2 = [];
-
-    if (res1.status === 'fulfilled' && res1.value.ok) {
-      items1 = await res1.value.json();
-    } else {
-      console.warn('API principale indisponible');
+    let items = [];
+    try {
+      const res = await fetch(BBM.Config.workerAPI);
+      if (res.ok) items = await res.json();
+    } catch (e) {
+      console.warn('API indisponible', e);
     }
 
-    if (res2.status === 'fulfilled' && res2.value.ok) {
-      items2 = await res2.value.json();
-    } else {
-      console.warn('API secondaire indisponible');
-    }
-
-    if (items1.length === 0 && items2.length === 0) {
+    if (items.length === 0) {
       throw new Error('Aucune API disponible');
     }
 
-    // Fusionner en dédupliquant — l'API principale a priorité
+    // Dédup
     const seen = new Set();
     const merged = [];
-
-    for (const item of [...items1, ...items2]) {
+    for (const item of items) {
       const key = item.category === 'movie'
         ? `movie_${item.tmdbID}`
         : `series_${item.tmdbID}_s${item.seasonNumber}_e${item.episodeNumber}`;

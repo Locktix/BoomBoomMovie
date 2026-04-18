@@ -64,7 +64,7 @@ requests/{requestId}
   createdAt: timestamp
 ```
 
-**Worker API Format** (from `workerAPI` and `workerAPI2`):
+**Worker API Format** (from `workerAPI`):
 Returns an array of objects with: tmdbID, title (movies), seriesTitle (series), category, url (streaming URL), seasonNumber (series), episodeNumber (series), createdAt (optional).
 
 ### Android TV App Stack
@@ -220,6 +220,5 @@ adb logcat
 - **No Build Tool**: Intentionally simple; direct deployment to GitHub Pages.
 - **Language**: French UI throughout — all user-facing strings are in French.
 - **API Rate Limiting**: TMDB limits ~40 requests/10s; `batchFetchTMDB` respects this via concurrency control (default 6).
-- **Worker API Fallback**: App tries `workerAPI` first, falls back to `workerAPI2` if unavailable.
 - **Service Worker versioning**: Bump `CACHE_NAME` in `sw.js` (currently `bbm-v4`) to force cache refresh on clients.
 
