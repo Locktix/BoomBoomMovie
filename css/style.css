@@ -1,28 +1,29 @@
 /* ============================================
    BoomBoomMovie — Signature Design System
-   Premium cinematic aesthetic · Glassmorphism · Warm amber
+   Premium cinematic aesthetic · Glassmorphism · Violet premium
    ============================================ */
 
 /* ---------- Design Tokens ---------- */
 :root {
-  --bbm-accent: #d4a843;
-  --bbm-accent-glow: rgba(212, 168, 67, 0.35);
-  --bbm-accent-soft: rgba(212, 168, 67, 0.12);
-  --bbm-accent-hover: #e4bc5a;
+  --bbm-accent: #8B5CF6;
+  --bbm-accent-glow: rgba(139, 92, 246, 0.4);
+  --bbm-accent-soft: rgba(139, 92, 246, 0.14);
+  --bbm-accent-hover: #A78BFA;
+  --bbm-accent-deep: #6D28D9;
   --bbm-danger: #e05555;
 
-  --bbm-bg-deep: #0a0a0f;
-  --bbm-bg: #0e0e14;
+  --bbm-bg-deep: #07070C;
+  --bbm-bg: #0C0C14;
   --bbm-bg-card: rgba(255, 255, 255, 0.04);
   --bbm-bg-card-hover: rgba(255, 255, 255, 0.07);
-  --bbm-bg-glass: rgba(20, 20, 30, 0.65);
-  --bbm-bg-glass-strong: rgba(14, 14, 20, 0.85);
+  --bbm-bg-glass: rgba(18, 18, 28, 0.65);
+  --bbm-bg-glass-strong: rgba(12, 12, 20, 0.85);
   --bbm-bg-input: rgba(255, 255, 255, 0.06);
   --bbm-bg-input-focus: rgba(255, 255, 255, 0.1);
 
   --bbm-border: rgba(255, 255, 255, 0.06);
   --bbm-border-hover: rgba(255, 255, 255, 0.12);
-  --bbm-border-accent: rgba(212, 168, 67, 0.3);
+  --bbm-border-accent: rgba(139, 92, 246, 0.35);
 
   --bbm-text: #f0ece4;
   --bbm-text-secondary: #8e8b83;
@@ -499,7 +500,7 @@ select:focus-visible {
 .nav-profile-avatar {
   width: 32px; height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--bbm-accent), #e4bc5a);
+  background: linear-gradient(135deg, var(--bbm-accent), var(--bbm-accent-hover));
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 0.8rem;
   color: var(--bbm-bg-deep);
@@ -613,9 +614,10 @@ select:focus-visible {
 .billboard-vignette {
   position: absolute; inset: 0;
   background:
-    linear-gradient(180deg, rgba(10,10,15,0.3) 0%, transparent 30%),
-    linear-gradient(0deg, var(--bbm-bg-deep) 0%, transparent 50%),
-    linear-gradient(90deg, rgba(10,10,15,0.7) 0%, transparent 50%);
+    linear-gradient(180deg, rgba(7,7,12,0.45) 0%, transparent 25%),
+    linear-gradient(0deg, var(--bbm-bg-deep) 0%, rgba(7,7,12,0.4) 35%, transparent 65%),
+    linear-gradient(90deg, rgba(7,7,12,0.85) 0%, rgba(7,7,12,0.3) 45%, transparent 70%),
+    radial-gradient(ellipse at 15% 75%, rgba(139, 92, 246, 0.18) 0%, transparent 55%);
 }
 
 .billboard-info {
@@ -821,6 +823,13 @@ select:focus-visible {
               z-index 0ms 0ms;
 }
 
+.title-card:hover .title-card-img {
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(139, 92, 246, 0.35),
+    0 0 40px rgba(139, 92, 246, 0.25);
+}
+
 .title-card-img {
   width: 100%;
   aspect-ratio: 2 / 3;
@@ -828,6 +837,8 @@ select:focus-visible {
   overflow: hidden;
   background: var(--bbm-bg-card);
   position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: box-shadow var(--bbm-duration) var(--bbm-ease);
 }
 
 .title-card-img img {
@@ -992,7 +1003,7 @@ select:focus-visible {
   padding: 3px 8px;
   border-radius: 4px;
   z-index: 5;
-  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.4);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.45);
 }
 
 /* Remove from continue watching */
@@ -3012,7 +3023,7 @@ select:focus-visible {
 
 /* Nav MCU link */
 .nav-mcu-link {
-  background: linear-gradient(135deg, #e23636, #d4a843) !important;
+  background: linear-gradient(135deg, #e23636, var(--bbm-accent)) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
@@ -3980,9 +3991,10 @@ select:focus-visible {
 /* --- Focus ring universal --- */
 .tv-mode .tv-focused {
   outline: 3px solid var(--bbm-accent) !important;
-  outline-offset: 3px !important;
-  box-shadow: 0 0 0 5px rgba(212, 168, 67, 0.2),
-              0 0 20px rgba(212, 168, 67, 0.12) !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.28),
+              0 0 42px rgba(139, 92, 246, 0.45),
+              0 18px 48px rgba(0, 0, 0, 0.7) !important;
   z-index: 50 !important;
   position: relative;
 }
@@ -4206,7 +4218,7 @@ select:focus-visible {
 }
 .tv-mode .season-dropdown-toggle.tv-focused {
   border-color: var(--bbm-accent) !important;
-  box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.3) !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35) !important;
   outline: none !important;
 }
 
@@ -4692,7 +4704,7 @@ select:focus-visible {
 
 .changelog-entry.latest .changelog-card {
   border-color: var(--bbm-border-accent);
-  background: rgba(212, 168, 67, 0.03);
+  background: rgba(139, 92, 246, 0.04);
 }
 
 .changelog-card:hover {
@@ -4862,3 +4874,145 @@ select:focus-visible {
   transition: all var(--bbm-duration) var(--bbm-ease);
 }
 .btn-danger:hover { background: #e63946; color: #fff; }
+
+/* ============================================
+   CINEMATIC VIOLET AMBIENT — browse.html signature
+   ============================================ */
+
+.browse-content {
+  position: relative;
+}
+
+.browse-content::before {
+  content: '';
+  position: fixed;
+  top: 20%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 700px;
+  max-height: 700px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 65%);
+  filter: blur(40px);
+  z-index: 0;
+  pointer-events: none;
+  animation: ambientFloat 24s ease-in-out infinite alternate;
+}
+
+.browse-content::after {
+  content: '';
+  position: fixed;
+  bottom: 10%;
+  right: -8%;
+  width: 45vw;
+  height: 45vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.1) 0%, transparent 65%);
+  filter: blur(50px);
+  z-index: 0;
+  pointer-events: none;
+  animation: ambientFloat 30s ease-in-out -10s infinite alternate-reverse;
+}
+
+@keyframes ambientFloat {
+  from { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  to   { transform: translate(40px, -30px) scale(1.15); opacity: 1; }
+}
+
+.billboard,
+.content-rows {
+  position: relative;
+  z-index: 1;
+}
+
+/* Premium loader screen — violet gradient pulse */
+.loading-screen {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(109, 40, 217, 0.12) 0%, transparent 50%),
+    var(--bbm-bg-deep);
+}
+
+.loader {
+  border-color: rgba(139, 92, 246, 0.15);
+  border-top-color: var(--bbm-accent);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.3);
+}
+
+/* Enhanced billboard label — premium chip */
+.billboard-label {
+  padding: 6px 12px 6px 10px;
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 100px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.billboard-label::before {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--bbm-accent);
+  box-shadow: 0 0 10px var(--bbm-accent-glow);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Premium billboard title — subtle gradient */
+.billboard-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E5E2F5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Play button — deeper violet gradient */
+.btn-play {
+  background: linear-gradient(135deg, var(--bbm-accent) 0%, var(--bbm-accent-deep) 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.btn-play:hover {
+  background: linear-gradient(135deg, var(--bbm-accent-hover) 0%, var(--bbm-accent) 100%);
+  box-shadow: 0 12px 32px rgba(139, 92, 246, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+/* Row title — accent bar on hover */
+.row-title {
+  position: relative;
+  padding-left: 14px;
+}
+.row-title::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%) scaleY(0.6);
+  width: 3px; height: 70%;
+  background: linear-gradient(180deg, var(--bbm-accent) 0%, var(--bbm-accent-deep) 100%);
+  border-radius: 2px;
+  transition: transform var(--bbm-duration) var(--bbm-ease),
+              box-shadow var(--bbm-duration) var(--bbm-ease);
+}
+.row:hover .row-title::before {
+  transform: translateY(-50%) scaleY(1);
+  box-shadow: 0 0 16px var(--bbm-accent-glow);
+}
+
+/* Active nav link — refined pill with accent underline */
+.nav-links a.active {
+  background: rgba(139, 92, 246, 0.14);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3) inset;
+}
+
+/* Avatar — soft violet ring */
+.nav-profile-avatar {
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35), 0 4px 12px rgba(139, 92, 246, 0.25);
+  color: #fff !important;
+}

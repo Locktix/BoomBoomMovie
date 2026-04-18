@@ -15,7 +15,19 @@
       "Bash(node -c tv/js/tv-home.js)",
       "Bash(node -c tv/js/tv-core.js)",
       "Bash(node -c tv/js/tv-player.js)",
-      "Bash(node -c tv/js/tv-login.js)"
+      "Bash(node -c tv/js/tv-login.js)",
+      "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill/contents/)",
+      "Bash(curl -s https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/README.md)",
+      "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill/contents/.claude-plugin)",
+      "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill/contents/.claude)",
+      "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill/contents/.claude/skills)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(uipro init *)",
+      "Bash(claude mcp *)",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"streaming platform netflix cinematic dark premium entertainment movies\" --design-system -p \"BoomBoomMovie\" -f markdown)",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"glassmorphism dark cinematic premium\" --domain style -n 5)",
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const open=\\(css.match\\(/{/g\\)||[]\\).length; const close=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('{ count:',open,'} count:',close,'balanced:',open===close\\);\")"
     ]
   }
 }
