@@ -41,7 +41,8 @@
       "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS braces:',o,'==',c,':',o===c\\);\")",
       "Bash(node -e \"const fs=require\\('fs'\\); const js=fs.readFileSync\\('js/player.js','utf8'\\); new Function\\(js\\); console.log\\('player.js: OK', js.length, 'bytes'\\);\")",
       "Bash(xargs -I {} bash -c \"echo '=== {} ===' && grep -o 'BBM\\\\.[A-Za-z.]*' {} | sort -u\")",
-      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/changelog-data.js','utf8'\\)\\); console.log\\('changelog OK'\\);\")"
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/changelog-data.js','utf8'\\)\\); console.log\\('changelog OK'\\);\")",
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/admin.js','utf8'\\)\\); console.log\\('admin.js OK'\\);\")"
     ]
   }
 }

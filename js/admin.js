@@ -182,13 +182,15 @@
       const requesters = new Set(allRequests.map(r => r.requestedBy).filter(Boolean));
       document.getElementById('gstat-requesters').textContent = requesters.size;
 
-      // Top requested titles (count by tmdbID)
+      // Top requested titles (count by tmdbID) — exclure les demandes approuvées
       const titleCounts = {};
-      allRequests.forEach(r => {
-        const key = r.tmdbID || '?';
-        if (!titleCounts[key]) titleCounts[key] = { title: r.title || `#${key}`, poster: r.posterPath, count: 0 };
-        titleCounts[key].count++;
-      });
+      allRequests
+        .filter(r => r.status !== 'approved')
+        .forEach(r => {
+          const key = r.tmdbID || '?';
+          if (!titleCounts[key]) titleCounts[key] = { title: r.title || `#${key}`, poster: r.posterPath, count: 0 };
+          titleCounts[key].count++;
+        });
       const top = Object.values(titleCounts).sort((a, b) => b.count - a.count).slice(0, 5);
       const topContainer = document.getElementById('admin-top-requested');
       if (top.length > 0) {
