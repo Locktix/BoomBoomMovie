@@ -64,16 +64,16 @@
 
       <div class="landing-stats">
         <div>
-          <div class="landing-stat-value">10k+</div>
-          <div class="landing-stat-label">TITRES DISPONIBLES</div>
+          <div class="landing-stat-value" id="stat-total">—</div>
+          <div class="landing-stat-label">TITRES AU CATALOGUE</div>
         </div>
         <div>
-          <div class="landing-stat-value">4K</div>
-          <div class="landing-stat-label">QUALITÉ MAX</div>
+          <div class="landing-stat-value" id="stat-movies">—</div>
+          <div class="landing-stat-label">FILMS</div>
         </div>
         <div>
-          <div class="landing-stat-value">∞</div>
-          <div class="landing-stat-label">LECTURE ILLIMITÉE</div>
+          <div class="landing-stat-value" id="stat-series">—</div>
+          <div class="landing-stat-label">SÉRIES</div>
         </div>
       </div>
     </div>
@@ -229,6 +229,7 @@
   <script src="js/config.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -347,6 +348,48 @@
           forgotLink.style.pointerEvents = '';
         }
       });
+
+      // Real catalog stats — fetch from worker API, update values live
+      (async () => {
+        try {
+          await BBM.API.fetchAllItems();
+          const movies = BBM.API.getMovies();
+          const seriesMap = BBM.API.getSeriesMap();
+          const moviesCount = movies.length;
+          const seriesCount = seriesMap.size;
+          const uniqueIDs = new Set([...movies.map(m => String(m.tmdbID)), ...[...seriesMap.keys()].map(String)]);
+          const totalCount = uniqueIDs.size;
+
+          const fmt = (n) => {
+            if (n >= 1000) {
+              const k = n / 1000;
+              return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
+            }
+            return String(n);
+          };
+
+          const animateCount = (el, target) => {
+            const duration = 900;
+            const start = performance.now();
+            const step = (now) => {
+              const t = Math.min(1, (now - start) / duration);
+              const eased = 1 - Math.pow(1 - t, 3);
+              const current = Math.round(target * eased);
+              el.textContent = fmt(current);
+              if (t < 1) requestAnimationFrame(step);
+              else el.textContent = fmt(target);
+            };
+            requestAnimationFrame(step);
+          };
+
+          animateCount(document.getElementById('stat-total'), totalCount);
+          animateCount(document.getElementById('stat-movies'), moviesCount);
+          animateCount(document.getElementById('stat-series'), seriesCount);
+        } catch (e) {
+          // If the catalog is unreachable, keep the placeholders
+          console.warn('Stats fetch failed:', e);
+        }
+      })();
 
       // Catalog poster strip (iconic TMDB posters, doubled for seamless loop)
       const POSTERS = [
