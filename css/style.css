@@ -1353,8 +1353,14 @@ select:focus-visible {
   overflow: hidden;
 }
 
-/* Episode watched state */
-.episode-watched { opacity: 0.55; }
+/* Episode watched state — dim content but keep the toggle fully visible */
+.episode-watched .episode-thumb,
+.episode-watched .episode-title,
+.episode-watched .episode-overview,
+.episode-watched .episode-duration,
+.episode-watched .episode-number {
+  opacity: 0.55;
+}
 .episode-watched .episode-title::after {
   content: ' — VU';
   font-size: 0.7rem;
@@ -1374,6 +1380,52 @@ select:focus-visible {
   padding: 1px 5px;
   border-radius: 3px;
 }
+
+/* Per-episode watched toggle */
+.episode-details-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.episode-toggle-watched {
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--bbm-border-hover);
+  color: var(--bbm-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--bbm-duration-fast) var(--bbm-ease);
+}
+.episode-toggle-watched svg { width: 14px; height: 14px; }
+.episode-toggle-watched .ic-check { display: none; }
+.episode-toggle-watched .ic-circle { display: block; }
+.episode-toggle-watched:hover {
+  background: rgba(var(--bbm-accent-rgb), 0.14);
+  border-color: rgba(var(--bbm-accent-rgb), 0.4);
+  color: var(--bbm-accent);
+  transform: scale(1.1);
+}
+.episode-toggle-watched.watched {
+  background: #4ade80;
+  border-color: #4ade80;
+  color: #0a1f10;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+}
+.episode-toggle-watched.watched .ic-check { display: block; }
+.episode-toggle-watched.watched .ic-circle { display: none; }
+.episode-toggle-watched.watched:hover {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #fff;
+  transform: scale(1.1);
+}
+.episode-toggle-watched:disabled { opacity: 0.5; cursor: wait; }
+
+/* Keep the toggle visible even when the row is dimmed as "watched" */
+.episode-watched .episode-toggle-watched { opacity: 1; }
+.episode-watched { --episode-row-opacity: 0.55; }
 
 .episode-progress {
   height: 3px;

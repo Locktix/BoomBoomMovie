@@ -366,6 +366,19 @@ BBM.API = {
     }
   },
 
+  /** Un-mark a single episode from watched. */
+  async unmarkEpisodeWatched(tmdbID, season, episode) {
+    const user = BBM.Auth.currentUser;
+    if (!user || season == null || episode == null) return;
+    const tid = String(tmdbID);
+    const epKey = `${season}-${episode}`;
+    try {
+      await BBM.db.collection('users').doc(user.uid).update({
+        [`continueWatching.${tid}.watchedEpisodes.${epKey}`]: firebase.firestore.FieldValue.delete()
+      });
+    } catch (e) { /* entry may not exist */ }
+  },
+
   async getContinueWatching() {
     const user = BBM.Auth.currentUser;
     if (!user) return {};

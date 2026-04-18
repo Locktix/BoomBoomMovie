@@ -1686,6 +1686,21 @@ BBM.Browse = {
         }
       }
 
+      const isWatched = epWatchedClass === ' episode-watched';
+      // Hide the toggle when allWatched is on (master state lives on the modal button)
+      const showToggle = !allWatched;
+      const toggleHTML = showToggle ? `
+        <button class="episode-toggle-watched${isWatched ? ' watched' : ''}"
+                data-season="${ep.seasonNumber}" data-episode="${ep.episodeNumber}"
+                title="${isWatched ? 'Retirer des vus' : 'Marquer comme vu'}">
+          <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <svg class="ic-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9"/>
+          </svg>
+        </button>` : '';
+
       const item = document.createElement('div');
       item.className = 'episode-item' + epWatchedClass;
       item.innerHTML = `
@@ -1695,12 +1710,15 @@ BBM.Browse = {
           <div class="play-overlay">
             <svg viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
           </div>
-          ${epWatchedClass === ' episode-watched' ? '<div class="episode-watched-badge">VU</div>' : ''}
+          ${isWatched ? '<div class="episode-watched-badge">VU</div>' : ''}
         </div>
         <div class="episode-details">
           <div class="episode-details-header">
             <span class="episode-title">${epTitle}</span>
-            <span class="episode-duration">${epRuntime}</span>
+            <div class="episode-details-meta">
+              <span class="episode-duration">${epRuntime}</span>
+              ${toggleHTML}
+            </div>
           </div>
           <p class="episode-overview">${epOverview}</p>
           ${epProgressHTML}
@@ -1711,6 +1729,49 @@ BBM.Browse = {
         this.closeModal();
         this.playEpisode(tmdbID, ep.seasonNumber, ep.episodeNumber, epTitle);
       });
+
+      const toggleBtn = item.querySelector('.episode-toggle-watched');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const btn = e.currentTarget;
+          const s = parseInt(btn.dataset.season);
+          const epNum = parseInt(btn.dataset.episode);
+          const becomeWatched = !btn.classList.contains('watched');
+          btn.disabled = true;
+          try {
+            if (becomeWatched) {
+              await BBM.API.markEpisodeWatched(tmdbID, s, epNum);
+            } else {
+              await BBM.API.unmarkEpisodeWatched(tmdbID, s, epNum);
+            }
+            // Sync local cache so subsequent renders stay consistent
+            const tid = String(tmdbID);
+            const cache = this.continueWatching[tid] || {};
+            const we = { ...(cache.watchedEpisodes || {}) };
+            const key = `${s}-${epNum}`;
+            if (becomeWatched) we[key] = true; else delete we[key];
+            this.continueWatching[tid] = { ...cache, watchedEpisodes: we };
+            // Toggle UI
+            btn.classList.toggle('watched', becomeWatched);
+            btn.title = becomeWatched ? 'Retirer des vus' : 'Marquer comme vu';
+            item.classList.toggle('episode-watched', becomeWatched);
+            const badge = item.querySelector('.episode-watched-badge');
+            if (becomeWatched && !badge) {
+              const b = document.createElement('div');
+              b.className = 'episode-watched-badge';
+              b.textContent = 'VU';
+              item.querySelector('.episode-thumb').appendChild(b);
+            } else if (!becomeWatched && badge) {
+              badge.remove();
+            }
+          } catch (err) {
+            BBM.Toast.show('Erreur', 'error');
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      }
 
       listEl.appendChild(item);
     });
