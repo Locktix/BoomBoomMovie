@@ -29,8 +29,8 @@ BBM.Config = {
   backdropSize: "original",
   profileSize: "w185",
 
-  // Cache TTL (24h)
-  cacheTTL: 24 * 60 * 60 * 1000
+  // Cache TTL (7 days — TMDB metadata changes rarely)
+  cacheTTL: 7 * 24 * 60 * 60 * 1000
 };
 
 /*

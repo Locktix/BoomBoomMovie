@@ -3,7 +3,7 @@
    Cache-first for static assets, network-first for API
    ============================================ */
 
-const CACHE_NAME = 'bbm-v5';
+const CACHE_NAME = 'bbm-v6';
 const IMAGE_CACHE = 'bbm-images-v1';
 const MAX_IMAGE_CACHE = 500;
 const STATIC_ASSETS = [

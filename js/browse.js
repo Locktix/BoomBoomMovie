@@ -35,7 +35,9 @@ BBM.Browse = {
 
       // Prepare unique items for TMDB fetch
       const uniqueItems = this.getUniqueItems(items);
-      this.tmdbCache = await BBM.API.batchFetchTMDB(uniqueItems);
+      this.tmdbCache = await BBM.API.batchFetchTMDB(uniqueItems, 12, (done, total) => {
+        this.updateLoadingProgress(done, total);
+      });
 
       this.setupLazyLoad();
       this.renderHero();
@@ -145,6 +147,15 @@ BBM.Browse = {
       loader.classList.add('fade-out');
       setTimeout(() => { loader.style.display = 'none'; }, 500);
     }
+  },
+
+  updateLoadingProgress(done, total) {
+    const bar = document.getElementById('loading-progress-bar');
+    const text = document.getElementById('loading-progress-text');
+    if (!bar || !total) return;
+    const pct = Math.round((done / total) * 100);
+    bar.style.width = pct + '%';
+    if (text) text.textContent = `${done} / ${total} titres`;
   },
 
   /* ----------------------------------------

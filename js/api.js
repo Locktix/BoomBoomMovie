@@ -229,9 +229,11 @@ BBM.API = {
   },
 
   /** Batch fetch TMDB data avec concurrency limit */
-  async batchFetchTMDB(items, concurrency = 6) {
+  async batchFetchTMDB(items, concurrency = 12, onProgress = null) {
     const results = new Map();
     const queue = [...items];
+    const total = queue.length;
+    let done = 0;
 
     async function worker() {
       while (queue.length > 0) {
@@ -239,6 +241,8 @@ BBM.API = {
         const type = item.category === 'movie' ? 'movie' : 'tv';
         const data = await BBM.API.getTMDBData(item.tmdbID, type);
         if (data) results.set(item.tmdbID, data);
+        done++;
+        if (onProgress) onProgress(done, total);
       }
     }
 

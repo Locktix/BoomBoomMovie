@@ -3,9 +3,36 @@
    ============================================ */
 
 const BBM_CHANGELOG = {
-  currentVersion: '2.9.0',
+  currentVersion: '3.0.0',
 
   versions: [
+    {
+      version: '3.0.0',
+      date: '2026-04-18',
+      title: 'Refonte Premium — Violet, Glass & Cinéma',
+      type: 'major',
+      changes: [
+        { type: 'new', text: 'Refonte complète de l\'accueil : palette violet premium, grain cinéma, glassmorphism partout' },
+        { type: 'new', text: 'Hero billboard premium avec trailer YouTube en fond, logo TMDB, meta enrichie (note, HD, genres)' },
+        { type: 'new', text: 'Row "Top 10" style Netflix avec numéros géants contourés violet' },
+        { type: 'new', text: 'Bento spotlight : mise en avant éditoriale grille asymétrique' },
+        { type: 'new', text: 'Hover panels enrichis sur les cartes (détails, actions rapides)' },
+        { type: 'new', text: 'Typeahead : suggestions instantanées dans la barre de recherche' },
+        { type: 'new', text: 'Page landing marketing (index.html) avant login — hero cinématique, features, strip d\'affiches animé' },
+        { type: 'new', text: 'Page Paramètres dédiée avec 9 catégories et 30+ options (accent live-swap, mode patate, densité, contraste…)' },
+        { type: 'new', text: 'Player premium : grain cinéma, vignettes, chip type FILM/SÉRIE, sous-titre S01E01 auto' },
+        { type: 'new', text: 'Player : barre de progression dégradée violet, contrôles en pilule glass floutée' },
+        { type: 'new', text: 'Next-Episode card redesignée avec ring SVG animé qui compte à rebours' },
+        { type: 'new', text: 'Petit bouton "Marquer vu / Retirer des vus" sur chaque épisode du modal séries' },
+        { type: 'new', text: 'Barre de progression de chargement : "124 / 487 titres" en live pendant le batch TMDB' },
+        { type: 'improved', text: 'Suivi des épisodes vus individuellement pour les séries (plus seulement le dernier)' },
+        { type: 'improved', text: 'Chargement accéléré : concurrency TMDB 6 → 12, cache local 24h → 7 jours' },
+        { type: 'improved', text: 'Fusion profile → settings (un seul endroit pour tout régler)' },
+        { type: 'improved', text: 'Nettoyage de l\'API secondaire (passage à un worker unique)' },
+        { type: 'fix', text: 'Player mobile : grain/vignettes ne couvrent plus le lecteur vidéo natif' },
+        { type: 'fix', text: 'Écriture Firestore field-by-field : plus d\'écrasement accidentel de champs frères' }
+      ]
+    },
     {
       version: '2.9.0',
       date: '2026-04-09',
