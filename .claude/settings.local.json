@@ -33,7 +33,12 @@
       "Bash(node -c js/api.js)",
       "Bash(xargs -r kill echo \"done\")",
       "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS:',o,'==',c,':',o===c\\);\")",
-      "Bash(node -c js/config.js)"
+      "Bash(node -c js/config.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('css/style.css','utf8'\\); const main=[...css.matchAll\\(/rgba\\\\\\(139,\\\\s*92,\\\\s*246,\\\\s*\\([0-9.]+\\)\\\\\\)/g\\)].map\\(m=>m[0]\\); const deep=[...css.matchAll\\(/rgba\\\\\\(109,\\\\s*40,\\\\s*217,\\\\s*\\([0-9.]+\\)\\\\\\)/g\\)].map\\(m=>m[0]\\); console.log\\('main:',[...new Set\\(main\\)]\\); console.log\\('deep:',[...new Set\\(deep\\)]\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(node -c js/settings.js)",
+      "Bash(node -c js/settings-page.js)",
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS braces:',o,'==',c,':',o===c\\);\")"
     ]
   }
 }

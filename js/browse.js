@@ -786,8 +786,12 @@ BBM.Browse = {
       this.openModal(tmdbID, isMovie ? 'movie' : 'series');
     });
 
+    const S = (window.BBM && BBM.Settings) ? BBM.Settings : null;
+    const potato = S && S.get('performance.potatoMode');
+
     // Parallax on scroll (desktop only)
-    if (!this._heroParallaxBound && !('ontouchstart' in window)) {
+    const parallaxOn = !potato && (!S || S.get('performance.parallax'));
+    if (parallaxOn && !this._heroParallaxBound && !('ontouchstart' in window)) {
       this._heroParallaxBound = true;
       const onScroll = () => {
         const y = window.scrollY;
@@ -800,8 +804,13 @@ BBM.Browse = {
       window.addEventListener('scroll', onScroll, { passive: true });
     }
 
-    // Trailer autoplay after 2.5s (desktop, non-tv, non-reduced-motion)
-    if (trailer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.body.classList.contains('tv-mode') && !('ontouchstart' in window)) {
+    // Trailer autoplay (desktop, non-tv, non-reduced-motion, setting enabled)
+    const trailerOn = !potato && trailer && (!S || S.get('performance.heroTrailer'))
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      && !document.body.classList.contains('tv-mode')
+      && !('ontouchstart' in window);
+    if (trailerOn) {
+      const delayMs = Math.max(0, (S ? S.get('home.heroTrailerDelay') : 2.5) * 1000);
       clearTimeout(this._heroTrailerTimer);
       this._heroTrailerTimer = setTimeout(() => {
         const trailerSlot = billboard.querySelector('.billboard-trailer');
@@ -820,7 +829,7 @@ BBM.Browse = {
           this._heroMuted = true;
           muteBtn.addEventListener('click', () => this.toggleHeroMute());
         }
-      }, 2500);
+      }, delayMs);
     }
   },
 
@@ -875,10 +884,14 @@ BBM.Browse = {
       this.renderRow(container, 'Ma Liste', this.myList);
     }
 
+    const S = (window.BBM && BBM.Settings) ? BBM.Settings : null;
+
     // Top 10 de la semaine (best-rated)
-    const top10 = this.computeTop10();
-    if (top10.length >= 5) {
-      this.renderTop10Row(container, 'Top 10 cette semaine', top10);
+    if (!S || S.get('home.showTop10')) {
+      const top10 = this.computeTop10();
+      if (top10.length >= 5) {
+        this.renderTop10Row(container, 'Top 10 cette semaine', top10);
+      }
     }
 
     // Récemment ajoutés
@@ -886,12 +899,16 @@ BBM.Browse = {
     this.renderRow(container, 'Récemment ajoutés', recent);
 
     // Recommandé pour toi (basé sur les notes)
-    this.renderRecommendationsRow(container);
+    if (!S || S.get('home.showRecommendations')) {
+      this.renderRecommendationsRow(container);
+    }
 
     // Bento spotlight — genre aléatoire mis en vedette
-    const bentoGenre = this.pickBentoSpotlight();
-    if (bentoGenre) {
-      this.renderBentoSpotlight(container, bentoGenre.name, bentoGenre.ids);
+    if (!S || S.get('home.showBento')) {
+      const bentoGenre = this.pickBentoSpotlight();
+      if (bentoGenre) {
+        this.renderBentoSpotlight(container, bentoGenre.name, bentoGenre.ids);
+      }
     }
 
     // Films
@@ -1220,8 +1237,12 @@ BBM.Browse = {
       this.openModal(tmdbID, isMovie ? 'movie' : 'series');
     });
 
-    // Rich hover panel (desktop + pointer only)
-    if (!('ontouchstart' in window) && !document.body.classList.contains('tv-mode')) {
+    // Rich hover panel (desktop + pointer + setting enabled)
+    const S = (window.BBM && BBM.Settings) ? BBM.Settings : null;
+    const hoverOn = !('ontouchstart' in window)
+      && !document.body.classList.contains('tv-mode')
+      && (!S || (S.get('performance.hoverPanel') && !S.get('performance.potatoMode')));
+    if (hoverOn) {
       this.attachHoverPanel(card, tmdbID, tmdb, isMovie, isContinueWatching);
     }
 
