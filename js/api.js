@@ -326,23 +326,41 @@ BBM.API = {
   async saveContinueWatching(tmdbID, data) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
-    const key = `continueWatching.${String(tmdbID)}`;
+    const tid = String(tmdbID);
+    const ref = BBM.db.collection('users').doc(user.uid);
+    // Write each field via dot-notation so we don't clobber sibling fields
+    // (e.g. watchedEpisodes accumulated across sessions).
+    const update = {};
+    for (const [k, v] of Object.entries(data)) {
+      update[`continueWatching.${tid}.${k}`] = v;
+    }
+    update[`continueWatching.${tid}.updatedAt`] = firebase.firestore.FieldValue.serverTimestamp();
+    try {
+      await ref.update(update);
+    } catch (e) {
+      await ref.set({
+        continueWatching: {
+          [tid]: { ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
+        }
+      }, { merge: true });
+    }
+  },
+
+  /** Mark a single episode as watched within a series entry. */
+  async markEpisodeWatched(tmdbID, season, episode) {
+    const user = BBM.Auth.currentUser;
+    if (!user || season == null || episode == null) return;
+    const tid = String(tmdbID);
+    const epKey = `${season}-${episode}`;
     const ref = BBM.db.collection('users').doc(user.uid);
     try {
       await ref.update({
-        [key]: {
-          ...data,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }
+        [`continueWatching.${tid}.watchedEpisodes.${epKey}`]: true
       });
     } catch (e) {
-      // Document might not exist yet, use set with merge
       await ref.set({
         continueWatching: {
-          [String(tmdbID)]: {
-            ...data,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          }
+          [tid]: { watchedEpisodes: { [epKey]: true } }
         }
       }, { merge: true });
     }

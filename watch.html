@@ -7,16 +7,21 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d4a843">
+  <meta name="theme-color" content="#8B5CF6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     body { overflow: hidden; }
   </style>
 </head>
-<body>
+<body class="player-premium">
   <!-- Loading Screen -->
   <div class="loading-screen" id="loading-screen">
+    <div class="loading-orbs">
+      <div class="loading-orb"></div>
+      <div class="loading-orb"></div>
+      <div class="loading-orb"></div>
+    </div>
     <div class="loader"></div>
     <span class="loader-text">Chargement</span>
   </div>
@@ -26,6 +31,13 @@
     <div class="player-container">
       <!-- Video -->
       <video id="player-video" preload="auto"></video>
+
+      <!-- Subtle grain -->
+      <div class="player-grain" aria-hidden="true"></div>
+
+      <!-- Top & bottom vignettes for premium contrast -->
+      <div class="player-vignette player-vignette-top" aria-hidden="true"></div>
+      <div class="player-vignette player-vignette-bottom" aria-hidden="true"></div>
 
       <!-- Overlay -->
       <div class="player-overlay" id="player-overlay">
@@ -37,7 +49,17 @@
             </svg>
             <span>Retour</span>
           </button>
-          <span class="player-title" id="player-title">Lecture en cours</span>
+          <div class="player-title-wrap">
+            <div class="player-title-row">
+              <span class="player-type-chip" id="player-type-chip" style="display:none">
+                <span class="player-chip-dot"></span>
+                <span id="player-type-chip-text">FILM</span>
+              </span>
+              <span class="player-title" id="player-title">Lecture en cours</span>
+            </div>
+            <span class="player-subtitle" id="player-subtitle" style="display:none"></span>
+          </div>
+          <div class="player-header-spacer"></div>
         </div>
 
         <!-- Center Controls -->
@@ -164,10 +186,20 @@
     <!-- Next Episode Overlay -->
     <div class="next-episode-overlay" id="next-episode-overlay" style="display:none">
       <div class="next-episode-card">
+        <div class="next-episode-kicker">À SUIVRE</div>
         <div class="next-episode-label">Épisode suivant dans <span id="next-ep-countdown">10</span>s</div>
+        <div class="next-episode-ring" aria-hidden="true">
+          <svg viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="20" class="next-ep-ring-bg"/>
+            <circle cx="22" cy="22" r="20" class="next-ep-ring-fg" id="next-ep-ring-fg"/>
+          </svg>
+        </div>
         <div class="next-episode-title" id="next-ep-title"></div>
         <div class="next-episode-buttons">
-          <button class="btn-next-play" id="next-ep-play">Lire maintenant</button>
+          <button class="btn-next-play" id="next-ep-play">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>
+            Lire maintenant
+          </button>
           <button class="btn-next-cancel" id="next-ep-cancel">Annuler</button>
         </div>
       </div>

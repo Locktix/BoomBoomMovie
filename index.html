@@ -3,69 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoomBoomMovie — Connexion</title>
+  <title>BoomBoomMovie — Ton cinéma. Tes séries. Sans limites.</title>
+  <meta name="description" content="Des milliers de films et séries en streaming, partout, sur tous tes écrans. Aucune pub. Aucun compromis.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d4a843">
+  <meta name="theme-color" content="#8B5CF6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
-  <!-- Animated background orbs -->
-  <div class="login-bg-orbs">
+<body class="landing-page">
+  <!-- Ambient orbs -->
+  <div class="landing-orbs" aria-hidden="true">
     <div class="orb"></div>
     <div class="orb"></div>
     <div class="orb"></div>
   </div>
 
-  <div class="login-page" id="login-page">
-    <!-- Header -->
-    <header class="login-header">
-      <div class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></div>
-    </header>
+  <!-- Top nav -->
+  <nav class="landing-nav" id="landing-nav">
+    <a href="#" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+    <div class="landing-nav-actions">
+      <a class="landing-nav-link" href="#features">Fonctionnalités</a>
+      <a class="landing-nav-link" href="#catalog">Catalogue</a>
+      <a class="landing-nav-link landing-nav-cta" href="#auth">Se connecter</a>
+    </div>
+  </nav>
 
-    <!-- Login Form -->
-    <div class="login-wrapper">
-      <div class="login-box">
-        <h1 id="form-title">S'identifier</h1>
-        <p class="subtitle" id="form-subtitle">Connecte-toi pour accéder à ton espace</p>
+  <!-- Hero -->
+  <section class="landing-hero" id="auth">
+    <div class="landing-hero-backdrop" aria-hidden="true"></div>
 
-        <div class="login-error" id="login-error"></div>
+    <div class="landing-hero-content">
+      <span class="landing-kicker">
+        <span class="landing-kicker-dot"></span>
+        NOUVEAUTÉS CHAQUE SEMAINE
+      </span>
 
-        <form id="auth-form" autocomplete="on">
-          <!-- Nom (inscription uniquement) -->
-          <div class="form-group" id="name-group" style="display: none">
-            <input type="text" id="input-name" placeholder="Nom d'utilisateur" autocomplete="name">
-          </div>
+      <h1 class="landing-title">
+        Ton cinéma.<br>
+        Tes séries.<br>
+        <em>Sans limites.</em>
+      </h1>
 
-          <div class="form-group">
-            <input type="email" id="input-email" placeholder="Adresse email" autocomplete="email" required>
-          </div>
+      <p class="landing-lead">
+        Des milliers de films et séries en streaming, partout, sur tous tes écrans.
+        Interface léchée, lecture instantanée, zéro pub. C'est tout ce que tu mérites.
+      </p>
 
-          <div class="form-group">
-            <input type="password" id="input-password" placeholder="Mot de passe" autocomplete="current-password" required minlength="6">
-          </div>
+      <div class="landing-hero-ctas">
+        <button class="landing-cta-primary" id="cta-start">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+          Commencer maintenant
+        </button>
+        <a class="landing-cta-secondary" href="#features">
+          En savoir plus
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
 
-          <button type="submit" class="btn-primary" id="btn-submit">S'identifier</button>
-        </form>
-
-        <p class="login-forgot" id="forgot-wrap">
-          <a id="forgot-link">Mot de passe oublié ?</a>
-        </p>
-
-        <p class="login-toggle">
-          <span id="toggle-text">Nouveau sur BoomBoomMovie ?</span>
-          <a id="toggle-link">Inscris-toi.</a>
-        </p>
+      <div class="landing-stats">
+        <div>
+          <div class="landing-stat-value">10k+</div>
+          <div class="landing-stat-label">TITRES DISPONIBLES</div>
+        </div>
+        <div>
+          <div class="landing-stat-value">4K</div>
+          <div class="landing-stat-label">QUALITÉ MAX</div>
+        </div>
+        <div>
+          <div class="landing-stat-value">∞</div>
+          <div class="landing-stat-label">LECTURE ILLIMITÉE</div>
+        </div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="login-footer">
-      <p>BoomBoomMovie © 2026</p>
-    </footer>
-  </div>
+    <!-- Auth panel -->
+    <div class="landing-auth-panel">
+      <h1 id="form-title">S'identifier</h1>
+      <p class="subtitle" id="form-subtitle">Connecte-toi pour accéder à ton espace</p>
+
+      <div class="login-error" id="login-error"></div>
+
+      <form id="auth-form" autocomplete="on">
+        <div class="form-group" id="name-group" style="display: none">
+          <input type="text" id="input-name" placeholder="Nom d'utilisateur" autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <input type="email" id="input-email" placeholder="Adresse email" autocomplete="email" required>
+        </div>
+
+        <div class="form-group">
+          <input type="password" id="input-password" placeholder="Mot de passe" autocomplete="current-password" required minlength="6">
+        </div>
+
+        <button type="submit" class="btn-primary" id="btn-submit">S'identifier</button>
+      </form>
+
+      <p class="login-forgot" id="forgot-wrap">
+        <a id="forgot-link">Mot de passe oublié ?</a>
+      </p>
+
+      <p class="login-toggle">
+        <span id="toggle-text">Nouveau sur BoomBoomMovie ?</span>
+        <a id="toggle-link">Inscris-toi.</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="landing-section" id="features">
+    <div class="landing-section-head">
+      <span class="landing-section-kicker">POURQUOI BOOMBOOM</span>
+      <h2 class="landing-section-title">Une expérience <em>premium</em>, pensée pour les vrais cinéphiles.</h2>
+      <p class="landing-section-lead">
+        On ne coupe jamais les coins ronds. Interface soignée, lecture fluide, sync sur tous tes écrans.
+        Pas d'abonnement, pas de pub, pas de compromis.
+      </p>
+    </div>
+
+    <div class="landing-features-grid">
+      <div class="landing-feature">
+        <div class="landing-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <h3>Catalogue massif</h3>
+        <p>Des milliers de films et séries, classiques cultes et sorties récentes. Du MCU aux animés en passant par les séries HBO.</p>
+      </div>
+
+      <div class="landing-feature">
+        <div class="landing-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <h3>Sur tous tes écrans</h3>
+        <p>Ordi, mobile, tablette, Android TV. Commence un épisode dans le métro, finis-le sur le canapé. La progression suit.</p>
+      </div>
+
+      <div class="landing-feature">
+        <div class="landing-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <h3>Lecture instantanée</h3>
+        <p>Zéro buffering, démarrage immédiat, qualité 4K. Player custom avec raccourcis clavier et pistes audio/sous-titres.</p>
+      </div>
+
+      <div class="landing-feature">
+        <div class="landing-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <h3>Ta liste, tes règles</h3>
+        <p>Ajoute ce que tu veux, note ce que tu aimes. Des recommandations basées sur ce que tu regardes vraiment, pas sur un algo louche.</p>
+      </div>
+
+      <div class="landing-feature">
+        <div class="landing-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h3>Reprise auto</h3>
+        <p>On sauvegarde ta progression à chaque seconde. Tu reprends exactement où tu t'étais arrêté, même après trois mois.</p>
+      </div>
+
+      <div class="landing-feature">
+        <div class="landing-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <h3>Demande-le, on le trouve</h3>
+        <p>Un film manque ? Tu demandes, on ajoute. Pas de menu à choix multiples, juste les titres que la communauté veut vraiment voir.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Catalog strip -->
+  <section class="landing-catalog-strip" id="catalog" aria-hidden="true">
+    <div class="landing-catalog-track" id="catalog-track">
+      <!-- Posters injected via JS -->
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="landing-final-cta">
+    <div class="landing-final-card">
+      <span class="landing-section-kicker">DERNIÈRE CHANCE</span>
+      <h2>Prêt à passer au <em style="font-style:normal;background:linear-gradient(135deg,var(--bbm-accent),var(--bbm-accent-hover));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">niveau au-dessus</em> ?</h2>
+      <p>Crée ton compte en 10 secondes. Pas de carte bleue, pas d'engagement. Juste le meilleur du cinéma, à portée de clic.</p>
+      <button class="landing-cta-primary" id="cta-final">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+        Créer mon compte
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="landing-footer-links">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#catalog">Catalogue</a>
+      <a href="#auth">Connexion</a>
+    </div>
+    <p>BoomBoomMovie © 2026 — Fait avec 🎬 pour les cinéphiles exigeants.</p>
+  </footer>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -92,12 +245,28 @@
       const toggleLink = document.getElementById('toggle-link');
       const errorEl = document.getElementById('login-error');
       const subtitleEl = document.getElementById('form-subtitle');
-
       const forgotLink = document.getElementById('forgot-link');
       const forgotWrap = document.getElementById('forgot-wrap');
 
-      // Rediriger si déjà connecté
+      // Redirect si déjà connecté
       BBM.Auth.redirectIfLoggedIn();
+
+      // Nav scroll effect
+      const nav = document.getElementById('landing-nav');
+      const onScroll = () => {
+        nav.classList.toggle('scrolled', window.scrollY > 30);
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      // CTAs → focus auth panel
+      const focusAuth = (register) => {
+        if (register && isLogin) toggleLink.click();
+        document.getElementById('auth').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => inputEmail.focus(), 500);
+      };
+      document.getElementById('cta-start').addEventListener('click', () => focusAuth(false));
+      document.getElementById('cta-final').addEventListener('click', () => focusAuth(true));
 
       // Toggle Login / Register
       toggleLink.addEventListener('click', () => {
@@ -130,7 +299,6 @@
         const email = inputEmail.value.trim();
         const password = inputPassword.value;
         const name = inputName.value.trim();
-
         if (!email || !password) return;
 
         btnSubmit.disabled = true;
@@ -152,7 +320,7 @@
         }
       });
 
-      // Mot de passe oublié
+      // Forgot password
       forgotLink.addEventListener('click', async () => {
         const email = inputEmail.value.trim();
         if (!email) {
@@ -179,6 +347,40 @@
           forgotLink.style.pointerEvents = '';
         }
       });
+
+      // Catalog poster strip (iconic TMDB posters, doubled for seamless loop)
+      const POSTERS = [
+        '/dKqa850uvbNSCaQCV4Im1XlzEtQ.jpg',   // Inception
+        '/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg',   // Interstellar
+        '/q719jXXEzOoYaps6babgKnONONX.jpg',   // Dune
+        '/9n2tJBplPbgR2ca05hS5CKXwP2c.jpg',   // Barbie
+        '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',   // Oppenheimer
+        '/rktDFPbfHfUbArZ6OOOKsXcv0Bm.jpg',   // Spider-Man NWH
+        '/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg',   // House of the Dragon
+        '/jsoz1HlxczSuTx0mDl2h0lxy36l.jpg',   // The Last of Us
+        '/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',   // The Lord of the Rings
+        '/iZLqwUxDgJ7vh7zjcpIUq7jM7sY.jpg',   // John Wick
+        '/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg',   // The Matrix
+        '/kqjL17yufvn9OVLyXYpvtyrFfak.jpg',   // Mad Max Fury Road
+        '/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg',   // Mandalorian
+        '/jMBpJFRzI1SwcSCoJL3PPXOx2o9.jpg',   // Breaking Bad
+        '/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg',   // Stranger Things
+        '/aTvePCU7exLepwg5hWySjwxojQK.jpg',   // Arcane
+      ];
+      const TMDB_IMG = 'https://image.tmdb.org/t/p/w342';
+      const track = document.getElementById('catalog-track');
+      const frag = document.createDocumentFragment();
+      // Double the list for infinite-scroll illusion
+      [...POSTERS, ...POSTERS].forEach(path => {
+        const img = document.createElement('img');
+        img.className = 'landing-poster';
+        img.loading = 'lazy';
+        img.alt = '';
+        img.src = TMDB_IMG + path;
+        img.onerror = () => { img.style.display = 'none'; };
+        frag.appendChild(img);
+      });
+      track.appendChild(frag);
     });
   </script>
   <script src="js/tv-nav.js"></script>

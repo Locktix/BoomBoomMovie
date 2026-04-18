@@ -1672,7 +1672,9 @@ BBM.Browse = {
       // Episode watch state
       let epWatchedClass = '';
       let epProgressHTML = '';
-      if (allWatched) {
+      const epKey = `${ep.seasonNumber}-${ep.episodeNumber}`;
+      const epMarkedWatched = cw?.watchedEpisodes?.[epKey];
+      if (allWatched || epMarkedWatched) {
         epWatchedClass = ' episode-watched';
       } else if (cw && cw.seasonNumber === ep.seasonNumber && cw.episodeNumber === ep.episodeNumber) {
         const pct = cw.duration > 0 ? cw.progress / cw.duration : 0;

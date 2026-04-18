@@ -36,8 +36,8 @@ BBM.Player = {
     this.video = document.getElementById('player-video');
     this.overlay = document.getElementById('player-overlay');
 
-    // Set title
-    document.getElementById('player-title').textContent = title;
+    // Set title + premium chip/subtitle
+    this.setHeaderMeta(title);
 
     // Load video
     this.video.src = videoURL;
@@ -74,6 +74,43 @@ BBM.Player = {
     if (loader) {
       loader.classList.add('fade-out');
       setTimeout(() => loader.style.display = 'none', 500);
+    }
+  },
+
+  /* ----------------------------------------
+     Premium Header Meta (chip + subtitle)
+     ---------------------------------------- */
+  setHeaderMeta(title) {
+    const titleEl = document.getElementById('player-title');
+    const chip = document.getElementById('player-type-chip');
+    const chipText = document.getElementById('player-type-chip-text');
+    const subtitle = document.getElementById('player-subtitle');
+
+    if (this.type === 'series' && this.season != null && this.episode != null) {
+      // Split "Series Title - S01E01" → series title + S01E01
+      const epCode = `S${String(this.season).padStart(2, '0')}E${String(this.episode).padStart(2, '0')}`;
+      const epRegex = /\s[-—]\s*S\d{2}E\d{2}\s*$/i;
+      const seriesName = title.replace(epRegex, '').trim();
+      if (titleEl) titleEl.textContent = seriesName || title;
+      if (chip && chipText) {
+        chipText.textContent = 'SÉRIE';
+        chip.style.display = '';
+      }
+      if (subtitle) {
+        subtitle.textContent = `Saison ${this.season} · Épisode ${this.episode} · ${epCode}`;
+        subtitle.style.display = '';
+      }
+    } else if (this.type === 'movie') {
+      if (titleEl) titleEl.textContent = title;
+      if (chip && chipText) {
+        chipText.textContent = 'FILM';
+        chip.style.display = '';
+      }
+      if (subtitle) subtitle.style.display = 'none';
+    } else {
+      if (titleEl) titleEl.textContent = title;
+      if (chip) chip.style.display = 'none';
+      if (subtitle) subtitle.style.display = 'none';
     }
   },
 
@@ -657,6 +694,9 @@ BBM.Player = {
           seasonNumber: this.season,
           episodeNumber: this.episode
         });
+        if (this.type === 'series') {
+          await BBM.API.markEpisodeWatched(this.tmdbID, this.season, this.episode);
+        }
       } catch (e) {}
       return;
     }
@@ -706,6 +746,9 @@ BBM.Player = {
           seasonNumber: this.season,
           episodeNumber: this.episode
         });
+        if (this.type === 'series') {
+          await BBM.API.markEpisodeWatched(this.tmdbID, this.season, this.episode);
+        }
       } catch (e) { /* ignore */ }
     }
 
@@ -736,8 +779,17 @@ BBM.Player = {
 
     titleEl.textContent = title;
     overlay.style.display = '';
-    let seconds = 10;
+    const total = 10;
+    let seconds = total;
     countdownEl.textContent = seconds;
+
+    // SVG ring (r=20 → circumference ≈ 125.66)
+    const ringFg = document.getElementById('next-ep-ring-fg');
+    const CIRC = 2 * Math.PI * 20;
+    if (ringFg) {
+      ringFg.style.strokeDasharray = CIRC;
+      ringFg.style.strokeDashoffset = '0';
+    }
 
     const goNext = () => {
       clearInterval(timer);
@@ -747,6 +799,10 @@ BBM.Player = {
     const timer = setInterval(() => {
       seconds--;
       countdownEl.textContent = seconds;
+      if (ringFg) {
+        const elapsed = total - seconds;
+        ringFg.style.strokeDashoffset = (CIRC * (elapsed / total)).toFixed(2);
+      }
       if (seconds <= 0) goNext();
     }, 1000);
 
