@@ -17,6 +17,15 @@
   <div class="tv-player-page">
     <video id="tv-video" class="tv-video" preload="auto" playsinline></video>
 
+    <!-- Buffer / loading overlay -->
+    <div class="tv-buffer-overlay active" id="tv-buffer-overlay">
+      <div class="tv-buffer-ring" aria-hidden="true">
+        <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="22"/></svg>
+      </div>
+      <div class="tv-buffer-text" id="tv-buffer-text">Chargement…</div>
+      <div class="tv-buffer-hint" id="tv-buffer-hint">Première lecture — la vidéo est mise en cache, ça peut prendre un instant.</div>
+    </div>
+
     <!-- Grain & vignettes -->
     <div class="tv-player-grain" aria-hidden="true"></div>
     <div class="tv-player-vignette tv-player-vignette-top" aria-hidden="true"></div>

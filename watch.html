@@ -32,6 +32,15 @@
       <!-- Video -->
       <video id="player-video" preload="auto"></video>
 
+      <!-- Buffer / loading overlay -->
+      <div class="player-buffer-overlay active" id="player-buffer-overlay">
+        <div class="player-buffer-ring" aria-hidden="true">
+          <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="22"/></svg>
+        </div>
+        <div class="player-buffer-text" id="player-buffer-text">Chargement…</div>
+        <div class="player-buffer-hint" id="player-buffer-hint">Première lecture — la vidéo est mise en cache, ça peut prendre un instant.</div>
+      </div>
+
       <!-- Subtle grain -->
       <div class="player-grain" aria-hidden="true"></div>
 

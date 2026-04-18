@@ -35,6 +35,7 @@
 
     state.video.src = videoURL;
 
+    setupBufferOverlay();
     setupControls();
     setupKeyboard();
     setupBack();
@@ -76,6 +77,52 @@
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
+  }
+
+  // ----------------------------------------
+  // Buffer overlay — visual feedback during loading/buffering
+  // ----------------------------------------
+  function setupBufferOverlay() {
+    const overlay = document.getElementById('tv-buffer-overlay');
+    const text = document.getElementById('tv-buffer-text');
+    const hint = document.getElementById('tv-buffer-hint');
+    if (!overlay) return;
+
+    const v = state.video;
+    let hintTimer = null;
+
+    const show = (label, reveal) => {
+      if (text && label) text.textContent = label;
+      if (reveal === false && hint) hint.classList.remove('visible');
+      overlay.classList.add('active');
+      clearTimeout(hintTimer);
+      if (reveal !== false && hint) {
+        hintTimer = setTimeout(() => hint.classList.add('visible'), 3000);
+      }
+    };
+
+    const hide = () => {
+      overlay.classList.remove('active');
+      clearTimeout(hintTimer);
+      if (hint) hint.classList.remove('visible');
+    };
+
+    v.addEventListener('loadstart', () => show('Chargement…', true));
+    v.addEventListener('waiting', () => show('Mise en mémoire tampon…', false));
+    v.addEventListener('seeking', () => show('Recherche…', false));
+    v.addEventListener('canplay', hide);
+    v.addEventListener('playing', hide);
+    v.addEventListener('seeked', hide);
+
+    v.addEventListener('error', () => {
+      if (text) text.textContent = 'Erreur de lecture';
+      if (hint) {
+        hint.textContent = 'Impossible de charger la vidéo. Vérifie ta connexion ou réessaie.';
+        hint.classList.add('visible');
+      }
+      overlay.classList.add('active', 'error');
+      clearTimeout(hintTimer);
+    });
   }
 
   // ----------------------------------------

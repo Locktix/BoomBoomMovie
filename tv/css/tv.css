@@ -1043,6 +1043,90 @@ img { display: block; max-width: 100%; }
 }
 
 /* ============================================
+   Buffer overlay — visual feedback while loading
+   ============================================ */
+
+.tv-buffer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: radial-gradient(circle at 50% 50%, rgba(var(--tv-accent-deep-rgb), 0.24) 0%, rgba(0, 0, 0, 0.62) 60%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s var(--tv-ease), visibility 0.4s;
+}
+.tv-buffer-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tv-buffer-ring {
+  width: 88px;
+  height: 88px;
+}
+.tv-buffer-ring svg {
+  width: 100%;
+  height: 100%;
+  animation: tv-buffer-spin 1.4s linear infinite;
+}
+.tv-buffer-ring circle {
+  fill: none;
+  stroke: var(--tv-accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 14px var(--tv-accent-glow));
+  animation: tv-buffer-dash 1.8s ease-in-out infinite;
+}
+@keyframes tv-buffer-spin { to { transform: rotate(360deg); } }
+@keyframes tv-buffer-dash {
+  0% { stroke-dasharray: 1 138; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 90 138; stroke-dashoffset: -35; }
+  100% { stroke-dasharray: 90 138; stroke-dashoffset: -124; }
+}
+
+.tv-buffer-text {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+
+.tv-buffer-hint {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  max-width: 560px;
+  padding: 0 24px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s var(--tv-ease), transform 0.4s var(--tv-ease);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.tv-buffer-hint.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tv-buffer-overlay.error .tv-buffer-ring { display: none; }
+.tv-buffer-overlay.error::before {
+  content: '⚠';
+  font-size: 72px;
+  color: var(--tv-danger);
+  filter: drop-shadow(0 0 16px rgba(227, 84, 84, 0.5));
+}
+.tv-buffer-overlay.error .tv-buffer-text { color: var(--tv-danger); }
+
+/* ============================================
    Empty / error state
    ============================================ */
 

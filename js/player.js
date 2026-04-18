@@ -42,6 +42,9 @@ BBM.Player = {
     // Load video
     this.video.src = videoURL;
 
+    // Buffer overlay feedback (works for both mobile and desktop paths)
+    this.setupBufferOverlay();
+
     // Sur mobile/tablette, utiliser le player natif du navigateur
     if (this.isMobile) {
       this.overlay.style.display = 'none';
@@ -79,6 +82,53 @@ BBM.Player = {
       loader.classList.add('fade-out');
       setTimeout(() => loader.style.display = 'none', 500);
     }
+  },
+
+  /* ----------------------------------------
+     Buffer Overlay — visual feedback during loading/buffering
+     ---------------------------------------- */
+  setupBufferOverlay() {
+    const overlay = document.getElementById('player-buffer-overlay');
+    const text = document.getElementById('player-buffer-text');
+    const hint = document.getElementById('player-buffer-hint');
+    if (!overlay) return;
+
+    const v = this.video;
+    let hintTimer = null;
+
+    const show = (label, reveal) => {
+      if (text && label) text.textContent = label;
+      if (reveal === false && hint) hint.classList.remove('visible');
+      overlay.classList.add('active');
+      clearTimeout(hintTimer);
+      if (reveal !== false && hint) {
+        // Reveal the "première lecture" hint after 3s of waiting
+        hintTimer = setTimeout(() => hint.classList.add('visible'), 3000);
+      }
+    };
+
+    const hide = () => {
+      overlay.classList.remove('active');
+      clearTimeout(hintTimer);
+      if (hint) hint.classList.remove('visible');
+    };
+
+    v.addEventListener('loadstart', () => show('Chargement…', true));
+    v.addEventListener('waiting', () => show('Mise en mémoire tampon…', false));
+    v.addEventListener('seeking', () => show('Recherche…', false));
+    v.addEventListener('canplay', hide);
+    v.addEventListener('playing', hide);
+    v.addEventListener('seeked', hide);
+
+    v.addEventListener('error', () => {
+      if (text) text.textContent = 'Erreur de lecture';
+      if (hint) {
+        hint.textContent = 'Impossible de charger la vidéo. Vérifie ta connexion ou réessaie.';
+        hint.classList.add('visible');
+      }
+      overlay.classList.add('active', 'error');
+      clearTimeout(hintTimer);
+    });
   },
 
   /* ----------------------------------------
