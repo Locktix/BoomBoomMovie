@@ -514,20 +514,89 @@ BBM.Browse = {
       searchTimeout = setTimeout(() => {
         const query = searchInput.value.trim();
         if (query.length >= 2) {
-          this.performSearch(query);
-        } else if (this.currentView === 'search') {
-          this.switchView('home');
+          this.renderTypeahead(query);
+        } else {
+          this.hideTypeahead();
+          if (this.currentView === 'search') this.switchView('home');
         }
-      }, 300);
+      }, 200);
+    });
+
+    searchInput.addEventListener('blur', () => {
+      setTimeout(() => this.hideTypeahead(), 200);
     });
 
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         searchContainer.classList.remove('open');
         searchInput.value = '';
+        this.hideTypeahead();
         if (this.currentView === 'search') this.switchView('home');
       }
+      if (e.key === 'Enter') {
+        const q = searchInput.value.trim();
+        if (q.length >= 2) {
+          this.hideTypeahead();
+          this.performSearch(q);
+        }
+      }
     });
+  },
+
+  renderTypeahead(query) {
+    let panel = document.getElementById('typeahead-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'typeahead-panel';
+      panel.className = 'typeahead-panel';
+      document.body.appendChild(panel);
+    }
+    const results = BBM.API.search(query).slice(0, 6);
+    if (results.length === 0) {
+      panel.innerHTML = `<div class="typeahead-empty">Aucun résultat pour « ${query} »</div>`;
+    } else {
+      panel.innerHTML = results.map(r => {
+        const tmdb = this.tmdbCache.get(String(r.tmdbID));
+        if (!tmdb) return '';
+        const title = tmdb.title || tmdb.name || '';
+        const year = (tmdb.release_date || tmdb.first_air_date || '').substring(0, 4);
+        const poster = BBM.API.getPosterURL(tmdb.poster_path, 'w185');
+        const rating = tmdb.vote_average ? Math.round(tmdb.vote_average * 10) : null;
+        const isMovie = !!tmdb.title;
+        return `
+          <div class="typeahead-item" data-tmdbid="${r.tmdbID}" data-type="${isMovie ? 'movie' : 'series'}">
+            ${poster ? `<img src="${poster}" alt="${title}">` : '<div class="typeahead-ph"></div>'}
+            <div class="typeahead-meta">
+              <div class="typeahead-title">${title}</div>
+              <div class="typeahead-sub">
+                <span class="typeahead-tag">${isMovie ? 'Film' : 'Série'}</span>
+                ${year ? `<span>${year}</span>` : ''}
+                ${rating ? `<span class="typeahead-rating">★ ${rating}%</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('') + `<div class="typeahead-footer">Appuyer sur Entrée pour voir tous les résultats</div>`;
+    }
+    // Position below input
+    const searchInput = document.getElementById('search-input');
+    const rect = searchInput.getBoundingClientRect();
+    panel.style.top = `${rect.bottom + 8}px`;
+    panel.style.right = `${window.innerWidth - rect.right}px`;
+    panel.style.width = `${Math.max(rect.width, 380)}px`;
+    panel.classList.add('visible');
+    panel.querySelectorAll('.typeahead-item').forEach(it => {
+      it.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        this.hideTypeahead();
+        this.openModal(it.dataset.tmdbid, it.dataset.type);
+      });
+    });
+  },
+
+  hideTypeahead() {
+    const panel = document.getElementById('typeahead-panel');
+    if (panel) panel.classList.remove('visible');
   },
 
   performSearch(query) {
@@ -634,40 +703,76 @@ BBM.Browse = {
      Hero / Billboard
      ---------------------------------------- */
   renderHero() {
-    // Choisir un film/série aléatoire avec backdrop
-    const candidates = [];
+    // Candidates : titres avec backdrop et note >= 7 en priorité
+    const allCandidates = [];
     this.tmdbCache.forEach((data, tmdbID) => {
       if (data.backdrop_path) {
-        candidates.push({ tmdbID, data });
+        allCandidates.push({ tmdbID, data, score: (data.vote_average || 0) * (data.vote_count > 100 ? 1 : 0.5) });
       }
     });
+    if (allCandidates.length === 0) return;
 
-    if (candidates.length === 0) return;
-
-    const hero = candidates[Math.floor(Math.random() * candidates.length)];
+    allCandidates.sort((a, b) => b.score - a.score);
+    const topPool = allCandidates.slice(0, Math.min(20, allCandidates.length));
+    const hero = topPool[Math.floor(Math.random() * topPool.length)];
     const { tmdbID, data } = hero;
     const isMovie = !!data.title;
+    const title = data.title || data.name || '';
+    const year = (data.release_date || data.first_air_date || '').substring(0, 4);
+    const rating = data.vote_average ? Math.round(data.vote_average * 10) : null;
+    const runtime = isMovie && data.runtime ? `${Math.floor(data.runtime / 60)}h ${String(data.runtime % 60).padStart(2, '0')}` : null;
+    const seasons = !isMovie && data.number_of_seasons ? `${data.number_of_seasons} saison${data.number_of_seasons > 1 ? 's' : ''}` : null;
+    const genres = (data.genres || []).slice(0, 3).map(g => g.name);
+    const logoURL = BBM.API.getLogoURL(data, 'w500');
+    const backdropURL = BBM.API.getBackdropURL(data.backdrop_path, 'original');
+    const trailer = (data.videos?.results || []).find(v =>
+      v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+    );
+
+    const metaPills = [];
+    if (rating) metaPills.push(`<span class="hero-rating"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2l2.6 7.4h7.8l-6.3 4.6 2.4 7.4L12 16.8 5.5 21.4l2.4-7.4L1.6 9.4h7.8z"/></svg>${rating}%</span>`);
+    if (year) metaPills.push(`<span class="hero-meta-item">${year}</span>`);
+    if (runtime) metaPills.push(`<span class="hero-meta-item">${runtime}</span>`);
+    if (seasons) metaPills.push(`<span class="hero-meta-item">${seasons}</span>`);
+    metaPills.push(`<span class="hero-meta-item hero-hd">HD</span>`);
 
     const billboard = document.getElementById('billboard');
+    const titleBlock = logoURL
+      ? `<img class="billboard-logo" src="${logoURL}" alt="${title}">`
+      : `<h1 class="billboard-title">${title}</h1>`;
+
     billboard.innerHTML = `
       <div class="billboard-bg">
-        <img src="${BBM.API.getBackdropURL(data.backdrop_path)}" alt="${data.title || data.name}">
+        <img class="billboard-backdrop" src="${backdropURL}" alt="${title}">
+        ${trailer ? `<div class="billboard-trailer" data-video-id="${trailer.key}"></div>` : ''}
         <div class="billboard-vignette"></div>
+        <div class="billboard-grain"></div>
       </div>
       <div class="billboard-info">
-        <div class="billboard-label">${isMovie ? 'Film' : 'Série'}</div>
-        <h1 class="billboard-title">${data.title || data.name}</h1>
+        <div class="billboard-label">
+          <span class="billboard-label-dot"></span>
+          ${isMovie ? 'Film à la une' : 'Série à la une'}
+        </div>
+        ${titleBlock}
+        <div class="billboard-meta">${metaPills.join('')}</div>
+        ${genres.length ? `<div class="billboard-genres">${genres.map(g => `<span class="billboard-genre-chip">${g}</span>`).join('')}</div>` : ''}
         <p class="billboard-overview">${data.overview || ''}</p>
         <div class="billboard-buttons">
           <button class="btn-play" data-tmdbid="${tmdbID}" data-type="${isMovie ? 'movie' : 'series'}">
-            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="4,2 22,12 4,22"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="4,2 22,12 4,22"/></svg>
             Lecture
           </button>
           <button class="btn-info" data-tmdbid="${tmdbID}" data-type="${isMovie ? 'movie' : 'series'}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             Plus d'infos
+          </button>
+          <button class="btn-mute" id="hero-mute" title="Son" aria-label="Son" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+              <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -677,10 +782,71 @@ BBM.Browse = {
     billboard.querySelector('.btn-play').addEventListener('click', () => {
       this.playTitle(tmdbID, isMovie ? 'movie' : 'series');
     });
-
     billboard.querySelector('.btn-info').addEventListener('click', () => {
       this.openModal(tmdbID, isMovie ? 'movie' : 'series');
     });
+
+    // Parallax on scroll (desktop only)
+    if (!this._heroParallaxBound && !('ontouchstart' in window)) {
+      this._heroParallaxBound = true;
+      const onScroll = () => {
+        const y = window.scrollY;
+        if (y > 700) return;
+        const bg = document.querySelector('.billboard-bg');
+        const info = document.querySelector('.billboard-info');
+        if (bg) bg.style.transform = `translateY(${y * 0.4}px) scale(${1 + y * 0.0003})`;
+        if (info) info.style.transform = `translateY(${y * 0.15}px)`;
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // Trailer autoplay after 2.5s (desktop, non-tv, non-reduced-motion)
+    if (trailer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.body.classList.contains('tv-mode') && !('ontouchstart' in window)) {
+      clearTimeout(this._heroTrailerTimer);
+      this._heroTrailerTimer = setTimeout(() => {
+        const trailerSlot = billboard.querySelector('.billboard-trailer');
+        if (!trailerSlot) return;
+        const iframe = document.createElement('iframe');
+        iframe.id = 'hero-trailer-iframe';
+        iframe.src = `https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&loop=1&playlist=${trailer.key}&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&playsinline=1&disablekb=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+        iframe.allow = 'autoplay; encrypted-media';
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('tabindex', '-1');
+        trailerSlot.appendChild(iframe);
+        requestAnimationFrame(() => trailerSlot.classList.add('active'));
+        const muteBtn = document.getElementById('hero-mute');
+        if (muteBtn) {
+          muteBtn.style.display = 'inline-flex';
+          this._heroMuted = true;
+          muteBtn.addEventListener('click', () => this.toggleHeroMute());
+        }
+      }, 2500);
+    }
+  },
+
+  toggleHeroMute() {
+    const iframe = document.getElementById('hero-trailer-iframe');
+    const btn = document.getElementById('hero-mute');
+    if (!iframe || !iframe.contentWindow || !btn) return;
+    const shouldMute = !this._heroMuted; // we track muted state; toggle flips it
+    // If currently muted (_heroMuted true), unmute now
+    const action = this._heroMuted ? 'unMute' : 'mute';
+    iframe.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: action, args: [] }),
+      '*'
+    );
+    this._heroMuted = !this._heroMuted;
+    btn.classList.toggle('is-muted', this._heroMuted);
+    btn.setAttribute('aria-label', this._heroMuted ? 'Activer le son' : 'Couper le son');
+    btn.innerHTML = this._heroMuted
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+           <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+         </svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+           <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+         </svg>`;
   },
 
   /* ----------------------------------------
@@ -709,6 +875,12 @@ BBM.Browse = {
       this.renderRow(container, 'Ma Liste', this.myList);
     }
 
+    // Top 10 de la semaine (best-rated)
+    const top10 = this.computeTop10();
+    if (top10.length >= 5) {
+      this.renderTop10Row(container, 'Top 10 cette semaine', top10);
+    }
+
     // Récemment ajoutés
     const recent = BBM.API.getRecentlyAdded(20).map(i => i.tmdbID);
     this.renderRow(container, 'Récemment ajoutés', recent);
@@ -716,10 +888,15 @@ BBM.Browse = {
     // Recommandé pour toi (basé sur les notes)
     this.renderRecommendationsRow(container);
 
+    // Bento spotlight — genre aléatoire mis en vedette
+    const bentoGenre = this.pickBentoSpotlight();
+    if (bentoGenre) {
+      this.renderBentoSpotlight(container, bentoGenre.name, bentoGenre.ids);
+    }
+
     // Films
     const movieIDs = BBM.API.getMovies().map(m => m.tmdbID);
     if (movieIDs.length > 0) {
-      // Shuffle for variety
       const shuffled = [...new Set(movieIDs)].sort(() => Math.random() - 0.5);
       this.renderRow(container, 'Films', shuffled);
     }
@@ -737,6 +914,131 @@ BBM.Browse = {
         this.renderRow(container, name, ids);
       }
     });
+  },
+
+  computeTop10() {
+    const items = [];
+    this.tmdbCache.forEach((data, tmdbID) => {
+      if (!data.poster_path) return;
+      const vote = data.vote_average || 0;
+      const pop = data.popularity || 0;
+      if (vote < 6 || (data.vote_count || 0) < 50) return;
+      items.push({ tmdbID, score: vote * 10 + Math.log10(pop + 1) * 3 });
+    });
+    items.sort((a, b) => b.score - a.score);
+    return items.slice(0, 10).map(i => i.tmdbID);
+  },
+
+  renderTop10Row(parent, title, tmdbIDs) {
+    const row = document.createElement('div');
+    row.className = 'row row-top10';
+    row.innerHTML = `
+      <div class="row-header">
+        <h2 class="row-title">
+          <span class="top10-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2l2.6 7.4h7.8l-6.3 4.6 2.4 7.4L12 16.8 5.5 21.4l2.4-7.4L1.6 9.4h7.8z"/></svg>TOP 10</span>
+          ${title}
+        </h2>
+      </div>
+      <div class="row-container">
+        <button class="row-btn row-btn-left">‹</button>
+        <div class="row-content row-top10-content"></div>
+        <button class="row-btn row-btn-right">›</button>
+      </div>
+    `;
+    const content = row.querySelector('.row-content');
+    tmdbIDs.forEach((tmdbID, idx) => {
+      const tmdb = this.tmdbCache.get(String(tmdbID));
+      if (!tmdb) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'top10-item';
+      wrap.innerHTML = `<span class="top10-number">${idx + 1}</span>`;
+      const card = this.createCard(String(tmdbID), tmdb, false);
+      card.classList.add('top10-card');
+      wrap.appendChild(card);
+      content.appendChild(wrap);
+    });
+    const btnLeft = row.querySelector('.row-btn-left');
+    const btnRight = row.querySelector('.row-btn-right');
+    btnLeft.addEventListener('click', () => content.scrollBy({ left: -content.clientWidth * 0.8, behavior: 'smooth' }));
+    btnRight.addEventListener('click', () => content.scrollBy({ left: content.clientWidth * 0.8, behavior: 'smooth' }));
+    parent.appendChild(row);
+    this.observeLazyImages(row);
+  },
+
+  pickBentoSpotlight() {
+    const rows = this.groupByGenre();
+    if (rows.length === 0) return null;
+    const pool = rows.filter(r => r.ids.length >= 6);
+    if (pool.length === 0) return null;
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+    // Keep titles with backdrop + good rating for bento beauty
+    const scored = picked.ids
+      .map(id => ({ id, data: this.tmdbCache.get(String(id)) }))
+      .filter(x => x.data && x.data.backdrop_path && x.data.poster_path)
+      .sort((a, b) => (b.data.vote_average || 0) - (a.data.vote_average || 0))
+      .slice(0, 6);
+    if (scored.length < 6) return null;
+    return { name: picked.name, ids: scored.map(s => s.id) };
+  },
+
+  renderBentoSpotlight(parent, genreName, tmdbIDs) {
+    const section = document.createElement('section');
+    section.className = 'bento-spotlight';
+    const ids = tmdbIDs.slice(0, 6);
+    const items = ids.map(id => ({ id, data: this.tmdbCache.get(String(id)) })).filter(x => x.data);
+    if (items.length < 6) return;
+
+    const bigOne = items[0];
+    const isMovieBig = !!bigOne.data.title;
+    const titleBig = bigOne.data.title || bigOne.data.name;
+    const bigBackdrop = BBM.API.getBackdropURL(bigOne.data.backdrop_path, 'w1280');
+    const bigLogo = BBM.API.getLogoURL(bigOne.data, 'w300');
+    const bigRating = bigOne.data.vote_average ? Math.round(bigOne.data.vote_average * 10) : null;
+
+    section.innerHTML = `
+      <div class="bento-header">
+        <span class="bento-kicker">Spotlight · ${genreName}</span>
+        <h2 class="bento-title">Notre sélection <em>${genreName}</em></h2>
+      </div>
+      <div class="bento-grid">
+        <a class="bento-cell bento-big" data-tmdbid="${bigOne.id}" data-type="${isMovieBig ? 'movie' : 'series'}">
+          <img class="bento-img" src="${bigBackdrop}" alt="${titleBig}">
+          <div class="bento-gradient"></div>
+          <div class="bento-content">
+            ${bigLogo ? `<img class="bento-logo" src="${bigLogo}" alt="${titleBig}">` : `<h3 class="bento-cell-title">${titleBig}</h3>`}
+            ${bigRating ? `<div class="bento-rating">★ ${bigRating}%</div>` : ''}
+            <div class="bento-cta">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="4,2 22,12 4,22"/></svg>
+              Regarder
+            </div>
+          </div>
+        </a>
+        ${items.slice(1, 6).map(it => {
+          const m = !!it.data.title;
+          const t = it.data.title || it.data.name;
+          const bk = BBM.API.getBackdropURL(it.data.backdrop_path, 'w780');
+          const r = it.data.vote_average ? Math.round(it.data.vote_average * 10) : null;
+          return `
+            <a class="bento-cell bento-small" data-tmdbid="${it.id}" data-type="${m ? 'movie' : 'series'}">
+              <img class="bento-img" src="${bk}" alt="${t}">
+              <div class="bento-gradient"></div>
+              <div class="bento-content">
+                <h3 class="bento-cell-title">${t}</h3>
+                ${r ? `<div class="bento-rating small">★ ${r}%</div>` : ''}
+              </div>
+            </a>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    section.querySelectorAll('.bento-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        this.openModal(cell.dataset.tmdbid, cell.dataset.type);
+      });
+    });
+
+    parent.appendChild(section);
   },
 
   groupByGenre() {
@@ -878,7 +1180,6 @@ BBM.Browse = {
       <div class="title-card-img">
         ${isNew ? '<div class="new-badge">NOUVEAU</div>' : ''}
         ${watchedBadge}
-        ${isContinueWatching ? `<button class="btn-remove-cw" title="Retirer de Reprendre">✕</button>` : ''}
         ${posterURL ? `<img data-src="${posterURL}" alt="${title}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}
         <div class="title-card-overlay">
           <div class="card-buttons">
@@ -914,24 +1215,123 @@ BBM.Browse = {
       this.openModal(tmdbID, isMovie ? 'movie' : 'series');
     });
 
-    // Remove from continue watching
-    const removeBtn = card.querySelector('.btn-remove-cw');
-    if (removeBtn) {
-      removeBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        await BBM.API.removeContinueWatching(tmdbID);
-        delete this.continueWatching[tmdbID];
-        card.remove();
-        BBM.Toast.show('Retiré de Reprendre');
-      });
-    }
-
     // Click on card image -> open modal
     card.querySelector('.title-card-img').addEventListener('click', () => {
       this.openModal(tmdbID, isMovie ? 'movie' : 'series');
     });
 
+    // Rich hover panel (desktop + pointer only)
+    if (!('ontouchstart' in window) && !document.body.classList.contains('tv-mode')) {
+      this.attachHoverPanel(card, tmdbID, tmdb, isMovie, isContinueWatching);
+    }
+
+    // Ribbon TOP — titres populaires et bien notés
+    if ((tmdb.vote_count || 0) > 1500 && (tmdb.vote_average || 0) >= 7.5) {
+      const img = card.querySelector('.title-card-img');
+      if (img && !img.querySelector('.ribbon-top') && !img.querySelector('.new-badge')) {
+        const r = document.createElement('div');
+        r.className = 'ribbon-top';
+        r.innerHTML = `<svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" style="margin-right:3px;vertical-align:-1px"><path d="M12 2l2.6 7.4h7.8l-6.3 4.6 2.4 7.4L12 16.8 5.5 21.4l2.4-7.4L1.6 9.4h7.8z"/></svg>TOP`;
+        img.appendChild(r);
+      }
+    }
+
     return card;
+  },
+
+  attachHoverPanel(card, tmdbID, tmdb, isMovie, isContinueWatching = false) {
+    let hoverTimer;
+    let panel;
+    const showPanel = () => {
+      if (panel) return;
+      const title = tmdb.title || tmdb.name || '';
+      const year = (tmdb.release_date || tmdb.first_air_date || '').substring(0, 4);
+      const rating = tmdb.vote_average ? Math.round(tmdb.vote_average * 10) : null;
+      const runtime = isMovie && tmdb.runtime ? `${Math.floor(tmdb.runtime / 60)}h${String(tmdb.runtime % 60).padStart(2,'0')}` : null;
+      const seasons = !isMovie && tmdb.number_of_seasons ? `${tmdb.number_of_seasons} S` : null;
+      const genres = (tmdb.genres || []).slice(0, 3).map(g => g.name);
+      const backdrop = BBM.API.getBackdropURL(tmdb.backdrop_path, 'w780') || BBM.API.getPosterURL(tmdb.poster_path);
+      panel = document.createElement('div');
+      panel.className = 'hover-panel';
+      const removeBtnHTML = isContinueWatching
+        ? `<button class="hp-btn hp-remove" title="Retirer de Reprendre" aria-label="Retirer de Reprendre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`
+        : '';
+      panel.innerHTML = `
+        <div class="hover-panel-img">
+          ${backdrop ? `<img src="${backdrop}" alt="${title}">` : ''}
+          <div class="hover-panel-gradient"></div>
+        </div>
+        <div class="hover-panel-body">
+          <div class="hover-panel-actions">
+            <button class="hp-btn hp-play"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="4,2 22,12 4,22"/></svg></button>
+            <button class="hp-btn hp-list">${this.myList.includes(String(tmdbID)) ? '✓' : '+'}</button>
+            <button class="hp-btn hp-info">i</button>
+            ${removeBtnHTML}
+          </div>
+          <div class="hover-panel-title">${title}</div>
+          <div class="hover-panel-meta">
+            ${rating ? `<span class="hp-rating">${rating}%</span>` : ''}
+            ${year ? `<span>${year}</span>` : ''}
+            ${runtime ? `<span>${runtime}</span>` : ''}
+            ${seasons ? `<span>${seasons}</span>` : ''}
+            <span class="hp-hd">HD</span>
+          </div>
+          ${genres.length ? `<div class="hover-panel-genres">${genres.map(g => `<span>${g}</span>`).join('<i>•</i>')}</div>` : ''}
+          ${tmdb.overview ? `<p class="hover-panel-overview">${tmdb.overview}</p>` : ''}
+        </div>
+      `;
+      document.body.appendChild(panel);
+      const rect = card.getBoundingClientRect();
+      const pw = 340;
+      const leftIdeal = rect.left + rect.width / 2 - pw / 2;
+      const left = Math.max(16, Math.min(window.innerWidth - pw - 16, leftIdeal));
+      panel.style.left = `${left}px`;
+      panel.style.top = `${rect.top + window.scrollY - 40}px`;
+      requestAnimationFrame(() => panel.classList.add('visible'));
+      panel.querySelector('.hp-play').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.playTitle(tmdbID, isMovie ? 'movie' : 'series');
+      });
+      panel.querySelector('.hp-list').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleMyList(tmdbID, e.currentTarget);
+      });
+      panel.querySelector('.hp-info').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.openModal(tmdbID, isMovie ? 'movie' : 'series');
+      });
+      const removeBtn = panel.querySelector('.hp-remove');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await BBM.API.removeContinueWatching(tmdbID);
+          delete this.continueWatching[tmdbID];
+          card.remove();
+          removePanel();
+          BBM.Toast.show('Retiré de Reprendre');
+        });
+      }
+      panel.addEventListener('mouseleave', removePanel);
+    };
+    const removePanel = () => {
+      clearTimeout(hoverTimer);
+      if (panel) {
+        panel.classList.remove('visible');
+        const p = panel;
+        panel = null;
+        setTimeout(() => p.remove(), 250);
+      }
+    };
+    card.addEventListener('mouseenter', () => {
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(showPanel, 550);
+    });
+    card.addEventListener('mouseleave', (e) => {
+      clearTimeout(hoverTimer);
+      setTimeout(() => {
+        if (!panel || !panel.matches(':hover')) removePanel();
+      }, 80);
+    });
   },
 
   /* ----------------------------------------

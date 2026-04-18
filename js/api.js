@@ -151,7 +151,7 @@ BBM.API = {
 
     // Fetch from TMDB
     const endpoint = type === 'movie' ? 'movie' : 'tv';
-    const url = `${BBM.Config.tmdb.baseURL}/${endpoint}/${tmdbID}?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}&append_to_response=credits,videos`;
+    const url = `${BBM.Config.tmdb.baseURL}/${endpoint}/${tmdbID}?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}&append_to_response=credits,videos,images&include_image_language=fr,en,null`;
 
     try {
       const res = await fetch(url);
@@ -276,6 +276,17 @@ BBM.API = {
   getStillURL(path) {
     if (!path) return null;
     return `${BBM.Config.tmdb.imageBase}/w300${path}`;
+  },
+
+  getLogoURL(tmdb, size) {
+    const logos = tmdb?.images?.logos || [];
+    if (logos.length === 0) return null;
+    const preferred = logos.find(l => l.iso_639_1 === 'fr')
+      || logos.find(l => l.iso_639_1 === 'en')
+      || logos.find(l => !l.iso_639_1)
+      || logos[0];
+    if (!preferred?.file_path) return null;
+    return `${BBM.Config.tmdb.imageBase}/${size || 'w500'}${preferred.file_path}`;
   },
 
   getProfileURL(path) {

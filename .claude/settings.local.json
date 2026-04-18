@@ -27,7 +27,12 @@
       "Bash(claude mcp *)",
       "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"streaming platform netflix cinematic dark premium entertainment movies\" --design-system -p \"BoomBoomMovie\" -f markdown)",
       "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"glassmorphism dark cinematic premium\" --domain style -n 5)",
-      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const open=\\(css.match\\(/{/g\\)||[]\\).length; const close=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('{ count:',open,'} count:',close,'balanced:',open===close\\);\")"
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const open=\\(css.match\\(/{/g\\)||[]\\).length; const close=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('{ count:',open,'} count:',close,'balanced:',open===close\\);\")",
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS braces:',o,'/',c,'balanced:',o===c\\);\")",
+      "Bash(node -c js/browse.js)",
+      "Bash(node -c js/api.js)",
+      "Bash(xargs -r kill echo \"done\")",
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('css/style.css','utf8'\\); const o=\\(css.match\\(/{/g\\)||[]\\).length; const c=\\(css.match\\(/}/g\\)||[]\\).length; console.log\\('CSS:',o,'==',c,':',o===c\\);\")"
     ]
   }
 }
