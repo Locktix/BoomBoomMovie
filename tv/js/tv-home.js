@@ -1,59 +1,40 @@
 /* ============================================
-   BoomBoomMovie TV — Home / Browse
+   BoomBoomMovie TV — Home / Browse (guest mode)
    ============================================ */
 
 (() => {
   const state = {
-    user: null,
     movies: [],
     series: [],
-    tmdbCache: new Map(),   // tmdbID → TMDB data
-    myList: [],
-    continueWatching: {},
+    tmdbCache: new Map(),
     heroItem: null
   };
 
-  // ----------------------------------------
-  // Diag helpers (panneau en bas-droite, révélé si blocage)
-  // ----------------------------------------
+  // Diag panel — revealed if init takes too long
   const Diag = {
-    el:    () => document.getElementById('tv-diag'),
-    auth:  (t) => { const e = document.getElementById('tv-diag-auth'); if (e) e.textContent = '🔑 Auth : ' + t; },
-    api:   (t) => { const e = document.getElementById('tv-diag-api');  if (e) e.textContent = '📡 API : '  + t; },
-    err:   (t) => { const e = document.getElementById('tv-diag-err');  if (e) e.textContent = t || ''; if (t) Diag.show(); },
-    show:  ()  => { const e = Diag.el(); if (e) e.style.display = 'block'; }
+    el:  () => document.getElementById('tv-diag'),
+    api: (t) => { const e = document.getElementById('tv-diag-api'); if (e) e.textContent = '📡 API : ' + t; },
+    err: (t) => { const e = document.getElementById('tv-diag-err'); if (e) e.textContent = t || ''; if (t) Diag.show(); },
+    show: () => { const e = Diag.el(); if (e) e.style.display = 'block'; }
   };
 
-  // Touches reçues — utile pour identifier le keycode du bouton OK
   document.addEventListener('keydown', (e) => {
     const k = document.getElementById('tv-diag-key');
-    if (k) k.textContent = `⌨️ Dernière touche : ${e.key} (code=${e.code}, native=${window.__bbmLastKey ?? '-'})`;
+    if (k) k.textContent = `⌨️ Dernière touche : ${e.key} (code=${e.code})`;
   }, true);
 
-  // Si la page reste bloquée > 6s, on révèle le diag automatiquement
   const diagTimer = setTimeout(() => Diag.show(), 6000);
 
   // ----------------------------------------
-  // Entry
+  // Entry — no auth in guest mode
   // ----------------------------------------
-  BBM.auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      Diag.auth('pas connecté → redirection login');
-      Diag.show();
-      window.location.href = 'index.html';
-      return;
-    }
-    Diag.auth(`connecté (${user.email})`);
-    state.user = user;
-    BBM.Auth.currentUser = user;
+  async function init() {
     try {
       Diag.api('chargement du catalogue…');
       await loadCatalog();
       Diag.api(`OK — ${state.movies.length} films, ${state.series.length} séries`);
-      await loadUserData();
       render();
       clearTimeout(diagTimer);
-      // Si tout est OK, on masque le diag après 2s
       setTimeout(() => { const e = Diag.el(); if (e) e.style.display = 'none'; }, 2000);
     } catch (err) {
       console.error('TV home init failed:', err);
@@ -64,31 +45,27 @@
     } finally {
       BBM.TV.Loading.hide();
     }
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
   // ----------------------------------------
-  // Load catalog & TMDB metadata
+  // Catalog & TMDB
   // ----------------------------------------
   async function loadCatalog() {
     await BBM.API.fetchAllItems();
     state.movies = BBM.API.getMovies();
     state.series = BBM.API.getSeries();
 
-    // Unique items for TMDB fetch: one entry per tmdbID
     const unique = new Map();
     state.movies.forEach(m => unique.set(m.tmdbID, { tmdbID: m.tmdbID, category: 'movie' }));
     state.series.forEach(s => unique.set(s.tmdbID, { tmdbID: s.tmdbID, category: 'series' }));
 
-    state.tmdbCache = await BBM.API.batchFetchTMDB([...unique.values()], 6);
-  }
-
-  async function loadUserData() {
-    const [list, cw] = await Promise.all([
-      BBM.API.getMyList(),
-      BBM.API.getContinueWatching()
-    ]);
-    state.myList = list;
-    state.continueWatching = cw || {};
+    state.tmdbCache = await BBM.API.batchFetchTMDB([...unique.values()], 12);
   }
 
   // ----------------------------------------
@@ -98,23 +75,18 @@
     setupTopBar();
     renderHero();
     renderRows('all');
-    // Default focus on the hero "Lire" button once content is live
     requestAnimationFrame(() => {
       document.getElementById('hero-play')?.focus();
     });
   }
 
   function setupTopBar() {
-    document.getElementById('btn-logout').addEventListener('click', () => {
-      BBM.Auth.logout();
-    });
-
     document.querySelectorAll('[data-filter]').forEach(btn => {
       btn.addEventListener('click', () => {
         const filter = btn.dataset.filter;
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b === btn));
         window.scrollTo({ top: 0, behavior: 'smooth' });
         renderRows(filter);
-        // Focus the first card of the new view
         requestAnimationFrame(() => {
           const first = document.querySelector('#tv-rows .tv-focusable');
           if (first) first.focus();
@@ -124,7 +96,6 @@
   }
 
   function renderHero() {
-    // Pick a random item from recently added with a backdrop
     const recent = BBM.API.getRecentlyAdded(40)
       .map(item => {
         const tmdb = state.tmdbCache.get(item.tmdbID);
@@ -142,6 +113,7 @@
     const year = (tmdb.release_date || tmdb.first_air_date || '').slice(0, 4);
     const rating = tmdb.vote_average ? tmdb.vote_average.toFixed(1) : null;
     const type = item.category === 'movie' ? 'Film' : 'Série';
+    const runtime = tmdb.runtime ? `${tmdb.runtime} min` : null;
 
     document.getElementById('tv-hero-bg').style.backgroundImage =
       `url(${BBM.API.getBackdropURL(tmdb.backdrop_path)})`;
@@ -149,9 +121,14 @@
 
     const meta = document.getElementById('tv-hero-meta');
     meta.innerHTML = '';
-    if (rating) meta.insertAdjacentHTML('beforeend', `<span class="rating">★ ${rating}</span>`);
-    if (year) meta.insertAdjacentHTML('beforeend', `<span>${year}</span>`);
-    meta.insertAdjacentHTML('beforeend', `<span>${type}</span>`);
+    if (rating) {
+      meta.insertAdjacentHTML('beforeend',
+        `<span class="tv-hero-chip rating"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg> ${rating}</span>`);
+    }
+    if (year) meta.insertAdjacentHTML('beforeend', `<span class="tv-hero-chip">${year}</span>`);
+    meta.insertAdjacentHTML('beforeend', `<span class="tv-hero-chip">${type}</span>`);
+    if (runtime) meta.insertAdjacentHTML('beforeend', `<span class="tv-hero-chip">${runtime}</span>`);
+    meta.insertAdjacentHTML('beforeend', `<span class="tv-hero-chip" style="font-weight:800;color:var(--tv-accent-bright);border-color:rgba(var(--tv-accent-rgb),0.5)">HD</span>`);
 
     document.getElementById('tv-hero-overview').textContent = tmdb.overview || '';
 
@@ -165,23 +142,13 @@
     rowsEl.innerHTML = '';
 
     if (filter === 'all') {
-      // Home: rows view with hero
       hero.style.display = '';
-
-      const cwRow = buildContinueWatchingRow();
-      if (cwRow) rowsEl.appendChild(cwRow);
-
-      const myListRow = buildMyListRow();
-      if (myListRow) rowsEl.appendChild(myListRow);
-
+      rowsEl.appendChild(buildTop10Row());
       rowsEl.appendChild(buildRow('Récemment ajoutés', BBM.API.getRecentlyAdded(25)));
       rowsEl.appendChild(buildRow('Films populaires', withTmdb(state.movies).slice(0, 25)));
       rowsEl.appendChild(buildRow('Séries populaires', withTmdb(state.series).slice(0, 25)));
-
-      // Genre rows for variety
       buildGenreRows().forEach(row => rowsEl.appendChild(row));
     } else {
-      // Films / Séries: full grid, hide hero
       hero.style.display = 'none';
       const source = filter === 'movies' ? state.movies : state.series;
       const title = filter === 'movies' ? 'Tous les films' : 'Toutes les séries';
@@ -207,10 +174,34 @@
     container.appendChild(grid);
   }
 
+  function buildTop10Row() {
+    // Top 10 by popularity
+    const all = withTmdb([...state.movies, ...state.series]).slice(0, 10);
+    const row = document.createElement('section');
+    row.className = 'tv-row tv-row-top10';
+    row.innerHTML = `<h2 class="tv-row-title"><span>Top 10 cette semaine</span></h2>`;
+
+    const scroller = document.createElement('div');
+    scroller.className = 'tv-row-scroller';
+    all.forEach((item, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'tv-top10-item';
+      const num = document.createElement('div');
+      num.className = 'tv-top10-number';
+      num.textContent = i + 1;
+      wrap.appendChild(num);
+      const card = buildCard(item);
+      if (card) wrap.appendChild(card);
+      scroller.appendChild(wrap);
+    });
+    row.appendChild(scroller);
+    return row;
+  }
+
   function buildGenreRows() {
     const allItems = [...state.movies, ...state.series];
-    const seen = new Set(); // avoid duplicate entries per tmdbID per genre
-    const genreMap = new Map(); // id → { name, items }
+    const seen = new Set();
+    const genreMap = new Map();
 
     allItems.forEach(item => {
       const tmdb = state.tmdbCache.get(item.tmdbID);
@@ -224,18 +215,15 @@
       });
     });
 
-    const top = [...genreMap.values()]
+    return [...genreMap.values()]
       .filter(g => g.items.length >= 5)
       .sort((a, b) => b.items.length - a.items.length)
-      .slice(0, 6);
-
-    return top
+      .slice(0, 6)
       .map(g => buildRow(g.name, withTmdb(g.items).slice(0, 25)))
       .filter(Boolean);
   }
 
   function withTmdb(items) {
-    // Sort by TMDB popularity when available
     return [...items]
       .map(i => ({ item: i, tmdb: state.tmdbCache.get(i.tmdbID) }))
       .filter(x => x.tmdb)
@@ -243,51 +231,20 @@
       .map(x => x.item);
   }
 
-  function buildContinueWatchingRow() {
-    const entries = Object.entries(state.continueWatching || {})
-      .filter(([, d]) => d && d.progress && d.duration)
-      .sort((a, b) => {
-        const ta = a[1].updatedAt?.toMillis ? a[1].updatedAt.toMillis() : 0;
-        const tb = b[1].updatedAt?.toMillis ? b[1].updatedAt.toMillis() : 0;
-        return tb - ta;
-      });
-
-    if (entries.length === 0) return null;
-
-    const items = [];
-    for (const [tmdbID, data] of entries) {
-      const allItems = [...state.movies, ...state.series];
-      const base = allItems.find(i => String(i.tmdbID) === String(tmdbID));
-      if (base) items.push({ ...base, _cw: data });
-    }
-    if (items.length === 0) return null;
-    return buildRow('Reprendre', items, { showProgress: true });
-  }
-
-  function buildMyListRow() {
-    if (!state.myList || state.myList.length === 0) return null;
-    const allItems = [...state.movies, ...state.series];
-    const items = state.myList
-      .map(id => allItems.find(i => String(i.tmdbID) === String(id)))
-      .filter(Boolean);
-    if (items.length === 0) return null;
-    return buildRow('Ma liste', items);
-  }
-
-  function buildRow(title, items, opts = {}) {
+  function buildRow(title, items) {
     const row = document.createElement('section');
     row.className = 'tv-row';
 
     const h = document.createElement('h2');
     h.className = 'tv-row-title';
-    h.textContent = title;
+    h.innerHTML = `<span>${escapeHtml(title)}</span>`;
     row.appendChild(h);
 
     const scroller = document.createElement('div');
     scroller.className = 'tv-row-scroller';
 
     items.forEach(item => {
-      const card = buildCard(item, opts);
+      const card = buildCard(item);
       if (card) scroller.appendChild(card);
     });
 
@@ -296,7 +253,7 @@
     return row;
   }
 
-  function buildCard(item, opts = {}) {
+  function buildCard(item) {
     const tmdb = state.tmdbCache.get(item.tmdbID);
     const title = (tmdb?.title || tmdb?.name || item.title || item.seriesTitle || 'Sans titre');
 
@@ -328,21 +285,12 @@
       card.appendChild(badge);
     }
 
-    if (opts.showProgress && item._cw && item._cw.duration) {
-      const pct = Math.min(100, (item._cw.progress / item._cw.duration) * 100);
-      const bar = document.createElement('div');
-      bar.className = 'tv-card-progress';
-      bar.innerHTML = `<div class="tv-card-progress-fill" style="width:${pct}%"></div>`;
-      card.appendChild(bar);
-    }
-
     card.addEventListener('click', () => openDetail(item, tmdb));
-
     return card;
   }
 
   // ----------------------------------------
-  // Detail modal
+  // Detail modal (guest mode — no myList)
   // ----------------------------------------
   function openDetail(item, tmdb) {
     const title = tmdb?.title || tmdb?.name || item.title || item.seriesTitle;
@@ -352,28 +300,26 @@
     const seasons = item.category === 'series'
       ? `${item.episodes?.length || 0} épisode${item.episodes?.length > 1 ? 's' : ''}`
       : null;
-    const genres = (tmdb?.genres || []).slice(0, 3).map(g => g.name).join(' · ');
+    const genres = (tmdb?.genres || []).slice(0, 3).map(g => g.name);
     const type = item.category === 'movie' ? 'Film' : 'Série';
 
     const metaBits = [
-      rating ? `<span class="rating">★ ${rating}</span>` : '',
-      year ? `<span>${year}</span>` : '',
-      `<span>${type}</span>`,
-      runtime ? `<span>${runtime}</span>` : '',
-      seasons ? `<span>${seasons}</span>` : ''
+      rating ? `<span class="tv-hero-chip rating"><svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg> ${rating}</span>` : '',
+      year ? `<span class="tv-hero-chip">${year}</span>` : '',
+      `<span class="tv-hero-chip">${type}</span>`,
+      runtime ? `<span class="tv-hero-chip">${runtime}</span>` : '',
+      seasons ? `<span class="tv-hero-chip">${seasons}</span>` : ''
     ].filter(Boolean).join('');
-
-    const inList = state.myList.includes(String(item.tmdbID));
 
     let body = `
       <h2 class="tv-modal-title">${escapeHtml(title)}</h2>
       <div class="tv-modal-meta">${metaBits}</div>
-      ${genres ? `<div style="color:var(--tv-text-dim);font-size:18px">${escapeHtml(genres)}</div>` : ''}
+      ${genres.length ? `<div class="tv-modal-genres">${genres.map(escapeHtml).join('<span class="sep">·</span>')}</div>` : ''}
       <p class="tv-modal-overview">${escapeHtml(tmdb?.overview || 'Pas de description disponible.')}</p>
       <div class="tv-modal-actions" id="tv-modal-actions">
-        <button class="tv-btn primary tv-focusable" id="btn-play">▶ Lire</button>
-        <button class="tv-btn tv-focusable" id="btn-mylist">
-          ${inList ? '✓ Dans ma liste' : '+ Ajouter à ma liste'}
+        <button class="tv-btn primary tv-focusable" id="btn-play">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="5,3 19,12 5,21"/></svg>
+          Lire
         </button>
       </div>
     `;
@@ -387,40 +333,13 @@
       body
     });
 
-    // Wire buttons after modal opens
     requestAnimationFrame(() => {
-      const btnPlay = document.getElementById('btn-play');
-      const btnList = document.getElementById('btn-mylist');
-
-      btnPlay.addEventListener('click', () => {
+      document.getElementById('btn-play').addEventListener('click', () => {
         if (item.category === 'series') {
-          // Play first episode or resumed episode
-          const cw = state.continueWatching[String(item.tmdbID)];
-          let ep;
-          if (cw && cw.season && cw.episode) {
-            ep = item.episodes.find(e => e.seasonNumber === cw.season && e.episodeNumber === cw.episode);
-          }
-          ep = ep || item.episodes[0];
+          const ep = item.episodes?.[0];
           if (ep) playEpisode(item, ep, tmdb);
         } else {
           playItem(item, tmdb);
-        }
-      });
-
-      btnList.addEventListener('click', async () => {
-        const inList2 = state.myList.includes(String(item.tmdbID));
-        try {
-          if (inList2) {
-            await BBM.API.removeFromMyList(item.tmdbID);
-            state.myList = state.myList.filter(id => id !== String(item.tmdbID));
-            btnList.textContent = '+ Ajouter à ma liste';
-          } else {
-            await BBM.API.addToMyList(item.tmdbID);
-            state.myList.push(String(item.tmdbID));
-            btnList.textContent = '✓ Dans ma liste';
-          }
-        } catch (e) {
-          console.warn('My list toggle failed', e);
         }
       });
 
@@ -452,7 +371,7 @@
             .filter(e => e.seasonNumber === activeSeason)
             .map(e => `
               <button class="tv-episode-item tv-focusable" data-s="${e.seasonNumber}" data-e="${e.episodeNumber}">
-                <span class="ep-num">S${e.seasonNumber}·E${e.episodeNumber}</span>
+                <span class="ep-num">S${String(e.seasonNumber).padStart(2,'0')}E${String(e.episodeNumber).padStart(2,'0')}</span>
                 <span style="flex:1;text-align:left">Épisode ${e.episodeNumber}</span>
               </button>
             `).join('')}
@@ -494,7 +413,7 @@
   }
 
   function playEpisode(series, ep, tmdb) {
-    const title = `${tmdb?.name || series.seriesTitle} — S${ep.seasonNumber}·E${ep.episodeNumber}`;
+    const title = `${tmdb?.name || series.seriesTitle} — S${String(ep.seasonNumber).padStart(2,'0')}E${String(ep.episodeNumber).padStart(2,'0')}`;
     const params = new URLSearchParams({
       v: ep.url,
       title,

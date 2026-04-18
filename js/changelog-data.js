@@ -3,9 +3,27 @@
    ============================================ */
 
 const BBM_CHANGELOG = {
-  currentVersion: '3.0.0',
+  currentVersion: '3.1.0',
 
   versions: [
+    {
+      version: '3.1.0',
+      date: '2026-04-18',
+      title: 'TV Premium & Mode Invité',
+      type: 'minor',
+      changes: [
+        { type: 'new', text: 'Refonte premium complète de la TV : palette violet, glass, orbs d\'ambiance, hero cinématique' },
+        { type: 'new', text: 'TV en mode invité : plus besoin de se connecter sur la télé, lecture directe' },
+        { type: 'new', text: 'Top 10 sur la TV avec grands numéros contourés violet style Netflix' },
+        { type: 'new', text: 'Player TV premium : grain cinéma, vignettes, chip type FILM/SÉRIE, sous-titre S01E01' },
+        { type: 'new', text: 'Hero TV : kicker "À L\'AFFICHE", chips meta (note, année, HD, durée), zoom auto subtil' },
+        { type: 'new', text: 'Badge "MODE INVITÉ" discret dans la barre du haut' },
+        { type: 'improved', text: 'Navigation D-pad : focus ring violet avec glow, scale 1.08 sur les cartes' },
+        { type: 'improved', text: 'Modal détails TV : glass + orbs violet, gros bouton Lire dégradé' },
+        { type: 'improved', text: 'Loader TV : orbs + spinner violet avec glow' },
+        { type: 'improved', text: 'Page d\'accueil TV redirige directement vers le catalogue (plus de login)' }
+      ]
+    },
     {
       version: '3.0.0',
       date: '2026-04-18',

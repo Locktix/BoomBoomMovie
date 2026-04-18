@@ -6,21 +6,35 @@
   <title>BoomBoomMovie TV — Lecture</title>
   <link rel="stylesheet" href="css/tv.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
-  <style>body { overflow: hidden; }</style>
+  <style>body { overflow: hidden; background: #000; }</style>
 </head>
 <body>
   <div class="tv-loading" id="tv-loading">
     <div class="tv-spinner"></div>
-    <div class="tv-loading-text">Préparation de la lecture…</div>
+    <div class="tv-loading-text">Préparation de la lecture</div>
   </div>
 
   <div class="tv-player-page">
     <video id="tv-video" class="tv-video" preload="auto" playsinline></video>
 
+    <!-- Grain & vignettes -->
+    <div class="tv-player-grain" aria-hidden="true"></div>
+    <div class="tv-player-vignette tv-player-vignette-top" aria-hidden="true"></div>
+    <div class="tv-player-vignette tv-player-vignette-bottom" aria-hidden="true"></div>
+
     <div class="tv-player-overlay" id="tv-overlay">
       <div class="tv-player-header">
-        <button class="tv-btn tv-focusable" id="btn-back">← Retour</button>
-        <div class="tv-player-title" id="tv-title">Lecture</div>
+        <button class="tv-btn tv-focusable" id="btn-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+          Retour
+        </button>
+        <div class="tv-player-title-wrap">
+          <div class="tv-player-title-row">
+            <span class="tv-player-type-chip" id="tv-type-chip" style="display:none"><span id="tv-type-chip-text">FILM</span></span>
+            <div class="tv-player-title" id="tv-title">Lecture</div>
+          </div>
+          <span class="tv-player-subtitle" id="tv-subtitle" style="display:none"></span>
+        </div>
       </div>
 
       <div class="tv-player-controls">
@@ -57,14 +71,13 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (loaded for BBM.db init; not used in guest mode) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Shared modules -->
   <script src="../js/config.js"></script>
-  <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
 
   <!-- TV modules -->

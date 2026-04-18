@@ -3,54 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoomBoomMovie TV — Connexion</title>
+  <title>BoomBoomMovie TV</title>
+  <meta http-equiv="refresh" content="0; url=browse.html">
   <link rel="stylesheet" href="css/tv.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
 </head>
 <body>
-  <div class="tv-login-page">
-    <div class="tv-login-box">
-      <div class="tv-logo">Boom<span class="accent">Boom</span>Movie</div>
-      <p class="tv-login-subtitle" id="subtitle">Connecte-toi pour accéder à ton espace</p>
-
-      <div class="tv-error" id="error"></div>
-
-      <form id="auth-form" autocomplete="on">
-        <div class="tv-form-group" id="name-group" style="display:none">
-          <input type="text" id="input-name" class="tv-input tv-focusable" placeholder="Nom d'utilisateur" autocomplete="name">
-        </div>
-
-        <div class="tv-form-group">
-          <input type="email" id="input-email" class="tv-input tv-focusable" placeholder="Adresse email" autocomplete="email" required>
-        </div>
-
-        <div class="tv-form-group">
-          <input type="password" id="input-password" class="tv-input tv-focusable" placeholder="Mot de passe" autocomplete="current-password" required minlength="6">
-        </div>
-
-        <button type="submit" id="btn-submit" class="tv-btn primary tv-btn-full tv-focusable">
-          S'identifier
-        </button>
-      </form>
-
-      <p class="tv-login-toggle">
-        <span id="toggle-text">Nouveau sur BoomBoomMovie ?</span>
-        <a id="toggle-link" class="tv-login-toggle-link tv-focusable" tabindex="0">Inscris-toi.</a>
-      </p>
-    </div>
+  <div class="tv-orbs" aria-hidden="true">
+    <div class="tv-orb"></div>
+    <div class="tv-orb"></div>
+    <div class="tv-orb"></div>
   </div>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-  <!-- Shared modules -->
-  <script src="../js/config.js"></script>
-  <script src="../js/auth.js"></script>
-
-  <!-- TV modules -->
-  <script src="js/tv-core.js"></script>
-  <script src="js/tv-login.js"></script>
+  <div class="tv-loading">
+    <div class="tv-spinner"></div>
+    <div class="tv-loading-text">Démarrage</div>
+  </div>
+  <script>window.location.replace('browse.html');</script>
 </body>
 </html>

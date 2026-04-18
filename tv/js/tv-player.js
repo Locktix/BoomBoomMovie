@@ -1,5 +1,5 @@
 /* ============================================
-   BoomBoomMovie TV — Video Player
+   BoomBoomMovie TV — Video Player (guest mode)
    ============================================ */
 
 (() => {
@@ -11,20 +11,11 @@
     type: null,
     season: null,
     episode: null,
-    series: null,       // aggregated series data when playing an episode
+    series: null,
     isSeekingFromBar: false
   };
 
-  // ----------------------------------------
-  // Init
-  // ----------------------------------------
-  BBM.auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      window.location.href = 'index.html';
-      return;
-    }
-    BBM.Auth.currentUser = user;
-
+  async function init() {
     const params = new URLSearchParams(window.location.search);
     const videoURL = params.get('v');
     const title = params.get('title') || 'Lecture';
@@ -40,7 +31,7 @@
 
     state.video = document.getElementById('tv-video');
     state.overlay = document.getElementById('tv-overlay');
-    document.getElementById('tv-title').textContent = title;
+    setHeaderMeta(title);
 
     state.video.src = videoURL;
 
@@ -49,7 +40,7 @@
     setupBack();
     setupAutoHide();
 
-    // For series: load catalog so we can navigate episodes
+    // For series: load catalog for prev/next episode navigation
     if (state.type === 'series' && state.tmdbID) {
       try {
         await BBM.API.fetchAllItems();
@@ -61,10 +52,7 @@
       }
     }
 
-    state.video.addEventListener('loadedmetadata', () => {
-      updateTotal();
-      loadProgress();
-    });
+    state.video.addEventListener('loadedmetadata', () => updateTotal());
 
     state.video.addEventListener('canplay', () => {
       state.video.play().catch(() => {});
@@ -77,22 +65,44 @@
 
     state.video.addEventListener('play', () => togglePlayIcon(true));
     state.video.addEventListener('pause', () => togglePlayIcon(false));
-    state.video.addEventListener('ended', () => { saveProgress(true); onEnded(); });
+    state.video.addEventListener('ended', onEnded);
 
-    // Periodic progress save
-    setInterval(() => {
-      if (!state.video.paused && state.video.currentTime > 5) saveProgress();
-    }, 10000);
-
-    window.addEventListener('beforeunload', () => {
-      if (state.video.currentTime > 5) saveProgress();
-    });
-
-    // Focus the play/pause button initially
     requestAnimationFrame(() => {
       document.getElementById('btn-playpause').focus();
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // ----------------------------------------
+  // Header meta — chip + subtitle
+  // ----------------------------------------
+  function setHeaderMeta(title) {
+    const titleEl = document.getElementById('tv-title');
+    const chip = document.getElementById('tv-type-chip');
+    const chipText = document.getElementById('tv-type-chip-text');
+    const subtitle = document.getElementById('tv-subtitle');
+
+    if (state.type === 'series' && state.season != null && state.episode != null) {
+      const epCode = `S${String(state.season).padStart(2, '0')}E${String(state.episode).padStart(2, '0')}`;
+      const epRegex = /\s[-—]\s*S\d{2}E\d{2}\s*$/i;
+      const seriesName = title.replace(epRegex, '').trim();
+      if (titleEl) titleEl.textContent = seriesName || title;
+      if (chip && chipText) { chipText.textContent = 'SÉRIE'; chip.style.display = ''; }
+      if (subtitle) {
+        subtitle.textContent = `Saison ${state.season} · Épisode ${state.episode} · ${epCode}`;
+        subtitle.style.display = '';
+      }
+    } else {
+      if (titleEl) titleEl.textContent = title;
+      if (chip && chipText) { chipText.textContent = 'FILM'; chip.style.display = ''; }
+      if (subtitle) subtitle.style.display = 'none';
+    }
+  }
 
   // ----------------------------------------
   // Controls
@@ -105,14 +115,11 @@
     document.getElementById('btn-next-ep').addEventListener('click', () => gotoEpisode(1));
 
     const bar = document.getElementById('progress-bar');
-    // Click on bar jumps — also handle Enter when focused (uses relative position? No — for TV, use left/right while focused)
     bar.addEventListener('click', (e) => {
       const rect = bar.getBoundingClientRect();
       const pct = (e.clientX - rect.left) / rect.width;
       state.video.currentTime = pct * (state.video.duration || 0);
     });
-
-    // When progress bar is focused, left/right seeks (keyboard hander is in setupKeyboard)
   }
 
   function setupKeyboard() {
@@ -126,13 +133,11 @@
       if (e.key === 'MediaFastForward') { seek(10); showOverlay(); return; }
       if (e.key === 'MediaRewind') { seek(-10); showOverlay(); return; }
 
-      // When progress bar has focus, LEFT/RIGHT seek instead of nav
       if (document.activeElement?.id === 'progress-bar') {
         if (e.key === 'ArrowLeft') { e.preventDefault(); e.stopImmediatePropagation(); seek(-10); showOverlay(); return; }
         if (e.key === 'ArrowRight') { e.preventDefault(); e.stopImmediatePropagation(); seek(10); showOverlay(); return; }
       }
 
-      // Any D-pad press re-shows overlay
       if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'].includes(e.key)) {
         showOverlay();
       }
@@ -141,7 +146,6 @@
 
   function setupBack() {
     const back = () => {
-      if (state.video.currentTime > 5) saveProgress();
       window.location.href = 'browse.html';
       return true;
     };
@@ -177,16 +181,14 @@
     const el = document.getElementById('icon-play');
     if (!el) return;
     if (playing) {
-      // Pause icon
       el.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
     } else {
-      // Play icon
       el.innerHTML = '<polygon points="5,3 19,12 5,21"/>';
     }
   }
 
   // ----------------------------------------
-  // Progress
+  // Progress UI (no save/load — guest mode)
   // ----------------------------------------
   function updateProgress() {
     const v = state.video;
@@ -208,46 +210,6 @@
     const s = Math.floor(t % 60);
     const pad = (n) => String(n).padStart(2, '0');
     return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-  }
-
-  // ----------------------------------------
-  // Save / load progress
-  // ----------------------------------------
-  function saveProgress(finished = false) {
-    if (!state.tmdbID) return;
-    const v = state.video;
-    if (!v.duration) return;
-
-    if (finished || (v.currentTime / v.duration) > 0.95) {
-      // Treat as watched — remove from continue watching
-      BBM.API.removeContinueWatching(state.tmdbID).catch(() => {});
-      return;
-    }
-
-    BBM.API.saveContinueWatching(state.tmdbID, {
-      progress: v.currentTime,
-      duration: v.duration,
-      category: state.type,
-      season: state.season,
-      episode: state.episode
-    }).catch(() => {});
-  }
-
-  async function loadProgress() {
-    if (!state.tmdbID) return;
-    try {
-      const cw = await BBM.API.getContinueWatching();
-      const saved = cw[String(state.tmdbID)];
-      if (!saved) return;
-
-      // Only restore if same episode (for series)
-      if (state.type === 'series') {
-        if (saved.season !== state.season || saved.episode !== state.episode) return;
-      }
-      if (saved.progress > 10 && saved.progress < (state.video.duration - 30)) {
-        state.video.currentTime = saved.progress;
-      }
-    } catch (e) {}
   }
 
   // ----------------------------------------
@@ -278,10 +240,8 @@
     const target = idx + delta;
     if (target < 0 || target >= state.series.episodes.length) return;
 
-    if (state.video.currentTime > 5) saveProgress();
-
     const ep = state.series.episodes[target];
-    const title = `${state.series.seriesTitle} — S${ep.seasonNumber}·E${ep.episodeNumber}`;
+    const title = `${state.series.seriesTitle} — S${String(ep.seasonNumber).padStart(2,'0')}E${String(ep.episodeNumber).padStart(2,'0')}`;
     const params = new URLSearchParams({
       v: ep.url,
       title,
