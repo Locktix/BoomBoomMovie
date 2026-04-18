@@ -45,6 +45,10 @@ BBM.Player = {
     // Sur mobile/tablette, utiliser le player natif du navigateur
     if (this.isMobile) {
       this.overlay.style.display = 'none';
+      // Hide premium decorations so they don't cover the native controls
+      document.querySelectorAll('.player-grain, .player-vignette').forEach(el => {
+        el.style.display = 'none';
+      });
       this.video.setAttribute('controls', '');
       this.video.setAttribute('playsinline', '');
       this.video.setAttribute('webkit-playsinline', '');
