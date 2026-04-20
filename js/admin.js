@@ -443,11 +443,11 @@
       set('catalog-series', seriesMap.size);
       set('catalog-episodes', episodes);
 
-      // Recently added (30 days)
+      // Recently added (7 days)
       const now = Date.now();
       const recent = allItems.filter(i => {
         if (!i.createdAt) return false;
-        return (now - new Date(i.createdAt).getTime()) < 30 * 86400000;
+        return (now - new Date(i.createdAt).getTime()) < 7 * 86400000;
       });
       const uniqueRecent = new Map();
       recent.forEach(i => { if (!uniqueRecent.has(i.tmdbID)) uniqueRecent.set(i.tmdbID, i); });
