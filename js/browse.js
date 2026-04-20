@@ -218,33 +218,19 @@ BBM.Browse = {
     const mobileUsername = document.getElementById('mobile-username');
     if (mobileUsername) mobileUsername.textContent = BBM.Auth.getDisplayName();
 
-    // Admin link — reveal instantly from localStorage (if previously confirmed)
-    // AND re-verify in the background so the flag stays fresh.
-    const showAdminButtons = () => {
-      const btn = document.getElementById('btn-admin');
-      const mBtn = document.getElementById('mobile-btn-admin');
-      if (btn) btn.style.display = '';
-      if (mBtn) mBtn.style.display = '';
-    };
-    const hideAdminButtons = () => {
-      const btn = document.getElementById('btn-admin');
-      const mBtn = document.getElementById('mobile-btn-admin');
-      if (btn) btn.style.display = 'none';
-      if (mBtn) mBtn.style.display = 'none';
-    };
-
-    // 1) Instant reveal from localStorage (scoped per uid)
-    try {
-      const cachedKey = `bbm_is_admin_${user.uid}`;
-      if (localStorage.getItem(cachedKey) === '1') showAdminButtons();
-    } catch (e) { /* ignore */ }
-
-    // 2) Background re-verify (update the cache either way)
-    BBM.Auth.isAdmin().then(isAdmin => {
+    // Admin link — driven by `html.is-admin` class (set in inline script
+    // from localStorage cache) + Firestore re-verification.
+    const setAdminFlag = (isAdmin) => {
+      document.documentElement.classList.toggle('is-admin', !!isAdmin);
       try { localStorage.setItem(`bbm_is_admin_${user.uid}`, isAdmin ? '1' : '0'); } catch (e) {}
-      if (isAdmin) showAdminButtons();
-      else hideAdminButtons();
-    }).catch(e => console.warn('[admin check]', e));
+    };
+
+    BBM.Auth.isAdmin().then(isAdmin => {
+      console.log('[admin] check result:', isAdmin);
+      setAdminFlag(isAdmin);
+    }).catch(e => {
+      console.warn('[admin check] failed, keeping cached flag:', e);
+    });
 
     // Logout
     const logoutBtn = document.getElementById('btn-logout');

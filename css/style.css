@@ -6570,6 +6570,15 @@ body.bbm-high-contrast .billboard-overview { opacity: 1; }
 }
 
 /* ============================================
+   ADMIN-ONLY reveal (uses html.is-admin class, zero JS race)
+   ============================================ */
+.admin-only { display: none !important; }
+html.is-admin .admin-only { display: block !important; }
+/* Preserve .nav-profile-dropdown a#btn-admin's block+accent styling */
+html.is-admin .nav-profile-dropdown a#btn-admin,
+html.is-admin .mobile-menu-link.admin-only { display: block !important; }
+
+/* ============================================
    ADMIN — sidebar layout & premium overhaul
    ============================================ */
 

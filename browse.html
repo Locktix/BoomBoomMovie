@@ -12,6 +12,20 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+  <script>
+    // Early admin-flag hydration — avoids FOUC and race conditions on the
+    // admin link. Reads any cached `bbm_is_admin_<uid>` = '1' from localStorage.
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf('bbm_is_admin_') === 0 && localStorage.getItem(k) === '1') {
+          document.documentElement.classList.add('is-admin');
+          break;
+        }
+      }
+    } catch (e) {}
+  </script>
+
   <!-- Loading Screen -->
   <div class="loading-screen" id="loading-screen">
     <div class="loader"></div>
@@ -111,7 +125,7 @@
       <a href="stats.html" class="mobile-menu-link">Mes statistiques</a>
       <a href="downloads.html" class="mobile-menu-link">Mes téléchargements</a>
       <a href="settings.html" class="mobile-menu-link">Paramètres</a>
-      <a href="admin.html" class="mobile-menu-link" id="mobile-btn-admin" style="display:none">⚙ Admin Panel</a>
+      <a href="admin.html" class="mobile-menu-link admin-only" id="mobile-btn-admin">⚙ Admin Panel</a>
     </div>
     <hr class="mobile-menu-divider">
     <button class="mobile-menu-link mobile-logout" id="mobile-btn-logout">Se déconnecter</button>
