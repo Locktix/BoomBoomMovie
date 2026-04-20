@@ -809,7 +809,14 @@ BBM.Browse = {
         const y = window.scrollY;
         if (y > 700) return;
         const bg = document.querySelector('.billboard-bg');
-        if (bg) bg.style.transform = `translateY(${y * 0.12}px) scale(${1 + y * 0.00015})`;
+        const trailer = document.querySelector('.billboard-trailer');
+        const translate = `translateY(${y * 0.12}px)`;
+        const scale = `scale(${1 + y * 0.00015})`;
+        // Keep trailer and backdrop moving in lockstep — otherwise the 80ms
+        // transition on .billboard-bg lags behind the iframe and the backdrop
+        // edges become briefly visible around the trailer during scroll.
+        if (bg) bg.style.transform = `${translate} ${scale}`;
+        if (trailer) trailer.style.transform = translate;
       };
       window.addEventListener('scroll', onScroll, { passive: true });
     }

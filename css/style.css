@@ -821,9 +821,14 @@ select:focus-visible {
 .row-content::-webkit-scrollbar { display: none; }
 
 .row-btn {
-  position: absolute; top: 50%;
+  position: absolute;
+  /* .row-content has padding: 20px 0 80px — we need to center inside the
+     actual card area, not the padded container. Fix by bounding top/bottom
+     to the padding and letting auto-margin center the fixed-size button. */
+  top: 20px;
+  bottom: 80px;
+  margin-block: auto;
   width: 42px; height: 42px;
-  margin-top: -21px;
   border-radius: 50%;
   background: rgba(12, 12, 20, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -5151,7 +5156,9 @@ select:focus-visible {
 .billboard-trailer {
   position: absolute; inset: 0;
   opacity: 0;
-  transition: opacity 1.2s ease;
+  /* Match .billboard-bg transition so parallax moves both in lockstep */
+  transition: opacity 1.2s ease, transform 80ms linear;
+  will-change: transform;
   pointer-events: none;
   overflow: hidden;
 }
