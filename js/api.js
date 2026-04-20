@@ -421,6 +421,47 @@ BBM.API = {
   },
 
   /* ----------------------------------------
+     Firestore — Presence (heartbeat)
+     ---------------------------------------- */
+
+  /** Writes the current user's presence. `watching` may be null when idle. */
+  async updatePresence(watching) {
+    const user = BBM.Auth.currentUser;
+    if (!user) return;
+    try {
+      await BBM.db.collection('users').doc(user.uid).set({
+        presence: {
+          lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+          watching: watching || null,
+          ua: (navigator.userAgent || '').slice(0, 200)
+        },
+        // Cache display fields on the root doc for admin listing
+        displayName: user.displayName || null,
+        email: user.email || null
+      }, { merge: true });
+    } catch (e) { /* noop */ }
+  },
+
+  /* ----------------------------------------
+     Firestore — Admin: users management
+     ---------------------------------------- */
+
+  async getAllUsers() {
+    try {
+      const snap = await BBM.db.collection('users').get();
+      return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    } catch (e) {
+      console.warn('getAllUsers failed (firestore rules?):', e);
+      return [];
+    }
+  },
+
+  async setUserAdmin(uid, admin) {
+    if (!uid) return;
+    await BBM.db.collection('users').doc(uid).update({ admin: !!admin });
+  },
+
+  /* ----------------------------------------
      Firestore — Watch Party (synced playback)
      ---------------------------------------- */
 

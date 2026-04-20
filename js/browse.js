@@ -14,6 +14,7 @@ BBM.Browse = {
      ---------------------------------------- */
   async init() {
     const user = await BBM.Auth.requireAuth();
+    this.startPresenceHeartbeat();
     this.setupNavbar(user);
     this.setupSearch();
     this.setupModal();
@@ -138,6 +139,17 @@ BBM.Browse = {
   /* ----------------------------------------
      Loading
      ---------------------------------------- */
+  startPresenceHeartbeat() {
+    if (this._presenceTimer) return;
+    const tick = () => BBM.API.updatePresence(null).catch(() => {});
+    tick();
+    this._presenceTimer = setInterval(tick, 60000);
+    window.addEventListener('beforeunload', () => {
+      // Best-effort clear: it's ok if this doesn't reach Firestore
+      try { BBM.API.updatePresence(null); } catch (e) {}
+    });
+  },
+
   showLoading(show) {
     const loader = document.getElementById('loading-screen');
     if (!loader) return;

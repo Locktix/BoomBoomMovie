@@ -142,6 +142,24 @@ BBM.Player = {
   },
 
   /* ----------------------------------------
+     Presence — push "currently watching" info
+     ---------------------------------------- */
+  _pushPresenceWatching() {
+    if (!this.video || this.video.paused) return;
+    const titleEl = document.getElementById('player-title');
+    const title = titleEl?.textContent || 'Lecture en cours';
+    BBM.API.updatePresence({
+      tmdbID: this.tmdbID || null,
+      title,
+      type: this.type || 'movie',
+      season: this.season != null ? this.season : null,
+      episode: this.episode != null ? this.episode : null,
+      currentTime: Math.floor(this.video.currentTime || 0),
+      duration: Math.floor(this.video.duration || 0)
+    }).catch(() => {});
+  },
+
+  /* ----------------------------------------
      Watch Party — host & guest sync
      ---------------------------------------- */
   async setupWatchParty(params) {
@@ -525,7 +543,8 @@ BBM.Player = {
   setupNativeControls() {
     const v = this.video;
 
-    v.addEventListener('play', () => { this.isPlaying = true; });
+    v.addEventListener('play', () => { this.isPlaying = true; this._pushPresenceWatching(); });
+    v.addEventListener('pause', () => { BBM.API.updatePresence(null).catch(() => {}); });
     v.addEventListener('pause', () => {
       this.isPlaying = false;
       if (v.currentTime > 5) this.saveProgress();
@@ -536,10 +555,13 @@ BBM.Player = {
       if (this.isPlaying && v.currentTime > 5) {
         this.saveProgress();
       }
+      // Also refresh presence (watching state) every tick while playing
+      if (this.isPlaying) this._pushPresenceWatching();
     }, 10000);
 
     window.addEventListener('beforeunload', () => {
       if (v.currentTime > 5) this.saveProgress();
+      BBM.API.updatePresence(null).catch(() => {});
     });
 
     v.addEventListener('ended', () => { this.onVideoEnded(); });

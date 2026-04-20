@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d4a843">
+  <meta name="theme-color" content="#8B5CF6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
+<body class="admin-body">
   <!-- Loading Screen -->
   <div class="loading-screen" id="loading-screen">
     <div class="loader"></div>
@@ -25,84 +25,299 @@
     <a href="browse.html" class="btn-primary" style="display:inline-block;width:auto;padding:12px 32px;margin-top:20px">Retour</a>
   </div>
 
-  <!-- Admin Panel -->
-  <div class="admin-page" id="admin-page" style="display:none">
-    <!-- Navbar -->
-    <nav class="navbar scrolled">
-      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
-      <span class="admin-nav-badge">Admin</span>
-      <div class="nav-right" style="margin-left:auto">
-        <a href="browse.html" class="btn-info" style="padding:8px 20px;font-size:0.85rem">← Retour au site</a>
-      </div>
-    </nav>
+  <!-- Admin Layout -->
+  <div class="admin-page admin-layout" id="admin-page" style="display:none">
 
-    <!-- Content -->
-    <main class="admin-content">
-      <div class="admin-header">
-        <h1>Panel Administration</h1>
-        <p class="admin-subtitle">Gestion des demandes de contenu</p>
-      </div>
+    <!-- Mobile top bar -->
+    <div class="admin-topbar">
+      <button class="admin-burger" id="admin-burger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="browse.html" class="logo admin-topbar-logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+      <a href="browse.html" class="admin-topbar-back" aria-label="Retour">←</a>
+    </div>
 
-      <!-- Stats -->
-      <div class="admin-stats" id="admin-stats">
-        <div class="admin-stat-card">
-          <span class="admin-stat-number" id="stat-total">0</span>
-          <span class="admin-stat-label">Total</span>
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="admin-sidebar-backdrop" id="admin-sidebar-backdrop"></div>
+      <div class="admin-sidebar-inner">
+        <div class="admin-sidebar-header">
+          <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+          <span class="admin-sidebar-badge">ADMIN</span>
         </div>
-        <div class="admin-stat-card pending">
-          <span class="admin-stat-number" id="stat-pending">0</span>
-          <span class="admin-stat-label">En attente</span>
-        </div>
-        <div class="admin-stat-card approved">
-          <span class="admin-stat-number" id="stat-approved">0</span>
-          <span class="admin-stat-label">Approuvés</span>
-        </div>
-        <div class="admin-stat-card rejected">
-          <span class="admin-stat-number" id="stat-rejected">0</span>
-          <span class="admin-stat-label">Refusés</span>
+
+        <nav class="admin-sidebar-nav">
+          <button class="admin-nav-btn active" data-section="dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            <span>Vue d'ensemble</span>
+          </button>
+          <button class="admin-nav-btn" data-section="requests">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Demandes</span>
+            <span class="admin-nav-badge" id="sidebar-req-count">0</span>
+          </button>
+          <button class="admin-nav-btn" data-section="users">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Utilisateurs</span>
+            <span class="admin-nav-badge" id="sidebar-online-count">0</span>
+          </button>
+          <button class="admin-nav-btn" data-section="catalog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <span>Catalogue</span>
+          </button>
+          <button class="admin-nav-btn" data-section="system">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Système</span>
+          </button>
+        </nav>
+
+        <div class="admin-sidebar-footer">
+          <div class="admin-sidebar-user" id="admin-sidebar-user">
+            <div class="admin-sidebar-avatar" id="admin-sidebar-avatar">?</div>
+            <div class="admin-sidebar-user-meta">
+              <span class="admin-sidebar-user-name" id="admin-sidebar-user-name">—</span>
+              <span class="admin-sidebar-user-role">Administrateur</span>
+            </div>
+          </div>
+          <a href="browse.html" class="admin-sidebar-exit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Retour au site
+          </a>
         </div>
       </div>
+    </aside>
 
-      <!-- Global Stats -->
-      <div class="admin-global-stats" id="admin-global-stats">
-        <h2 class="admin-section-title">Statistiques globales</h2>
-        <div class="admin-stats" id="admin-global-cards">
+    <!-- Main -->
+    <main class="admin-main">
+      <!-- DASHBOARD -->
+      <section class="admin-section" id="section-dashboard">
+        <header class="admin-section-header">
+          <h1>Vue d'ensemble</h1>
+          <p>Tableau de bord de l'activité de la plateforme.</p>
+        </header>
+
+        <div class="admin-stats" id="admin-stats">
           <div class="admin-stat-card">
+            <div class="admin-stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <span class="admin-stat-number" id="stat-total">0</span>
+            <span class="admin-stat-label">Demandes totales</span>
+          </div>
+          <div class="admin-stat-card pending">
+            <div class="admin-stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <span class="admin-stat-number" id="stat-pending">0</span>
+            <span class="admin-stat-label">En attente</span>
+          </div>
+          <div class="admin-stat-card approved">
+            <div class="admin-stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="admin-stat-number" id="stat-approved">0</span>
+            <span class="admin-stat-label">Approuvées</span>
+          </div>
+          <div class="admin-stat-card rejected">
+            <div class="admin-stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+            <span class="admin-stat-number" id="stat-rejected">0</span>
+            <span class="admin-stat-label">Refusées</span>
+          </div>
+        </div>
+
+        <div class="admin-stats">
+          <div class="admin-stat-card compact">
             <span class="admin-stat-number" id="gstat-catalog">—</span>
             <span class="admin-stat-label">Titres au catalogue</span>
           </div>
-          <div class="admin-stat-card">
+          <div class="admin-stat-card compact">
             <span class="admin-stat-number" id="gstat-movies">—</span>
             <span class="admin-stat-label">Films</span>
           </div>
-          <div class="admin-stat-card">
+          <div class="admin-stat-card compact">
             <span class="admin-stat-number" id="gstat-series">—</span>
             <span class="admin-stat-label">Séries</span>
           </div>
-          <div class="admin-stat-card">
+          <div class="admin-stat-card compact">
             <span class="admin-stat-number" id="gstat-requesters">—</span>
             <span class="admin-stat-label">Demandeurs uniques</span>
           </div>
         </div>
-        <div class="admin-top-requested" id="admin-top-requested"></div>
-      </div>
 
-      <!-- Filters -->
-      <div class="admin-filters">
-        <button class="admin-filter-btn active" data-filter="all">Tout</button>
-        <button class="admin-filter-btn" data-filter="pending">En attente</button>
-        <button class="admin-filter-btn" data-filter="approved">Approuvés</button>
-        <button class="admin-filter-btn" data-filter="rejected">Refusés</button>
-      </div>
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Utilisateurs en ligne</h3>
+            <span class="admin-card-subtitle" id="dashboard-online-summary">—</span>
+          </div>
+          <div class="admin-online-list" id="dashboard-online-list">
+            <div class="admin-loader"><div class="loader"></div></div>
+          </div>
+        </div>
 
-      <!-- Requests List -->
-      <div class="admin-requests" id="admin-requests">
-        <div class="loader" style="margin:40px auto"></div>
-      </div>
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Titres les plus demandés</h3>
+            <span class="admin-card-subtitle">Top 5 hors demandes approuvées</span>
+          </div>
+          <div class="admin-top-requested" id="admin-top-requested"></div>
+        </div>
+      </section>
+
+      <!-- REQUESTS -->
+      <section class="admin-section" id="section-requests" hidden>
+        <header class="admin-section-header">
+          <h1>Demandes de contenu</h1>
+          <p>Approuve, refuse ou réinitialise les demandes des utilisateurs.</p>
+        </header>
+
+        <div class="admin-filters">
+          <button class="admin-filter-btn active" data-filter="all">Tout</button>
+          <button class="admin-filter-btn" data-filter="pending">En attente</button>
+          <button class="admin-filter-btn" data-filter="approved">Approuvés</button>
+          <button class="admin-filter-btn" data-filter="rejected">Refusés</button>
+        </div>
+
+        <div class="admin-requests" id="admin-requests">
+          <div class="admin-loader"><div class="loader"></div></div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="admin-section" id="section-users" hidden>
+        <header class="admin-section-header">
+          <h1>Utilisateurs</h1>
+          <p>Liste de tous les comptes, leur présence en temps réel et ce qu'ils regardent.</p>
+        </header>
+
+        <div class="admin-filters">
+          <div class="admin-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="users-search" placeholder="Rechercher un utilisateur (nom ou email)…">
+          </div>
+          <div class="admin-filter-group">
+            <button class="admin-filter-btn active" data-user-filter="all">Tous</button>
+            <button class="admin-filter-btn" data-user-filter="online">En ligne</button>
+            <button class="admin-filter-btn" data-user-filter="watching">Regardent</button>
+            <button class="admin-filter-btn" data-user-filter="admin">Admins</button>
+          </div>
+        </div>
+
+        <div class="admin-users-table" id="admin-users-table">
+          <div class="admin-loader"><div class="loader"></div></div>
+        </div>
+      </section>
+
+      <!-- CATALOG -->
+      <section class="admin-section" id="section-catalog" hidden>
+        <header class="admin-section-header">
+          <h1>Catalogue</h1>
+          <p>Analyse du contenu disponible et de la répartition par genre.</p>
+        </header>
+
+        <div class="admin-stats">
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+            <span class="admin-stat-number" id="catalog-total">—</span>
+            <span class="admin-stat-label">Titres uniques</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-number" id="catalog-movies">—</span>
+            <span class="admin-stat-label">Films</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-number" id="catalog-series">—</span>
+            <span class="admin-stat-label">Séries</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-number" id="catalog-episodes">—</span>
+            <span class="admin-stat-label">Épisodes</span>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Ajoutés récemment (30 derniers jours)</h3>
+            <span class="admin-card-subtitle" id="catalog-recent-count">—</span>
+          </div>
+          <div class="admin-catalog-recent" id="catalog-recent"></div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Répartition par genre</h3>
+            <span class="admin-card-subtitle">Les 10 genres les plus présents</span>
+          </div>
+          <div class="admin-genre-breakdown" id="catalog-genres"></div>
+        </div>
+      </section>
+
+      <!-- SYSTEM -->
+      <section class="admin-section" id="section-system" hidden>
+        <header class="admin-section-header">
+          <h1>Système</h1>
+          <p>Maintenance, cache et exports. Actions administrateur avancées.</p>
+        </header>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Version</h3>
+          </div>
+          <div class="admin-system-info">
+            <div class="admin-info-row">
+              <span>Version actuelle</span>
+              <strong id="system-version">—</strong>
+            </div>
+            <div class="admin-info-row">
+              <span>User-Agent</span>
+              <code id="system-ua">—</code>
+            </div>
+            <div class="admin-info-row">
+              <span>Service Worker</span>
+              <code id="system-sw">—</code>
+            </div>
+            <div class="admin-info-row">
+              <span>Cache TMDB local</span>
+              <code id="system-cache">—</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Maintenance</h3>
+            <span class="admin-card-subtitle">Actions qui affectent ton compte ou le cache navigateur</span>
+          </div>
+          <div class="admin-ops-grid">
+            <button class="admin-op-btn" id="op-refresh-catalog">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <div><strong>Rafraîchir le catalogue</strong><small>Invalide le cache TMDB et reload la liste</small></div>
+            </button>
+            <button class="admin-op-btn" id="op-clear-resolved">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+              <div><strong>Purger demandes traitées</strong><small>Supprime toutes les approuvées / refusées</small></div>
+            </button>
+            <button class="admin-op-btn" id="op-export-requests">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <div><strong>Exporter les demandes</strong><small>Télécharge toutes les demandes en JSON</small></div>
+            </button>
+            <button class="admin-op-btn" id="op-clear-sw">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+              <div><strong>Vider le Service Worker</strong><small>Force un refetch total au prochain chargement</small></div>
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-danger">
+          <div class="admin-card-header">
+            <h3>Zone dangereuse</h3>
+            <span class="admin-card-subtitle">Ces actions ne peuvent pas être annulées</span>
+          </div>
+          <div class="admin-ops-grid">
+            <button class="admin-op-btn danger" id="op-delete-all-requests">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div><strong>Tout supprimer</strong><small>Efface TOUTES les demandes (y compris pending)</small></div>
+            </button>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
-  <!-- Toast Container -->
+  <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Firebase SDK -->
@@ -115,6 +330,7 @@
   <script src="js/settings.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/changelog-data.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/tv-nav.js"></script>
 </body>
