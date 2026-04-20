@@ -8,12 +8,20 @@
 (function () {
   const STORAGE_KEY = 'bbm_last_seen_version';
 
+  function changelog() {
+    // `const BBM_CHANGELOG = {...}` in changelog-data.js does NOT attach to
+    // window (only `var` does). So we read from the lexical global via `this`.
+    try { return (typeof BBM_CHANGELOG !== 'undefined') ? BBM_CHANGELOG : null; }
+    catch (e) { return null; }
+  }
+
   function getCurrentVersion() {
-    return (window.BBM_CHANGELOG && BBM_CHANGELOG.currentVersion) || null;
+    const cl = changelog();
+    return cl && cl.currentVersion ? cl.currentVersion : null;
   }
 
   function getLatestEntry() {
-    const cl = window.BBM_CHANGELOG;
+    const cl = changelog();
     return cl && cl.versions && cl.versions[0] ? cl.versions[0] : null;
   }
 
