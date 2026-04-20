@@ -76,8 +76,18 @@ BBM.Auth = {
     if (!user) return false;
     try {
       const doc = await BBM.db.collection('users').doc(user.uid).get();
-      return doc.exists && doc.data().admin === true;
+      if (!doc.exists) {
+        console.warn('[isAdmin] User doc missing for uid', user.uid);
+        return false;
+      }
+      const data = doc.data();
+      const flag = data && data.admin === true;
+      if (!flag) {
+        console.info('[isAdmin] admin field not true for', user.email, '→', data?.admin);
+      }
+      return flag;
     } catch (e) {
+      console.error('[isAdmin] Firestore read failed:', e.code || e.message, e);
       return false;
     }
   },
