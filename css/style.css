@@ -821,24 +821,40 @@ select:focus-visible {
 .row-content::-webkit-scrollbar { display: none; }
 
 .row-btn {
-  position: absolute; top: 0; bottom: 80px;
-  width: 48px;
-  background: linear-gradient(to right, var(--bbm-bg-deep), transparent);
-  color: var(--bbm-text);
-  font-size: 1.5rem;
+  position: absolute; top: 50%;
+  width: 44px; height: 44px;
+  margin-top: -22px;
+  border-radius: 50%;
+  background: rgba(12, 12, 20, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--bbm-text-bright);
+  font-size: 1.2rem;
   display: flex; align-items: center; justify-content: center;
   z-index: 10;
   opacity: 0;
-  transition: opacity var(--bbm-duration-fast) var(--bbm-ease);
+  transform: scale(0.85);
+  transition: opacity var(--bbm-duration-fast) var(--bbm-ease),
+              transform var(--bbm-duration-fast) var(--bbm-ease),
+              background var(--bbm-duration-fast) var(--bbm-ease),
+              border-color var(--bbm-duration-fast) var(--bbm-ease);
   cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
-.row-container:hover .row-btn { opacity: 1; }
-.row-btn:hover { color: var(--bbm-accent); }
-.row-btn-left { left: -12px; }
-.row-btn-right {
-  right: -12px;
-  background: linear-gradient(to left, var(--bbm-bg-deep), transparent);
+.row-container:hover .row-btn {
+  opacity: 1;
+  transform: scale(1);
 }
+.row-btn:hover {
+  color: #fff;
+  background: linear-gradient(135deg, var(--bbm-accent), var(--bbm-accent-deep));
+  border-color: rgba(var(--bbm-accent-rgb), 0.6);
+  box-shadow: 0 10px 28px rgba(var(--bbm-accent-rgb), 0.5);
+  transform: scale(1.08);
+}
+.row-btn-left { left: 14px; }
+.row-btn-right { right: 14px; }
 
 /* ============================================
    TITLE CARDS
@@ -5011,10 +5027,14 @@ select:focus-visible {
   to   { transform: translate(40px, -30px) scale(1.15); opacity: 1; }
 }
 
-.billboard,
-.content-rows {
+.billboard {
   position: relative;
   z-index: 1;
+}
+.content-rows {
+  position: relative;
+  z-index: 4;
+  background: linear-gradient(180deg, transparent 0%, var(--bbm-bg-deep) 90px);
 }
 
 /* Premium loader screen — violet gradient pulse */
@@ -6620,6 +6640,99 @@ body.bbm-high-contrast .billboard-overview { opacity: 1; }
   color: #fff;
   transform: translateY(-2px);
 }
+
+/* ============================================
+   WATCH LOADING SCREEN — enriched (title + back)
+   ============================================ */
+.watch-loading {
+  /* Inherits .loading-screen: fixed inset 0, flex column center */
+  z-index: 10000;
+}
+.watch-loading-back {
+  position: absolute;
+  top: 24px; left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px 9px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  color: var(--bbm-text-bright);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: all var(--bbm-duration-fast) var(--bbm-ease);
+  z-index: 2;
+}
+.watch-loading-back:hover {
+  background: rgba(var(--bbm-accent-rgb), 0.2);
+  border-color: rgba(var(--bbm-accent-rgb), 0.45);
+  transform: translateX(-2px);
+}
+.watch-loading-back svg { width: 18px; height: 18px; }
+
+.watch-loading-title {
+  margin-top: 24px;
+  font-family: var(--bbm-font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--bbm-text-bright);
+  letter-spacing: -0.3px;
+  text-align: center;
+  max-width: 80%;
+  animation: fadeInProgress 0.4s ease 0.2s both;
+}
+.watch-loading-subtitle {
+  font-size: 0.82rem;
+  color: var(--bbm-text-secondary);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 4px;
+  animation: fadeInProgress 0.4s ease 0.35s both;
+}
+
+@media (max-width: 720px) {
+  .watch-loading-back { top: 14px; left: 14px; padding: 8px 14px 8px 10px; font-size: 0.85rem; }
+  .watch-loading-title { font-size: 1.1rem; margin-top: 18px; }
+  .watch-loading-subtitle { font-size: 0.72rem; }
+}
+
+/* ============================================
+   MOBILE SKIP BUTTONS — floating ±10s on native player
+   ============================================ */
+.mobile-skip-row {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  margin-top: -32px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 18px;
+  pointer-events: none;
+  z-index: 3;
+}
+.mobile-skip-btn {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(12, 12, 20, 0.55);
+  border: 1.5px solid rgba(var(--bbm-accent-rgb), 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s var(--bbm-ease), background 0.15s var(--bbm-ease);
+}
+.mobile-skip-btn:active {
+  transform: scale(0.9);
+  background: rgba(var(--bbm-accent-rgb), 0.25);
+}
+.mobile-skip-btn svg { width: 32px; height: 32px; }
 
 /* ============================================
    BUFFER OVERLAY — visual feedback while loading

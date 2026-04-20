@@ -800,7 +800,8 @@ BBM.Browse = {
     const S = (window.BBM && BBM.Settings) ? BBM.Settings : null;
     const potato = S && S.get('performance.potatoMode');
 
-    // Parallax on scroll (desktop only)
+    // Parallax on scroll (desktop only) — subtle so the hero still scrolls
+    // away naturally and content rows don't appear to slide over a stuck hero.
     const parallaxOn = !potato && (!S || S.get('performance.parallax'));
     if (parallaxOn && !this._heroParallaxBound && !('ontouchstart' in window)) {
       this._heroParallaxBound = true;
@@ -808,9 +809,7 @@ BBM.Browse = {
         const y = window.scrollY;
         if (y > 700) return;
         const bg = document.querySelector('.billboard-bg');
-        const info = document.querySelector('.billboard-info');
-        if (bg) bg.style.transform = `translateY(${y * 0.4}px) scale(${1 + y * 0.0003})`;
-        if (info) info.style.transform = `translateY(${y * 0.15}px)`;
+        if (bg) bg.style.transform = `translateY(${y * 0.12}px) scale(${1 + y * 0.00015})`;
       };
       window.addEventListener('scroll', onScroll, { passive: true });
     }
@@ -834,12 +833,55 @@ BBM.Browse = {
         iframe.setAttribute('tabindex', '-1');
         trailerSlot.appendChild(iframe);
         requestAnimationFrame(() => trailerSlot.classList.add('active'));
+
         const muteBtn = document.getElementById('hero-mute');
         if (muteBtn) {
           muteBtn.style.display = 'inline-flex';
           this._heroMuted = true;
           muteBtn.addEventListener('click', () => this.toggleHeroMute());
         }
+
+        // --- YT availability detection ---------------------------------
+        // YouTube pousse des events via postMessage quand `enablejsapi=1`.
+        // Si on ne reçoit jamais un state "playing" (1) ou "buffering" (3)
+        // dans les 7 secondes, ou si on reçoit un onError (100, 101, 150),
+        // on masque silencieusement l'iframe et on garde le backdrop.
+        let trailerLivePlay = false;
+        const bailOut = (reason) => {
+          window.removeEventListener('message', msgHandler);
+          clearTimeout(safetyTimer);
+          trailerSlot.classList.remove('active');
+          if (iframe.parentNode) iframe.remove();
+          if (muteBtn) muteBtn.style.display = 'none';
+        };
+        const msgHandler = (ev) => {
+          if (!ev.data || typeof ev.data !== 'string') return;
+          if (!ev.origin.includes('youtube')) return;
+          let data;
+          try { data = JSON.parse(ev.data); } catch (e) { return; }
+          if (data.event === 'onError') {
+            bailOut('onError ' + data.info);
+          } else if (data.event === 'onStateChange' || data.event === 'infoDelivery') {
+            const state = (data.info && typeof data.info === 'object')
+              ? data.info.playerState
+              : data.info;
+            if (typeof state === 'number' && (state === 1 || state === 3)) {
+              trailerLivePlay = true;
+            }
+          }
+        };
+        window.addEventListener('message', msgHandler);
+        iframe.addEventListener('load', () => {
+          try {
+            iframe.contentWindow.postMessage(
+              JSON.stringify({ event: 'listening', id: iframe.id, channel: 'widget' }),
+              '*'
+            );
+          } catch (e) { /* noop */ }
+        });
+        const safetyTimer = setTimeout(() => {
+          if (!trailerLivePlay) bailOut('never played');
+        }, 7000);
       }, delayMs);
     }
   },

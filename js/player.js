@@ -56,6 +56,7 @@ BBM.Player = {
       this.video.setAttribute('playsinline', '');
       this.video.setAttribute('webkit-playsinline', '');
       this.setupNativeControls();
+      this.setupMobileSkipButtons();
       this.loadProgress();
     } else {
       this.video.setAttribute('playsinline', '');
@@ -76,12 +77,60 @@ BBM.Player = {
       this.video.play().catch(() => {});
     }, { once: true });
 
-    // Remove loading screen
+    // Loading screen: populate title + wire back button + hide only on canplay.
+    // This way the player never flashes with "0:00 / 0:00" before the video is
+    // ready to play.
     const loader = document.getElementById('loading-screen');
-    if (loader) {
+    const loadingTitle = document.getElementById('watch-loading-title');
+    const loadingSubtitle = document.getElementById('watch-loading-subtitle');
+    const loadingBack = document.getElementById('watch-loading-back');
+
+    if (this.type === 'series' && this.season != null && this.episode != null) {
+      const epCode = `S${String(this.season).padStart(2, '0')}E${String(this.episode).padStart(2, '0')}`;
+      const epRegex = /\s[-—]\s*S\d{2}E\d{2}\s*$/i;
+      const seriesName = title.replace(epRegex, '').trim();
+      if (loadingTitle) loadingTitle.textContent = seriesName || title;
+      if (loadingSubtitle) loadingSubtitle.textContent = `Saison ${this.season} · Épisode ${this.episode} · ${epCode}`;
+    } else {
+      if (loadingTitle) loadingTitle.textContent = title;
+      if (loadingSubtitle) loadingSubtitle.textContent = '';
+    }
+
+    if (loadingBack) {
+      loadingBack.addEventListener('click', () => {
+        window.location.href = 'browse.html';
+      });
+    }
+
+    const hideLoader = () => {
+      if (!loader || loader.classList.contains('fade-out')) return;
       loader.classList.add('fade-out');
       setTimeout(() => loader.style.display = 'none', 500);
-    }
+    };
+
+    // Hide on canplay (video ready) or after a safety timeout (~12s)
+    this.video.addEventListener('canplay', hideLoader, { once: true });
+    this.video.addEventListener('loadeddata', hideLoader, { once: true });
+    setTimeout(hideLoader, 12000);
+  },
+
+  /* ----------------------------------------
+     Mobile Skip Buttons (±10s) — overlay on top of native player
+     ---------------------------------------- */
+  setupMobileSkipButtons() {
+    const row = document.getElementById('mobile-skip-row');
+    const back = document.getElementById('mobile-skip-back');
+    const fwd = document.getElementById('mobile-skip-forward');
+    if (!row || !back || !fwd) return;
+
+    row.style.display = '';
+    const v = this.video;
+    back.addEventListener('click', () => {
+      v.currentTime = Math.max(0, v.currentTime - 10);
+    });
+    fwd.addEventListener('click', () => {
+      v.currentTime = Math.min(v.duration || 0, v.currentTime + 10);
+    });
   },
 
   /* ----------------------------------------
@@ -296,9 +345,17 @@ BBM.Player = {
     }
 
     // Fullscreen
-    document.getElementById('btn-fullscreen').addEventListener('click', () => {
-      this.toggleFullscreen();
-    });
+    const fsBtn = document.getElementById('btn-fullscreen');
+    fsBtn.addEventListener('click', () => this.toggleFullscreen());
+
+    // Toggle the icon depending on fullscreen state
+    const updateFsIcon = () => {
+      const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      fsBtn.innerHTML = inFs ? this.icons.fullscreenExit : this.icons.fullscreenEnter;
+    };
+    document.addEventListener('fullscreenchange', updateFsIcon);
+    document.addEventListener('webkitfullscreenchange', updateFsIcon);
+    updateFsIcon();
 
     // Shortcuts overlay
     document.getElementById('btn-shortcuts')?.addEventListener('click', (e) => {
@@ -876,7 +933,9 @@ BBM.Player = {
     pause: '<svg viewBox="0 0 24 24" fill="white"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>',
     volumeHigh: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="white"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
     volumeLow: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="white"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-    volumeMute: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="white"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
+    volumeMute: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="white"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+    fullscreenEnter: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><polyline points="21 3 14 10"/><polyline points="3 21 10 14"/></svg>',
+    fullscreenExit: '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>'
   }
 };
 
