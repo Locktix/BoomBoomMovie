@@ -3,9 +3,27 @@
    ============================================ */
 
 const BBM_CHANGELOG = {
-  currentVersion: '3.1.0',
+  currentVersion: '3.2.0',
 
   versions: [
+    {
+      version: '3.2.0',
+      date: '2026-04-19',
+      title: 'Watch Party, Téléchargements, Cast & Mobile polish',
+      type: 'minor',
+      changes: [
+        { type: 'new', text: 'Watch Party : lance une soirée ciné synchronisée avec tes potes via un code à 6 caractères' },
+        { type: 'new', text: 'Lecture synchronisée en temps réel : play/pause/seek propagés instantanément aux invités' },
+        { type: 'new', text: 'Chromecast : diffuse n\'importe quel film ou épisode sur ta TV Chromecast' },
+        { type: 'new', text: 'AirPlay : support natif Safari/iOS/macOS avec picker système' },
+        { type: 'new', text: 'Téléchargement direct des films et épisodes (bouton dans le modal et sur chaque épisode)' },
+        { type: 'new', text: 'Page "Mes téléchargements" : retrouve ta bibliothèque avec re-download et gestion' },
+        { type: 'new', text: 'Overlay "Diffusion en cours" premium avec nom de l\'appareil quand tu castes' },
+        { type: 'improved', text: 'Refonte responsive mobile complète : boutons modal restent ronds, layouts ajustés <768px / <480px / <360px' },
+        { type: 'improved', text: 'Safe-area pour mobiles notchés (iPhone etc.) — navbar et toasts ajustés' },
+        { type: 'fix', text: 'Boutons "Lire/Info" dans le modal ne deviennent plus ovales sur petits écrans' }
+      ]
+    },
     {
       version: '3.1.0',
       date: '2026-04-18',

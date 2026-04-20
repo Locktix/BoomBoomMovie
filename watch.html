@@ -38,7 +38,7 @@
   <div class="player-page">
     <div class="player-container">
       <!-- Video -->
-      <video id="player-video" preload="auto"></video>
+      <video id="player-video" preload="auto" x-webkit-airplay="allow"></video>
 
       <!-- Mobile skip buttons (shown only when native player is used) -->
       <div class="mobile-skip-row" id="mobile-skip-row" style="display:none">
@@ -76,6 +76,17 @@
 
       <!-- Overlay -->
       <div class="player-overlay" id="player-overlay">
+        <!-- Watch Party badge (shown only when in party) -->
+        <div class="watch-party-badge" id="watch-party-badge" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+          <span>WATCH PARTY</span>
+          <span class="watch-party-code" id="watch-party-code-display"></span>
+          <span class="watch-party-count" id="watch-party-count">1</span>
+        </div>
+
         <!-- Header -->
         <div class="player-header">
           <button class="player-back" id="player-back">
@@ -156,6 +167,22 @@
             <span class="player-time" id="player-time">0:00 / 0:00</span>
 
             <div class="player-controls-right">
+              <button class="ctrl-btn" id="btn-watch-party" title="Lancer une Watch Party">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </button>
+              <button class="ctrl-btn" id="btn-cast" title="Diffuser (Cast / AirPlay)" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 16a6 6 0 0 1 6 6"/>
+                  <path d="M2 12a10 10 0 0 1 10 10"/>
+                  <path d="M2 8a14 14 0 0 1 14 14"/>
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                </svg>
+              </button>
               <button class="ctrl-btn" id="btn-pip" title="Picture-in-Picture" style="display:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
@@ -220,6 +247,42 @@
       </div>
     </div>
 
+    <!-- Watch Party modal — shown after creating a room -->
+    <div class="wp-modal" id="wp-modal" style="display:none">
+      <div class="wp-card">
+        <button class="wp-close" id="wp-close" aria-label="Fermer">✕</button>
+        <div class="wp-kicker">WATCH PARTY</div>
+        <h2>Ta soirée est prête 🎬</h2>
+        <p class="wp-subtitle">Partage ce code ou le lien avec tes potes. Ils rejoindront et regarderont exactement la même chose que toi, en temps réel.</p>
+        <div class="wp-code-block">
+          <span class="wp-code-label">Code de la salle</span>
+          <div class="wp-code" id="wp-code">------</div>
+        </div>
+        <div class="wp-actions">
+          <button class="btn-primary wp-copy-link" id="wp-copy-link">Copier le lien</button>
+          <button class="btn-primary wp-copy-code" id="wp-copy-code" style="background:rgba(255,255,255,0.08);color:var(--bbm-text-bright);border:1px solid var(--bbm-border-hover);box-shadow:none">Copier le code</button>
+        </div>
+        <button class="wp-end" id="wp-end">Terminer la Watch Party</button>
+      </div>
+    </div>
+
+    <!-- Casting overlay — shown while casting to Chromecast / AirPlay -->
+    <div class="cast-active-overlay" id="cast-active-overlay" style="display:none">
+      <div class="cast-active-card">
+        <div class="cast-active-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 16a6 6 0 0 1 6 6"/>
+            <path d="M2 12a10 10 0 0 1 10 10"/>
+            <path d="M2 8a14 14 0 0 1 14 14"/>
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <div class="cast-active-label">Diffusion en cours</div>
+        <div class="cast-active-device" id="cast-active-device">Appareil inconnu</div>
+        <button class="cast-active-stop" id="cast-active-stop">Arrêter la diffusion</button>
+      </div>
+    </div>
+
     <!-- Next Episode Overlay -->
     <div class="next-episode-overlay" id="next-episode-overlay" style="display:none">
       <div class="next-episode-card">
@@ -250,6 +313,27 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Chromecast Sender SDK (async) -->
+  <script>
+    window.__onGCastApiAvailable = function(isAvailable) {
+      if (isAvailable && window.BBM && BBM.Player && BBM.Player.onCastApiReady) {
+        BBM.Player.onCastApiReady();
+      } else {
+        // Retry a few times — player.js may not be loaded yet
+        let tries = 0;
+        const iv = setInterval(() => {
+          if (window.BBM && BBM.Player && BBM.Player.onCastApiReady) {
+            clearInterval(iv);
+            BBM.Player.onCastApiReady();
+          } else if (++tries > 30) {
+            clearInterval(iv);
+          }
+        }, 100);
+      }
+    };
+  </script>
+  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 
   <!-- App Scripts -->
   <script src="js/config.js"></script>

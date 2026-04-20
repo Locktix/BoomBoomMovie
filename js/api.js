@@ -370,6 +370,142 @@ BBM.API = {
     }
   },
 
+  /* ----------------------------------------
+     Firestore — Downloads library
+     ---------------------------------------- */
+
+  /** Store a downloaded item in the user's library (map keyed by tmdb_s_e). */
+  async addDownload(entry) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !entry || !entry.tmdbID) return;
+    const key = entry.type === 'series' && entry.season != null && entry.episode != null
+      ? `${entry.tmdbID}_${entry.season}_${entry.episode}`
+      : String(entry.tmdbID);
+    const ref = BBM.db.collection('users').doc(user.uid);
+    const data = {
+      tmdbID: String(entry.tmdbID),
+      title: entry.title || '',
+      type: entry.type || 'movie',
+      url: entry.url || '',
+      posterPath: entry.posterPath || '',
+      season: entry.season != null ? entry.season : null,
+      episode: entry.episode != null ? entry.episode : null,
+      downloadedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    try {
+      await ref.update({ [`downloads.${key}`]: data });
+    } catch (e) {
+      await ref.set({ downloads: { [key]: data } }, { merge: true });
+    }
+  },
+
+  async removeDownload(key) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !key) return;
+    try {
+      await BBM.db.collection('users').doc(user.uid).update({
+        [`downloads.${key}`]: firebase.firestore.FieldValue.delete()
+      });
+    } catch (e) { /* noop */ }
+  },
+
+  async getDownloads() {
+    const user = BBM.Auth.currentUser;
+    if (!user) return {};
+    try {
+      const doc = await BBM.db.collection('users').doc(user.uid).get();
+      return doc.exists ? (doc.data().downloads || {}) : {};
+    } catch (e) {
+      return {};
+    }
+  },
+
+  /* ----------------------------------------
+     Firestore — Watch Party (synced playback)
+     ---------------------------------------- */
+
+  _generateRoomCode() {
+    // Unambiguous alphabet (no 0/O/I/1 confusion)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  },
+
+  async createWatchParty({ tmdbID, title, videoURL, type, season, episode }) {
+    const user = BBM.Auth.currentUser;
+    if (!user) throw new Error('Connexion requise');
+    const code = this._generateRoomCode();
+    const ref = BBM.db.collection('watchParties').doc(code);
+    const name = user.displayName || (user.email || '').split('@')[0] || 'Host';
+    await ref.set({
+      code,
+      hostUid: user.uid,
+      hostName: name,
+      tmdbID: String(tmdbID),
+      title: title || '',
+      videoURL: videoURL || '',
+      type: type || 'movie',
+      season: season != null ? season : null,
+      episode: episode != null ? episode : null,
+      currentTime: 0,
+      isPlaying: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      participants: {
+        [user.uid]: { name, joinedAt: firebase.firestore.Timestamp.now() }
+      }
+    });
+    return code;
+  },
+
+  async joinWatchParty(code) {
+    const user = BBM.Auth.currentUser;
+    if (!user) throw new Error('Connexion requise');
+    if (!code) throw new Error('Code manquant');
+    code = String(code).toUpperCase();
+    const ref = BBM.db.collection('watchParties').doc(code);
+    const doc = await ref.get();
+    if (!doc.exists) throw new Error('Watch party introuvable');
+    const name = user.displayName || (user.email || '').split('@')[0] || 'Invité';
+    await ref.update({
+      [`participants.${user.uid}`]: { name, joinedAt: firebase.firestore.Timestamp.now() }
+    });
+    return doc.data();
+  },
+
+  async updateWatchPartyState(code, state) {
+    if (!code) return;
+    try {
+      await BBM.db.collection('watchParties').doc(code).update({
+        ...state,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (e) { /* noop */ }
+  },
+
+  listenWatchParty(code, callback) {
+    if (!code) return () => {};
+    return BBM.db.collection('watchParties').doc(code).onSnapshot(doc => {
+      if (doc.exists) callback(doc.data());
+    });
+  },
+
+  async leaveWatchParty(code, uid) {
+    if (!code || !uid) return;
+    try {
+      await BBM.db.collection('watchParties').doc(code).update({
+        [`participants.${uid}`]: firebase.firestore.FieldValue.delete()
+      });
+    } catch (e) { /* noop */ }
+  },
+
+  async endWatchParty(code) {
+    if (!code) return;
+    try { await BBM.db.collection('watchParties').doc(code).delete(); }
+    catch (e) { /* noop */ }
+  },
+
   /** Un-mark a single episode from watched. */
   async unmarkEpisodeWatched(tmdbID, season, episode) {
     const user = BBM.Auth.currentUser;

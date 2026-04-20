@@ -21,12 +21,33 @@ BBM.Player = {
     await BBM.Auth.requireAuth();
 
     const params = new URLSearchParams(window.location.search);
-    const videoURL = params.get('v');
-    const title = params.get('title') || 'Lecture en cours';
+    let videoURL = params.get('v');
+    let title = params.get('title') || 'Lecture en cours';
     this.tmdbID = params.get('tmdbid');
     this.type = params.get('type');
     this.season = params.get('s') ? parseInt(params.get('s')) : null;
     this.episode = params.get('e') ? parseInt(params.get('e')) : null;
+
+    // --- Watch Party join mode : fetch video info from the room ---------
+    const partyCode = params.get('party');
+    if (partyCode) {
+      try {
+        const partyData = await BBM.API.joinWatchParty(partyCode);
+        videoURL = partyData.videoURL || videoURL;
+        title = partyData.title || title;
+        this.tmdbID = partyData.tmdbID || this.tmdbID;
+        this.type = partyData.type || this.type;
+        this.season = partyData.season != null ? partyData.season : this.season;
+        this.episode = partyData.episode != null ? partyData.episode : this.episode;
+        this._partyCode = partyCode.toUpperCase();
+        this._partyHostUid = partyData.hostUid;
+        this._isPartyHost = BBM.Auth.currentUser?.uid === partyData.hostUid;
+      } catch (err) {
+        alert('Watch party introuvable : ' + (err.message || 'erreur'));
+        window.location.href = 'browse.html';
+        return;
+      }
+    }
 
     if (!videoURL) {
       window.location.href = 'browse.html';
@@ -44,6 +65,12 @@ BBM.Player = {
 
     // Buffer overlay feedback (works for both mobile and desktop paths)
     this.setupBufferOverlay();
+
+    // Cast (Chromecast + AirPlay)
+    this.setupCast(videoURL, title);
+
+    // Watch Party — setup host / guest sync
+    await this.setupWatchParty(params);
 
     // Sur mobile/tablette, utiliser le player natif du navigateur
     if (this.isMobile) {
@@ -112,6 +139,281 @@ BBM.Player = {
     this.video.addEventListener('canplay', hideLoader, { once: true });
     this.video.addEventListener('loadeddata', hideLoader, { once: true });
     setTimeout(hideLoader, 12000);
+  },
+
+  /* ----------------------------------------
+     Watch Party — host & guest sync
+     ---------------------------------------- */
+  async setupWatchParty(params) {
+    const btn = document.getElementById('btn-watch-party');
+    const badge = document.getElementById('watch-party-badge');
+    const codeDisplay = document.getElementById('watch-party-code-display');
+    const countDisplay = document.getElementById('watch-party-count');
+
+    // --- Guest mode: already joined via ?party=CODE in init() -----------
+    if (this._partyCode && !this._isPartyHost) {
+      if (badge) {
+        badge.style.display = '';
+        if (codeDisplay) codeDisplay.textContent = this._partyCode;
+      }
+      if (btn) btn.style.display = 'none'; // guest can't re-create
+      this._attachPartyListener();
+      return;
+    }
+
+    // --- Host continuation mode: host re-opens with ?party=CODE ---------
+    if (this._partyCode && this._isPartyHost) {
+      if (badge) {
+        badge.style.display = '';
+        if (codeDisplay) codeDisplay.textContent = this._partyCode;
+      }
+      this._attachPartyListener();
+      this._attachPartyHostBindings();
+      return;
+    }
+
+    // --- Normal mode: wire "Create party" button ------------------------
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      try {
+        btn.disabled = true;
+        const code = await BBM.API.createWatchParty({
+          tmdbID: this.tmdbID,
+          title: document.getElementById('player-title')?.textContent || 'Lecture',
+          videoURL: this.video.src,
+          type: this.type,
+          season: this.season,
+          episode: this.episode
+        });
+        this._partyCode = code;
+        this._isPartyHost = true;
+        this._showWatchPartyModal(code);
+        if (badge) {
+          badge.style.display = '';
+          if (codeDisplay) codeDisplay.textContent = code;
+        }
+        this._attachPartyListener();
+        this._attachPartyHostBindings();
+        // Push current state so late joiners catch up
+        this._pushPartyState();
+      } catch (err) {
+        console.error('Watch party create failed:', err);
+        BBM.Toast.show('Impossible de créer la Watch Party', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  },
+
+  _showWatchPartyModal(code) {
+    const modal = document.getElementById('wp-modal');
+    const codeEl = document.getElementById('wp-code');
+    const copyLink = document.getElementById('wp-copy-link');
+    const copyCode = document.getElementById('wp-copy-code');
+    const endBtn = document.getElementById('wp-end');
+    const closeBtn = document.getElementById('wp-close');
+    if (!modal || !codeEl) return;
+
+    codeEl.textContent = code;
+    modal.style.display = '';
+    this.video.pause();
+
+    const shareURL = `${location.origin}${location.pathname.replace(/watch\.html$/, '')}watch.html?party=${code}`;
+
+    const safeClose = () => { modal.style.display = 'none'; this.video.play().catch(() => {}); };
+    closeBtn.onclick = safeClose;
+    modal.onclick = (e) => { if (e.target === modal) safeClose(); };
+
+    copyLink.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(shareURL);
+        BBM.Toast.show('Lien copié !', 'success');
+      } catch (e) { BBM.Toast.show('Impossible de copier', 'error'); }
+    };
+    copyCode.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(code);
+        BBM.Toast.show('Code copié !', 'success');
+      } catch (e) { BBM.Toast.show('Impossible de copier', 'error'); }
+    };
+    endBtn.onclick = async () => {
+      if (!confirm('Terminer la Watch Party ? Les invités seront éjectés.')) return;
+      await BBM.API.endWatchParty(this._partyCode);
+      this._partyCode = null;
+      this._isPartyHost = false;
+      document.getElementById('watch-party-badge').style.display = 'none';
+      safeClose();
+      BBM.Toast.show('Watch Party terminée');
+    };
+  },
+
+  _attachPartyListener() {
+    const countDisplay = document.getElementById('watch-party-count');
+    this._partyUnsubscribe = BBM.API.listenWatchParty(this._partyCode, (state) => {
+      // Update participants count
+      if (countDisplay && state.participants) {
+        countDisplay.textContent = Object.keys(state.participants).length;
+      }
+      // If I'm a guest, mirror the host's state
+      if (!this._isPartyHost) this._applyPartyState(state);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (this._partyUnsubscribe) this._partyUnsubscribe();
+      if (this._partyCode) {
+        BBM.API.leaveWatchParty(this._partyCode, BBM.Auth.currentUser?.uid);
+      }
+    });
+  },
+
+  _applyPartyState(state) {
+    if (this._isPartyHost) return;
+    if (!this.video) return;
+    this._ignoreNextPlaybackEvent = true;
+    // Sync play/pause
+    if (state.isPlaying && this.video.paused) {
+      this.video.play().catch(() => {});
+    } else if (!state.isPlaying && !this.video.paused) {
+      this.video.pause();
+    }
+    // Sync position if drift > 2s
+    if (typeof state.currentTime === 'number') {
+      const drift = Math.abs(this.video.currentTime - state.currentTime);
+      if (drift > 2) this.video.currentTime = state.currentTime;
+    }
+    setTimeout(() => { this._ignoreNextPlaybackEvent = false; }, 400);
+  },
+
+  _attachPartyHostBindings() {
+    if (!this.video) return;
+    const push = () => this._pushPartyState();
+    this.video.addEventListener('play', push);
+    this.video.addEventListener('pause', push);
+    this.video.addEventListener('seeked', push);
+    // Periodic heartbeat so guests self-correct drift over time
+    this._partyHeartbeat = setInterval(push, 8000);
+  },
+
+  _pushPartyState() {
+    if (!this._isPartyHost || !this._partyCode || this._ignoreNextPlaybackEvent) return;
+    BBM.API.updateWatchPartyState(this._partyCode, {
+      currentTime: this.video.currentTime || 0,
+      isPlaying: !this.video.paused
+    });
+  },
+
+  /* ----------------------------------------
+     Cast — Chromecast + AirPlay
+     ---------------------------------------- */
+  setupCast(videoURL, title) {
+    this._castVideoURL = videoURL;
+    this._castTitle = title;
+
+    const castBtn = document.getElementById('btn-cast');
+    if (!castBtn) return;
+
+    let castMode = null; // 'chromecast' | 'airplay' | null
+
+    // ---------- AirPlay detection (Safari iOS/macOS) ----------
+    const v = this.video;
+    const airplayAvailable = typeof v.webkitShowPlaybackTargetPicker === 'function';
+    if (airplayAvailable) {
+      castMode = 'airplay';
+      castBtn.style.display = '';
+      // React to device availability changes (AirPlay-capable device on network)
+      v.addEventListener('webkitplaybacktargetavailabilitychanged', (e) => {
+        castBtn.style.display = (e.availability === 'available') ? '' : 'none';
+      });
+      castBtn.addEventListener('click', () => {
+        try { v.webkitShowPlaybackTargetPicker(); }
+        catch (err) { console.warn('AirPlay picker failed:', err); }
+      });
+    }
+
+    // ---------- Chromecast (overrides AirPlay when both available) ----------
+    // The Google Cast Sender SDK is loaded async; onCastApiReady() fires when
+    // the framework is ready. That method swaps the click handler.
+  },
+
+  onCastApiReady() {
+    if (!window.cast || !cast.framework) return;
+    const castBtn = document.getElementById('btn-cast');
+    const overlay = document.getElementById('cast-active-overlay');
+    const deviceLabel = document.getElementById('cast-active-device');
+    const stopBtn = document.getElementById('cast-active-stop');
+    if (!castBtn) return;
+
+    const ctx = cast.framework.CastContext.getInstance();
+    ctx.setOptions({
+      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+    });
+
+    castBtn.style.display = '';
+    // Remove any old click handler by cloning
+    const fresh = castBtn.cloneNode(true);
+    castBtn.parentNode.replaceChild(fresh, castBtn);
+
+    const launchCast = async () => {
+      try {
+        await ctx.requestSession();
+        this._loadCurrentMediaToCast();
+      } catch (err) {
+        if (err && err.toString && err.toString().includes('cancel')) return;
+        console.warn('Cast session error:', err);
+        BBM.Toast.show('Diffusion impossible — vérifie que ton appareil est sur le même Wi-Fi', 'error', 5000);
+      }
+    };
+    fresh.addEventListener('click', launchCast);
+
+    // React to session state changes to show/hide "casting" overlay
+    ctx.addEventListener(
+      cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+      (event) => {
+        const state = event.sessionState;
+        const session = ctx.getCurrentSession();
+        if (state === cast.framework.SessionState.SESSION_STARTED ||
+            state === cast.framework.SessionState.SESSION_RESUMED) {
+          this.video.pause();
+          if (overlay) overlay.style.display = '';
+          if (deviceLabel && session) {
+            const castDevice = session.getCastDevice();
+            deviceLabel.textContent = (castDevice && castDevice.friendlyName) || 'Appareil de diffusion';
+          }
+          this._loadCurrentMediaToCast();
+        } else if (state === cast.framework.SessionState.SESSION_ENDED) {
+          if (overlay) overlay.style.display = 'none';
+        }
+      }
+    );
+
+    if (stopBtn) {
+      stopBtn.addEventListener('click', () => {
+        const session = ctx.getCurrentSession();
+        if (session) session.endSession(true);
+      });
+    }
+  },
+
+  _loadCurrentMediaToCast() {
+    if (!window.cast || !cast.framework) return;
+    const ctx = cast.framework.CastContext.getInstance();
+    const session = ctx.getCurrentSession();
+    if (!session || !this._castVideoURL) return;
+
+    const mediaInfo = new chrome.cast.media.MediaInfo(this._castVideoURL, 'video/mp4');
+    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+    mediaInfo.metadata.title = this._castTitle || 'Lecture';
+
+    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+    // Resume from current local time if video has started
+    request.currentTime = this.video.currentTime || 0;
+    request.autoplay = true;
+
+    session.loadMedia(request).catch(err => {
+      console.warn('Cast load failed:', err);
+      BBM.Toast.show('Impossible de lire cette vidéo sur l\'appareil', 'error', 4000);
+    });
   },
 
   /* ----------------------------------------

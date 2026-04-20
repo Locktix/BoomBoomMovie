@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Mes téléchargements</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#8B5CF6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loader"></div>
+    <span class="loader-text">Chargement</span>
+  </div>
+
+  <div class="downloads-page" id="downloads-page" style="display:none">
+    <nav class="navbar scrolled">
+      <a href="browse.html" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
+      <div class="nav-right" style="margin-left:auto;display:flex;align-items:center;gap:12px">
+        <a href="browse.html" class="btn-info" style="padding:8px 20px;font-size:0.85rem">← Retour</a>
+        <div class="nav-profile-avatar" id="nav-avatar" style="width:36px;height:36px;font-size:0.85rem">?</div>
+      </div>
+    </nav>
+
+    <main class="downloads-content">
+      <header class="downloads-header">
+        <div class="downloads-header-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Mes téléchargements</h1>
+          <p class="downloads-subtitle" id="downloads-count">Chargement…</p>
+        </div>
+      </header>
+
+      <div class="downloads-empty" id="downloads-empty" style="display:none">
+        <div class="downloads-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="72" height="72">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h2>Aucun téléchargement pour l'instant</h2>
+        <p>Télécharge un film ou un épisode depuis le catalogue pour le retrouver ici.</p>
+        <a href="browse.html" class="btn-play" style="margin-top:20px">Parcourir le catalogue</a>
+      </div>
+
+      <div class="downloads-grid" id="downloads-grid"></div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/downloads.js"></script>
+  <script src="js/tv-nav.js"></script>
+</body>
+</html>

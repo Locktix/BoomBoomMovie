@@ -236,6 +236,24 @@ BBM.Browse = {
       document.getElementById('btn-my-requests')?.click();
     });
 
+    // Join Watch Party (prompt for room code)
+    const promptJoinParty = () => {
+      const code = prompt('Entre le code de la Watch Party (6 caractères) :');
+      if (!code) return;
+      const clean = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (clean.length !== 6) {
+        BBM.Toast.show('Code invalide (6 caractères attendus)', 'error');
+        return;
+      }
+      window.location.href = `watch.html?party=${clean}`;
+    };
+    document.getElementById('btn-join-party')?.addEventListener('click', promptJoinParty);
+    const mobileJoinParty = document.getElementById('mobile-btn-join-party');
+    if (mobileJoinParty) mobileJoinParty.addEventListener('click', () => {
+      this.closeMobileMenu();
+      promptJoinParty();
+    });
+
     // Nav links
     document.querySelectorAll('.nav-links a').forEach(link => {
       link.addEventListener('click', (e) => {
@@ -1479,6 +1497,11 @@ BBM.Browse = {
     const cw = this.continueWatching[String(tmdbID)];
     const isWatched = cw && (cw.allWatched || (cw.duration > 0 && (cw.progress / cw.duration) >= 0.9));
 
+    // Resolve the direct URL for movies so we can offer a download
+    const movieItem = isMovie
+      ? BBM.API.getMovies().find(m => String(m.tmdbID) === String(tmdbID))
+      : null;
+
     // Get available seasons from our data
     let availableSeasons = [];
     if (!isMovie) {
@@ -1514,6 +1537,14 @@ BBM.Browse = {
             <button class="btn-icon" id="modal-share" title="Partager">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </button>
+            ${isMovie && movieItem?.url ? `
+            <button class="btn-icon" id="modal-download" title="Télécharger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>` : ''}
           </div>
         </div>
       </div>
@@ -1583,6 +1614,21 @@ BBM.Browse = {
     if (trailerBtn) {
       trailerBtn.addEventListener('click', () => {
         this.openTrailer(trailer.key);
+      });
+    }
+
+    // Download (movies only)
+    const dlBtn = modal.querySelector('#modal-download');
+    if (dlBtn && movieItem?.url) {
+      dlBtn.addEventListener('click', () => {
+        this.triggerDownload({
+          url: movieItem.url,
+          title,
+          tmdbID,
+          type: 'movie',
+          posterPath: tmdb.poster_path || '',
+          filename: this.safeFilename(title) + '.mp4'
+        });
       });
     }
 
@@ -1749,6 +1795,17 @@ BBM.Browse = {
       const isWatched = epWatchedClass === ' episode-watched';
       // Hide the toggle when allWatched is on (master state lives on the modal button)
       const showToggle = !allWatched;
+      const downloadHTML = ep.url ? `
+        <button class="episode-download-btn"
+                data-url="${ep.url.replace(/"/g, '&quot;')}"
+                data-season="${ep.seasonNumber}" data-episode="${ep.episodeNumber}"
+                title="Télécharger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>` : '';
       const toggleHTML = showToggle ? `
         <button class="episode-toggle-watched${isWatched ? ' watched' : ''}"
                 data-season="${ep.seasonNumber}" data-episode="${ep.episodeNumber}"
@@ -1777,6 +1834,7 @@ BBM.Browse = {
             <span class="episode-title">${epTitle}</span>
             <div class="episode-details-meta">
               <span class="episode-duration">${epRuntime}</span>
+              ${downloadHTML}
               ${toggleHTML}
             </div>
           </div>
@@ -1789,6 +1847,27 @@ BBM.Browse = {
         this.closeModal();
         this.playEpisode(tmdbID, ep.seasonNumber, ep.episodeNumber, epTitle);
       });
+
+      const dlEpBtn = item.querySelector('.episode-download-btn');
+      if (dlEpBtn) {
+        dlEpBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const btn = e.currentTarget;
+          const url = btn.dataset.url;
+          const s = parseInt(btn.dataset.season);
+          const epNum = parseInt(btn.dataset.episode);
+          const seriesMap = BBM.API.getSeriesMap();
+          const seriesEntry = seriesMap.get(String(tmdbID));
+          const seriesTitle = seriesEntry?.seriesTitle || this.tmdbCache.get(String(tmdbID))?.name || 'Série';
+          const epCode = `S${String(s).padStart(2, '0')}E${String(epNum).padStart(2, '0')}`;
+          const fullTitle = `${seriesTitle} — ${epCode} — ${epTitle}`;
+          const posterPath = this.tmdbCache.get(String(tmdbID))?.poster_path || '';
+          this.triggerDownload({
+            url, title: fullTitle, tmdbID, type: 'series', season: s, episode: epNum,
+            posterPath, filename: this.safeFilename(`${seriesTitle} ${epCode}`) + '.mp4'
+          });
+        });
+      }
 
       const toggleBtn = item.querySelector('.episode-toggle-watched');
       if (toggleBtn) {
@@ -1835,6 +1914,38 @@ BBM.Browse = {
 
       listEl.appendChild(item);
     });
+  },
+
+  /* ----------------------------------------
+     Download helpers
+     ---------------------------------------- */
+  safeFilename(s) {
+    return String(s || 'video').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim().slice(0, 120) || 'video';
+  },
+
+  async triggerDownload({ url, title, tmdbID, type, season, episode, posterPath, filename }) {
+    if (!url) return;
+    // 1. Fire a browser download via a temporary <a download> link
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || this.safeFilename(title);
+      a.rel = 'noopener';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      BBM.Toast.show('Impossible de lancer le téléchargement', 'error');
+      return;
+    }
+    // 2. Track in Firestore so "Mes téléchargements" shows it
+    try {
+      await BBM.API.addDownload({ tmdbID, title, type, url, posterPath, season, episode });
+      BBM.Toast.show('Téléchargement lancé — visible dans Mes téléchargements', 'success', 4000);
+    } catch (e) {
+      // Non-fatal: download still happened, just not recorded
+    }
   },
 
   closeModal() {

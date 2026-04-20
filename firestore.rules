@@ -14,5 +14,14 @@ service cloud.firestore {
         && (resource.data.requestedBy == request.auth.uid
             || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true);
     }
+    match /watchParties/{roomCode} {
+      // Any authenticated user can create or join a room
+      allow read, create: if request.auth != null;
+      // Any authenticated user can update (host for state, participants for join/leave)
+      allow update: if request.auth != null;
+      // Only the host can delete the room
+      allow delete: if request.auth != null
+        && resource.data.hostUid == request.auth.uid;
+    }
   }
 }

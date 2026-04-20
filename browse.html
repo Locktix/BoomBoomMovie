@@ -65,7 +65,9 @@
           <hr>
           <button id="btn-request">Demander un titre</button>
           <button id="btn-my-requests">Mes demandes</button>
+          <button id="btn-join-party">Rejoindre une Watch Party</button>
           <a id="btn-stats" href="stats.html" class="dropdown-link">Mes statistiques</a>
+          <a href="downloads.html" class="dropdown-link">Mes téléchargements</a>
           <a href="settings.html" class="dropdown-link">Paramètres</a>
           <a id="btn-admin" href="admin.html" style="display:none">⚙ Admin Panel</a>
           <hr>
@@ -105,7 +107,9 @@
     <div class="mobile-menu-actions">
       <button class="mobile-menu-link" id="mobile-btn-request">Demander un titre</button>
       <button class="mobile-menu-link" id="mobile-btn-my-requests">Mes demandes</button>
+      <button class="mobile-menu-link" id="mobile-btn-join-party">Rejoindre une Watch Party</button>
       <a href="stats.html" class="mobile-menu-link">Mes statistiques</a>
+      <a href="downloads.html" class="mobile-menu-link">Mes téléchargements</a>
       <a href="settings.html" class="mobile-menu-link">Paramètres</a>
       <a href="admin.html" class="mobile-menu-link" id="mobile-btn-admin" style="display:none">⚙ Admin Panel</a>
     </div>
@@ -232,7 +236,7 @@
       <a href="privacy.html">Confidentialité</a>
       <a href="changelog.html">Changelog</a>
     </div>
-    <p class="footer-copy">© 2026 BoomBoomMovie · <a href="changelog.html" style="color: var(--bbm-text-muted)">v3.0.0</a></p>
+    <p class="footer-copy">© 2026 BoomBoomMovie · <a href="changelog.html" id="footer-version" style="color: var(--bbm-text-muted)">v3.2.0</a></p>
   </footer>
 
   <!-- Firebase SDK -->
@@ -246,6 +250,8 @@
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/browse.js"></script>
+  <script src="js/changelog-data.js"></script>
+  <script src="js/update-modal.js"></script>
   <script src="js/tv-nav.js"></script>
 </body>
 </html>
