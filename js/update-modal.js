@@ -27,12 +27,9 @@
     if (!version) return false;
     try {
       const seen = localStorage.getItem(STORAGE_KEY);
-      // Don't show on a user's very first visit (no prior version) — they just
-      // signed in, no reason to interrupt with "What's new".
-      if (!seen) {
-        localStorage.setItem(STORAGE_KEY, version);
-        return false;
-      }
+      // Show on first visit AND on any new version. The record is only
+      // written when the user dismisses the modal, so they see it exactly
+      // once per released version.
       return seen !== version;
     } catch (e) {
       return false;
