@@ -16,6 +16,7 @@ BBM.Config = {
   },
 
   workerAPI: "https://liste-films-api.alanplokain.workers.dev/",
+  streamsAPI: "https://pub-d22613e54d014fcbb9360d988e122431.r2.dev/_streams.json",
 
   tmdb: {
     apiKey: "05fa26f220d025af589338dc695b75ad",

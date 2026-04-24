@@ -12,8 +12,40 @@
     season: null,
     episode: null,
     series: null,
-    isSeekingFromBar: false
+    isSeekingFromBar: false,
+    hls: null
   };
+
+  /** Attache une source vidéo en gérant HLS via hls.js si nécessaire. */
+  function attachVideoSource(video, url) {
+    if (state.hls) {
+      try { state.hls.destroy(); } catch (e) {}
+      state.hls = null;
+    }
+    const isHls = (window.BBM && BBM.API && typeof BBM.API.isHlsUrl === 'function')
+      ? BBM.API.isHlsUrl(url)
+      : /\.m3u8(\?|$)/i.test(url || '');
+    if (!isHls || video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      return;
+    }
+    if (window.Hls && window.Hls.isSupported()) {
+      state.hls = new window.Hls({ maxBufferLength: 30, enableWorker: true });
+      state.hls.loadSource(url);
+      state.hls.attachMedia(video);
+      state.hls.on(window.Hls.Events.ERROR, (_e, data) => {
+        if (!data.fatal) return;
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) state.hls.startLoad();
+        else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) state.hls.recoverMediaError();
+        else { try { state.hls.destroy(); } catch (e) {} state.hls = null; }
+      });
+      return;
+    }
+    video.src = url;
+  }
+  window.addEventListener('beforeunload', () => {
+    if (state.hls) { try { state.hls.destroy(); } catch (e) {} }
+  });
 
   async function init() {
     const params = new URLSearchParams(window.location.search);
@@ -33,7 +65,7 @@
     state.overlay = document.getElementById('tv-overlay');
     setHeaderMeta(title);
 
-    state.video.src = videoURL;
+    attachVideoSource(state.video, videoURL);
 
     setupBufferOverlay();
     setupControls();

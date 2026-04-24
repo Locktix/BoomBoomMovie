@@ -9,37 +9,101 @@ BBM.API = {
   _seriesMap: null,
 
   /* ----------------------------------------
-     Worker API — Fetch all items
+     Worker API + R2 streams — Fetch all items
      ---------------------------------------- */
+
+  /** True si l'URL pointe vers un manifest HLS (m3u8). */
+  isHlsUrl(url) {
+    return typeof url === 'string' && /\.m3u8(\?|$)/i.test(url);
+  },
+
+  /** Normalise un item du R2 streams JSON vers le format catalog interne. */
+  _normalizeStreamItem(s) {
+    if (!s || !s.tmdbId || !s.url) return null;
+    const tmdbID = String(s.tmdbId);
+    const isMovie = s.type === 'movie';
+    const createdAt = s.addedAt ? new Date(Number(s.addedAt)).toISOString() : null;
+    if (isMovie) {
+      return {
+        tmdbID,
+        category: 'movie',
+        title: '', // sera enrichi via TMDB cache au rendu
+        url: s.url,
+        createdAt
+      };
+    }
+    // series : convertir "01" → 1, "02" → 2
+    const seasonNumber = s.season != null ? parseInt(s.season, 10) : null;
+    const episodeNumber = s.episode != null ? parseInt(s.episode, 10) : null;
+    if (seasonNumber == null || episodeNumber == null) return null;
+    return {
+      tmdbID,
+      category: 'series',
+      seriesTitle: '',
+      url: s.url,
+      seasonNumber,
+      episodeNumber,
+      createdAt
+    };
+  },
+
+  _itemKey(item) {
+    return item.category === 'movie'
+      ? `movie_${item.tmdbID}`
+      : `series_${item.tmdbID}_s${item.seasonNumber}_e${item.episodeNumber}`;
+  },
+
   async fetchAllItems() {
     if (this._items) return this._items;
 
-    let items = [];
-    try {
-      const res = await fetch(BBM.Config.workerAPI);
-      if (res.ok) items = await res.json();
-    } catch (e) {
-      console.warn('API indisponible', e);
-    }
+    // Fetch parallèle des deux sources
+    const [workerItems, streamItems] = await Promise.all([
+      fetch(BBM.Config.workerAPI)
+        .then(r => r.ok ? r.json() : [])
+        .catch(e => { console.warn('workerAPI indisponible', e); return []; }),
+      BBM.Config.streamsAPI
+        ? fetch(BBM.Config.streamsAPI)
+            .then(r => r.ok ? r.json() : [])
+            .catch(e => { console.warn('streamsAPI indisponible', e); return []; })
+        : Promise.resolve([])
+    ]);
 
-    if (items.length === 0) {
+    if (workerItems.length === 0 && streamItems.length === 0) {
       throw new Error('Aucune API disponible');
     }
 
-    // Dédup
-    const seen = new Set();
-    const merged = [];
-    for (const item of items) {
-      const key = item.category === 'movie'
-        ? `movie_${item.tmdbID}`
-        : `series_${item.tmdbID}_s${item.seasonNumber}_e${item.episodeNumber}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(item);
-      }
-    }
+    // Normalisation des items R2 puis fusion avec dédup.
+    // Priorité au HLS (m3u8) en cas de doublon : si un item m3u8 arrive
+    // alors qu'on a déjà un mp4 pour la même clé, on remplace.
+    const normalizedStreams = streamItems
+      .map(s => this._normalizeStreamItem(s))
+      .filter(Boolean);
 
-    this._items = merged;
+    const map = new Map();
+    const addItem = (item) => {
+      const key = this._itemKey(item);
+      const existing = map.get(key);
+      if (!existing) { map.set(key, item); return; }
+      const existingIsHls = this.isHlsUrl(existing.url);
+      const incomingIsHls = this.isHlsUrl(item.url);
+      // Remplace si l'incoming est HLS et l'existant ne l'est pas
+      if (incomingIsHls && !existingIsHls) {
+        // Conserve les métadonnées existantes (title, seriesTitle, createdAt
+        // si présent) en plus de la nouvelle URL HLS.
+        map.set(key, {
+          ...existing,
+          url: item.url,
+          createdAt: item.createdAt || existing.createdAt
+        });
+      }
+      // Sinon on garde l'existant (priorité au premier vu si même format,
+      // ou au HLS déjà en place)
+    };
+
+    workerItems.forEach(addItem);
+    normalizedStreams.forEach(addItem);
+
+    this._items = Array.from(map.values());
     this._processItems();
     this._buildSearchIndex();
     return this._items;

@@ -60,8 +60,14 @@ BBM.Player = {
     // Set title + premium chip/subtitle
     this.setHeaderMeta(title);
 
-    // Load video
-    this.video.src = videoURL;
+    // Load video — détecte HLS et bascule sur hls.js si le navigateur n'a
+    // pas de support natif (Chrome/Firefox/Edge)
+    this._attachVideoSource(videoURL);
+
+    // Cleanup hls.js on page unload
+    window.addEventListener('beforeunload', () => {
+      if (this._hls) { try { this._hls.destroy(); } catch (e) {} }
+    });
 
     // Buffer overlay feedback (works for both mobile and desktop paths)
     this.setupBufferOverlay();
@@ -157,6 +163,69 @@ BBM.Player = {
       currentTime: Math.floor(this.video.currentTime || 0),
       duration: Math.floor(this.video.duration || 0)
     }).catch(() => {});
+  },
+
+  /* ----------------------------------------
+     Source loader — natif vs hls.js
+     ----------------------------------------
+     Safari/iOS supporte HLS nativement (canPlayType
+     'application/vnd.apple.mpegurl'). Pour les autres navigateurs, on
+     utilise hls.js (chargé via CDN dans watch.html). Pour les sources
+     non-HLS (mp4 etc.) on garde l'attribution directe `video.src`.
+  */
+  _attachVideoSource(url) {
+    // Détruit toute instance hls.js précédente (changement d'épisode,
+    // join party, etc.)
+    if (this._hls) {
+      try { this._hls.destroy(); } catch (e) {}
+      this._hls = null;
+    }
+
+    const isHls = BBM.API && typeof BBM.API.isHlsUrl === 'function'
+      ? BBM.API.isHlsUrl(url)
+      : /\.m3u8(\?|$)/i.test(url || '');
+
+    if (!isHls) {
+      this.video.src = url;
+      return;
+    }
+
+    // Support natif (Safari, iOS)
+    if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+      this.video.src = url;
+      return;
+    }
+
+    // hls.js
+    if (window.Hls && window.Hls.isSupported()) {
+      this._hls = new window.Hls({
+        // Tuning raisonnable pour streaming long-form
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        enableWorker: true
+      });
+      this._hls.loadSource(url);
+      this._hls.attachMedia(this.video);
+      this._hls.on(window.Hls.Events.ERROR, (_e, data) => {
+        if (!data.fatal) return;
+        switch (data.type) {
+          case window.Hls.ErrorTypes.NETWORK_ERROR:
+            try { this._hls.startLoad(); } catch (e) {}
+            break;
+          case window.Hls.ErrorTypes.MEDIA_ERROR:
+            try { this._hls.recoverMediaError(); } catch (e) {}
+            break;
+          default:
+            try { this._hls.destroy(); } catch (e) {}
+            this._hls = null;
+            BBM.Toast?.show?.('Erreur de lecture du flux HLS', 'error');
+        }
+      });
+      return;
+    }
+
+    // Fallback ultime — laisse le navigateur tenter
+    this.video.src = url;
   },
 
   /* ----------------------------------------
