@@ -14,7 +14,6 @@ BBM.Browse = {
      ---------------------------------------- */
   async init() {
     const user = await BBM.Auth.requireAuth();
-    this.startPresenceHeartbeat();
     this.setupNavbar(user);
     this.setupSearch();
     this.setupModal();
@@ -22,13 +21,21 @@ BBM.Browse = {
     this.showLoading(true);
 
     try {
-      // Fetch data in parallel
+      // Fetch data in parallel — tous les getXxx partagent une seule
+      // lecture Firestore via BBM.API.getUserDoc().
+      // IMPORTANT : on lit AVANT tout write (presence heartbeat) pour
+      // éviter qu'un set({...},{merge:true}) en vol fasse retourner au
+      // SDK un snapshot partiel "locally pending" tronqué.
       const [items, myList, continueWatching, userRatings] = await Promise.all([
         BBM.API.fetchAllItems(),
         BBM.API.getMyList(),
         BBM.API.getContinueWatching(),
         BBM.API.getUserRatings()
       ]);
+
+      // Heartbeat de présence : démarré APRÈS la lecture initiale pour
+      // ne pas polluer la lecture avec un write en vol.
+      this.startPresenceHeartbeat();
 
       this.myList = myList;
       this.continueWatching = continueWatching;
@@ -225,12 +232,7 @@ BBM.Browse = {
       try { localStorage.setItem(`bbm_is_admin_${user.uid}`, isAdmin ? '1' : '0'); } catch (e) {}
     };
 
-    BBM.Auth.isAdmin().then(isAdmin => {
-      console.log('[admin] check result:', isAdmin);
-      setAdminFlag(isAdmin);
-    }).catch(e => {
-      console.warn('[admin check] failed, keeping cached flag:', e);
-    });
+    BBM.Auth.isAdmin().then(setAdminFlag).catch(() => {});
 
     // Logout
     const logoutBtn = document.getElementById('btn-logout');

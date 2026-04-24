@@ -70,34 +70,18 @@ BBM.Auth = {
     });
   },
 
-  /** Vérifier si l'utilisateur est admin (champ admin: true dans Firestore) */
+  /** Vérifier si l'utilisateur est admin (champ admin: true dans Firestore).
+      Lit via BBM.API.getUserDoc() — partage le cache mémoire avec les
+      autres lectures (myList, continueWatching, ratings) pour garantir
+      une vue cohérente du document utilisateur. */
   async isAdmin() {
     const user = this.currentUser;
     if (!user) return false;
-    const ref = BBM.db.collection('users').doc(user.uid);
+    if (!BBM.API || typeof BBM.API.getUserDoc !== 'function') return false;
     try {
-      // Force a server read first — Firestore's default offline persistence
-      // can serve a stale cached copy that's missing newly-added fields (like
-      // an `admin` flag added after the cache was populated).
-      let doc;
-      try {
-        doc = await ref.get({ source: 'server' });
-      } catch (serverErr) {
-        // Offline or blocked — fallback to whatever cache holds
-        doc = await ref.get();
-      }
-      if (!doc.exists) {
-        console.warn('[isAdmin] User doc missing for uid', user.uid);
-        return false;
-      }
-      const data = doc.data();
-      const flag = data && data.admin === true;
-      if (!flag) {
-        console.info('[isAdmin] admin field not true for', user.email, '→', data?.admin, 'source:', doc.metadata?.fromCache ? 'cache' : 'server');
-      }
-      return flag;
+      const data = await BBM.API.getUserDoc();
+      return !!(data && data.admin === true);
     } catch (e) {
-      console.error('[isAdmin] Firestore read failed:', e.code || e.message, e);
       return false;
     }
   },

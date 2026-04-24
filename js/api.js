@@ -287,19 +287,76 @@ BBM.API = {
   },
 
   /* ----------------------------------------
+     Firestore — User document (single source of truth)
+     ----------------------------------------
+     Le document utilisateur est lu UNE SEULE fois par session puis
+     mis en cache. Toutes les lectures (myList, continueWatching,
+     ratings, downloads, isAdmin) partagent ce snapshot pour éviter
+     les incohérences entre cache et serveur Firestore.
+  */
+  _userDocCache: null,
+  _userDocCacheUid: null,
+  _userDocPromise: null,
+
+  /** Récupère le document utilisateur — server-first, cache mémoire. */
+  async getUserDoc(opts = {}) {
+    const user = BBM.Auth.currentUser;
+    if (!user) return null;
+    const forceFresh = opts.forceFresh === true;
+
+    // Cache invalidé si l'uid change (changement de compte)
+    if (this._userDocCacheUid !== user.uid) {
+      this._userDocCache = null;
+      this._userDocPromise = null;
+      this._userDocCacheUid = user.uid;
+    }
+
+    if (!forceFresh && this._userDocCache) return this._userDocCache;
+
+    // Déduplique les lectures parallèles : si une fetch est déjà en
+    // cours, tous les appelants attendent le même résultat.
+    if (!forceFresh && this._userDocPromise) return this._userDocPromise;
+
+    const ref = BBM.db.collection('users').doc(user.uid);
+    this._userDocPromise = (async () => {
+      let doc;
+      try {
+        doc = await ref.get({ source: 'server' });
+      } catch (serverErr) {
+        try { doc = await ref.get(); } catch (e) { return null; }
+      }
+      if (!doc) return null;
+      const data = doc.exists ? doc.data() : {};
+      this._userDocCache = data;
+      return data;
+    })();
+
+    try {
+      return await this._userDocPromise;
+    } finally {
+      this._userDocPromise = null;
+    }
+  },
+
+  /** Invalide le cache après une écriture. À appeler dans chaque update. */
+  invalidateUserDoc() {
+    this._userDocCache = null;
+    this._userDocPromise = null;
+  },
+
+  /** Patch local du cache après écriture (évite un round-trip serveur). */
+  patchUserDoc(patcher) {
+    if (!this._userDocCache) return;
+    try { patcher(this._userDocCache); } catch (e) {}
+  },
+
+  /* ----------------------------------------
      Firestore — My List
      ---------------------------------------- */
 
   async getMyList() {
-    const user = BBM.Auth.currentUser;
-    if (!user) return [];
-    try {
-      const doc = await BBM.db.collection('users').doc(user.uid).get();
-      return doc.exists ? (doc.data().myList || []) : [];
-    } catch (e) {
-      console.error('getMyList error:', e);
-      return [];
-    }
+    const data = await this.getUserDoc();
+    return (data && data.myList) || [];
   },
 
   async addToMyList(tmdbID) {
@@ -308,6 +365,11 @@ BBM.API = {
     await BBM.db.collection('users').doc(user.uid).update({
       myList: firebase.firestore.FieldValue.arrayUnion(String(tmdbID))
     });
+    this.patchUserDoc(d => {
+      const list = d.myList || [];
+      if (!list.includes(String(tmdbID))) list.push(String(tmdbID));
+      d.myList = list;
+    });
   },
 
   async removeFromMyList(tmdbID) {
@@ -315,6 +377,9 @@ BBM.API = {
     if (!user) return;
     await BBM.db.collection('users').doc(user.uid).update({
       myList: firebase.firestore.FieldValue.arrayRemove(String(tmdbID))
+    });
+    this.patchUserDoc(d => {
+      d.myList = (d.myList || []).filter(id => id !== String(tmdbID));
     });
   },
 
@@ -348,6 +413,10 @@ BBM.API = {
         }
       }, { merge: true });
     }
+    this.patchUserDoc(d => {
+      d.continueWatching = d.continueWatching || {};
+      d.continueWatching[tid] = { ...(d.continueWatching[tid] || {}), ...data };
+    });
   },
 
   /** Mark a single episode as watched within a series entry. */
@@ -368,6 +437,12 @@ BBM.API = {
         }
       }, { merge: true });
     }
+    this.patchUserDoc(d => {
+      d.continueWatching = d.continueWatching || {};
+      d.continueWatching[tid] = d.continueWatching[tid] || {};
+      d.continueWatching[tid].watchedEpisodes = d.continueWatching[tid].watchedEpisodes || {};
+      d.continueWatching[tid].watchedEpisodes[epKey] = true;
+    });
   },
 
   /* ----------------------------------------
@@ -397,6 +472,10 @@ BBM.API = {
     } catch (e) {
       await ref.set({ downloads: { [key]: data } }, { merge: true });
     }
+    this.patchUserDoc(d => {
+      d.downloads = d.downloads || {};
+      d.downloads[key] = data;
+    });
   },
 
   async removeDownload(key) {
@@ -407,17 +486,14 @@ BBM.API = {
         [`downloads.${key}`]: firebase.firestore.FieldValue.delete()
       });
     } catch (e) { /* noop */ }
+    this.patchUserDoc(d => {
+      if (d.downloads) delete d.downloads[key];
+    });
   },
 
   async getDownloads() {
-    const user = BBM.Auth.currentUser;
-    if (!user) return {};
-    try {
-      const doc = await BBM.db.collection('users').doc(user.uid).get();
-      return doc.exists ? (doc.data().downloads || {}) : {};
-    } catch (e) {
-      return {};
-    }
+    const data = await this.getUserDoc();
+    return (data && data.downloads) || {};
   },
 
   /* ----------------------------------------
@@ -558,17 +634,15 @@ BBM.API = {
         [`continueWatching.${tid}.watchedEpisodes.${epKey}`]: firebase.firestore.FieldValue.delete()
       });
     } catch (e) { /* entry may not exist */ }
+    this.patchUserDoc(d => {
+      const eps = d.continueWatching?.[tid]?.watchedEpisodes;
+      if (eps) delete eps[epKey];
+    });
   },
 
   async getContinueWatching() {
-    const user = BBM.Auth.currentUser;
-    if (!user) return {};
-    try {
-      const doc = await BBM.db.collection('users').doc(user.uid).get();
-      return doc.exists ? (doc.data().continueWatching || {}) : {};
-    } catch (e) {
-      return {};
-    }
+    const data = await this.getUserDoc();
+    return (data && data.continueWatching) || {};
   },
 
   async removeContinueWatching(tmdbID) {
@@ -577,6 +651,9 @@ BBM.API = {
     const key = `continueWatching.${String(tmdbID)}`;
     await BBM.db.collection('users').doc(user.uid).update({
       [key]: firebase.firestore.FieldValue.delete()
+    });
+    this.patchUserDoc(d => {
+      if (d.continueWatching) delete d.continueWatching[String(tmdbID)];
     });
   },
 
@@ -639,14 +716,8 @@ BBM.API = {
      ---------------------------------------- */
 
   async getUserRatings() {
-    const user = BBM.Auth.currentUser;
-    if (!user) return {};
-    try {
-      const doc = await BBM.db.collection('users').doc(user.uid).get();
-      return doc.exists ? (doc.data().ratings || {}) : {};
-    } catch (e) {
-      return {};
-    }
+    const data = await this.getUserDoc();
+    return (data && data.ratings) || {};
   },
 
   async setRating(tmdbID, rating) {
@@ -661,6 +732,10 @@ BBM.API = {
         ratings: { [String(tmdbID)]: rating }
       }, { merge: true });
     }
+    this.patchUserDoc(d => {
+      d.ratings = d.ratings || {};
+      d.ratings[String(tmdbID)] = rating;
+    });
   },
 
   async removeRating(tmdbID) {
@@ -669,6 +744,9 @@ BBM.API = {
     const key = `ratings.${String(tmdbID)}`;
     await BBM.db.collection('users').doc(user.uid).update({
       [key]: firebase.firestore.FieldValue.delete()
+    });
+    this.patchUserDoc(d => {
+      if (d.ratings) delete d.ratings[String(tmdbID)];
     });
   },
 
