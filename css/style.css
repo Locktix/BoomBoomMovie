@@ -2211,6 +2211,182 @@ select:focus-visible {
   font-size: 0.85rem;
 }
 
+/* ============================================
+   SKIP INTRO / OUTRO
+   ============================================ */
+
+/* Colored range overlays on the progress bar */
+.skip-marker {
+  position: absolute;
+  top: 0; height: 100%;
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0.65;
+}
+.skip-marker-intro { background: #22c55e; }
+.skip-marker-outro { background: #f59e0b; }
+
+/* Skip buttons — Netflix-style floating over the player, bottom-right */
+.skip-btn {
+  position: absolute;
+  right: 40px;
+  bottom: 130px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(18, 18, 18, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 4px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background var(--bbm-duration-fast), border-color var(--bbm-duration-fast), transform var(--bbm-duration-fast);
+  animation: skipBtnIn 0.2s ease;
+}
+.skip-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  border-color: #fff;
+  transform: translateY(-1px);
+}
+.skip-btn:focus-visible {
+  outline: 2px solid var(--bbm-accent);
+  outline-offset: 2px;
+}
+@keyframes skipBtnIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Admin panel — floating card above the controls */
+.skip-admin-panel {
+  position: absolute;
+  right: 24px;
+  bottom: 110px;
+  z-index: 80;
+  width: 340px;
+  background: rgba(18, 18, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  font-family: inherit;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: skipBtnIn 0.15s ease;
+}
+.skip-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.skip-admin-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+.skip-admin-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.skip-admin-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.skip-admin-body {
+  padding: 12px 16px 14px;
+}
+.skip-admin-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.skip-admin-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+.skip-admin-dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+}
+.skip-admin-dot-intro { background: #22c55e; }
+.skip-admin-dot-outro { background: #f59e0b; }
+.skip-admin-time {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 50px;
+  text-align: right;
+}
+.skip-admin-btn {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background var(--bbm-duration-fast);
+}
+.skip-admin-btn:hover { background: rgba(255, 255, 255, 0.22); }
+.skip-admin-btn-clear {
+  padding: 5px 8px;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border-color: transparent;
+}
+.skip-admin-btn-clear:hover { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+.skip-admin-sep {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 8px 0;
+}
+.skip-admin-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.skip-admin-save {
+  padding: 8px 18px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #fff;
+  background: var(--bbm-accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: filter var(--bbm-duration-fast);
+}
+.skip-admin-save:hover:not(:disabled) { filter: brightness(1.1); }
+.skip-admin-save:disabled { opacity: 0.6; cursor: wait; }
+.skip-admin-status {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
 /* Next Episode Overlay */
 .next-episode-overlay {
   position: absolute;

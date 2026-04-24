@@ -105,6 +105,9 @@ BBM.Player = {
       this.setupEpisodeNav();
     }
 
+    // Skip intro / outro markers (load + wire up admin panel if admin)
+    this.setupSkipMarkers();
+
     // Autoplay
     this.video.addEventListener('canplay', () => {
       this.video.play().catch(() => {});
@@ -1297,6 +1300,157 @@ BBM.Player = {
         }
       }
     }
+  },
+
+  /* ----------------------------------------
+     Skip Intro / Outro
+     ---------------------------------------- */
+  async setupSkipMarkers() {
+    if (!this.tmdbID) return;
+
+    this._skipMarkers = { introStart: null, introEnd: null, outroStart: null, outroEnd: null };
+
+    const introBtn = document.getElementById('skip-btn-intro');
+    const outroBtn = document.getElementById('skip-btn-outro');
+    const introMark = document.getElementById('skip-marker-intro');
+    const outroMark = document.getElementById('skip-marker-outro');
+
+    // Load stored markers
+    try {
+      const data = await BBM.API.getSkipMarkers(this.tmdbID, this.type, this.season, this.episode);
+      if (data) {
+        ['introStart', 'introEnd', 'outroStart', 'outroEnd'].forEach(k => {
+          if (data[k] != null && !isNaN(data[k])) this._skipMarkers[k] = Number(data[k]);
+        });
+      }
+    } catch (e) { /* ignore — markers simply won't appear */ }
+
+    this._renderSkipMarkers();
+
+    // Skip buttons — click handlers
+    introBtn?.addEventListener('click', () => {
+      const end = this._skipMarkers.introEnd;
+      if (end != null && this.video) {
+        this.video.currentTime = end + 0.1;
+      }
+    });
+    outroBtn?.addEventListener('click', () => {
+      const end = this._skipMarkers.outroEnd;
+      if (end != null && this.video) {
+        this.video.currentTime = end + 0.1;
+      }
+    });
+
+    // Watch currentTime to show/hide skip buttons
+    const tick = () => {
+      if (!this.video || !this._skipMarkers) return;
+      const t = this.video.currentTime;
+      const m = this._skipMarkers;
+      const inIntro = m.introStart != null && m.introEnd != null
+        && t >= m.introStart && t < m.introEnd;
+      const inOutro = m.outroStart != null && m.outroEnd != null
+        && t >= m.outroStart && t < m.outroEnd;
+      if (introBtn) introBtn.style.display = inIntro ? '' : 'none';
+      if (outroBtn) outroBtn.style.display = inOutro ? '' : 'none';
+    };
+    this.video.addEventListener('timeupdate', tick);
+    this.video.addEventListener('seeked', tick);
+
+    // Re-render markers when duration becomes known
+    this.video.addEventListener('loadedmetadata', () => this._renderSkipMarkers());
+    this.video.addEventListener('durationchange', () => this._renderSkipMarkers());
+
+    // Admin panel — only if user is admin
+    try {
+      const isAdmin = await BBM.Auth.isAdmin();
+      if (isAdmin) this._setupSkipAdminPanel();
+    } catch (e) { /* not admin, ignore */ }
+  },
+
+  _renderSkipMarkers() {
+    const introMark = document.getElementById('skip-marker-intro');
+    const outroMark = document.getElementById('skip-marker-outro');
+    const duration = this.video?.duration;
+    if (!duration || isNaN(duration)) {
+      if (introMark) introMark.style.display = 'none';
+      if (outroMark) outroMark.style.display = 'none';
+      return;
+    }
+    const m = this._skipMarkers || {};
+    const placeRange = (el, start, end) => {
+      if (!el) return;
+      if (start == null || end == null || end <= start) { el.style.display = 'none'; return; }
+      const left = Math.max(0, Math.min(100, (start / duration) * 100));
+      const right = Math.max(0, Math.min(100, (end / duration) * 100));
+      el.style.left = left + '%';
+      el.style.width = Math.max(0, right - left) + '%';
+      el.style.display = '';
+    };
+    placeRange(introMark, m.introStart, m.introEnd);
+    placeRange(outroMark, m.outroStart, m.outroEnd);
+  },
+
+  _setupSkipAdminPanel() {
+    const btn = document.getElementById('btn-skip-admin');
+    const panel = document.getElementById('skip-admin-panel');
+    const closeBtn = document.getElementById('skip-admin-close');
+    const saveBtn = document.getElementById('skip-admin-save');
+    const statusEl = document.getElementById('skip-admin-status');
+    if (!btn || !panel) return;
+
+    btn.style.display = '';
+
+    const refreshDisplay = () => {
+      const m = this._skipMarkers || {};
+      const fmt = (v) => (v != null && !isNaN(v)) ? this.formatTime(v) : '—';
+      document.getElementById('skip-admin-intro-start-time').textContent = fmt(m.introStart);
+      document.getElementById('skip-admin-intro-end-time').textContent = fmt(m.introEnd);
+      document.getElementById('skip-admin-outro-start-time').textContent = fmt(m.outroStart);
+      document.getElementById('skip-admin-outro-end-time').textContent = fmt(m.outroEnd);
+    };
+    refreshDisplay();
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const visible = panel.style.display !== 'none';
+      panel.style.display = visible ? 'none' : '';
+      if (!visible) refreshDisplay();
+    });
+    closeBtn?.addEventListener('click', () => { panel.style.display = 'none'; });
+
+    // Set buttons — capture current time
+    panel.querySelectorAll('[data-set]').forEach(b => {
+      b.addEventListener('click', () => {
+        const key = b.dataset.set;
+        this._skipMarkers[key] = this.video.currentTime;
+        refreshDisplay();
+        this._renderSkipMarkers();
+        if (statusEl) statusEl.textContent = 'Modifié (non sauvegardé)';
+      });
+    });
+    // Clear buttons
+    panel.querySelectorAll('[data-clear]').forEach(b => {
+      b.addEventListener('click', () => {
+        const key = b.dataset.clear;
+        this._skipMarkers[key] = null;
+        refreshDisplay();
+        this._renderSkipMarkers();
+        if (statusEl) statusEl.textContent = 'Modifié (non sauvegardé)';
+      });
+    });
+    // Save
+    saveBtn?.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Sauvegarde…';
+      try {
+        await BBM.API.setSkipMarkers(this.tmdbID, this.type, this.season, this.episode, this._skipMarkers);
+        if (statusEl) statusEl.textContent = 'Sauvegardé ✓';
+      } catch (err) {
+        if (statusEl) statusEl.textContent = 'Erreur : ' + (err.message || err);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
   },
 
   showNextEpisode(title, url) {

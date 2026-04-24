@@ -787,6 +787,51 @@ BBM.API = {
   },
 
   /* ----------------------------------------
+     Firestore — Skip Markers (intro/outro)
+     ---------------------------------------- */
+
+  _skipMarkersDocId(tmdbID, type, season, episode) {
+    if (type === 'series' && season != null && episode != null) {
+      return `${tmdbID}_s${season}_e${episode}`;
+    }
+    return String(tmdbID);
+  },
+
+  async getSkipMarkers(tmdbID, type, season, episode) {
+    if (!tmdbID) return null;
+    try {
+      const docId = this._skipMarkersDocId(tmdbID, type, season, episode);
+      const snap = await BBM.db.collection('skipMarkers').doc(docId).get();
+      return snap.exists ? snap.data() : null;
+    } catch (e) {
+      console.warn('getSkipMarkers failed:', e);
+      return null;
+    }
+  },
+
+  async setSkipMarkers(tmdbID, type, season, episode, markers) {
+    const user = BBM.Auth.currentUser;
+    if (!user) throw new Error('Connexion requise');
+    if (!tmdbID) throw new Error('tmdbID manquant');
+    const docId = this._skipMarkersDocId(tmdbID, type, season, episode);
+    const payload = {
+      tmdbID: Number(tmdbID),
+      type: type || 'movie',
+      updatedBy: user.uid,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (type === 'series') {
+      payload.season = season;
+      payload.episode = episode;
+    }
+    ['introStart', 'introEnd', 'outroStart', 'outroEnd'].forEach(k => {
+      const v = markers[k];
+      payload[k] = (v != null && !isNaN(v)) ? Math.round(v * 10) / 10 : null;
+    });
+    await BBM.db.collection('skipMarkers').doc(docId).set(payload, { merge: true });
+  },
+
+  /* ----------------------------------------
      Firestore — Watch Party (synced playback)
      ---------------------------------------- */
 
