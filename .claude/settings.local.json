@@ -44,7 +44,10 @@
       "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/changelog-data.js','utf8'\\)\\); console.log\\('changelog OK'\\);\")",
       "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/admin.js','utf8'\\)\\); console.log\\('admin.js OK'\\);\")",
       "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/auth.js','utf8'\\)\\); console.log\\('auth.js OK'\\);\")",
-      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/browse.js','utf8'\\)\\); console.log\\('browse.js OK'\\);\")"
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/browse.js','utf8'\\)\\); console.log\\('browse.js OK'\\);\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
