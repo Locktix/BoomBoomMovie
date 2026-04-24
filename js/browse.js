@@ -508,14 +508,12 @@ BBM.Browse = {
     container.classList.add('active');
     container.classList.add('history-mode');
 
-    const cw = await BBM.API.getContinueWatching();
-    const entries = Object.entries(cw);
-
-    entries.sort((a, b) => this._historyTimestamp(b[1]) - this._historyTimestamp(a[1]));
+    const sessions = await BBM.API.getWatchHistory();
+    sessions.sort((a, b) => this._historyTimestamp(b) - this._historyTimestamp(a));
 
     grid.innerHTML = '';
 
-    if (entries.length === 0) {
+    if (sessions.length === 0) {
       grid.innerHTML = `
         <div class="history-empty">
           <div class="history-empty-icon">📺</div>
@@ -525,7 +523,7 @@ BBM.Browse = {
       return;
     }
 
-    const groups = this._groupHistoryByPeriod(entries);
+    const groups = this._groupHistoryByPeriod(sessions);
     groups.forEach(group => {
       const section = document.createElement('section');
       section.className = 'history-section';
@@ -536,24 +534,24 @@ BBM.Browse = {
         </header>
         <div class="history-section-body"></div>`;
       const body = section.querySelector('.history-section-body');
-      group.entries.forEach(([id, cwData]) => {
-        const tmdb = this.tmdbCache.get(String(id));
+      group.entries.forEach(sess => {
+        const tmdb = this.tmdbCache.get(String(sess.tmdbID));
         if (!tmdb) return;
-        body.appendChild(this._createHistoryEntry(id, cwData, tmdb));
+        body.appendChild(this._createHistoryEntry(sess, tmdb));
       });
       if (body.childElementCount > 0) grid.appendChild(section);
     });
   },
 
-  _historyTimestamp(cw) {
-    const ts = cw && cw.updatedAt;
+  _historyTimestamp(s) {
+    const ts = s && s.updatedAt;
     if (!ts) return 0;
     if (typeof ts.toMillis === 'function') return ts.toMillis();
     if (ts.seconds) return ts.seconds * 1000;
     return 0;
   },
 
-  _groupHistoryByPeriod(entries) {
+  _groupHistoryByPeriod(sessions) {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const startOfYesterday = startOfToday - 86400000;
@@ -568,39 +566,40 @@ BBM.Browse = {
       older:     { label: 'Plus ancien', entries: [] }
     };
 
-    entries.forEach(entry => {
-      const ms = this._historyTimestamp(entry[1]);
-      if (!ms) { groups.older.entries.push(entry); return; }
-      if (ms >= startOfToday) groups.today.entries.push(entry);
-      else if (ms >= startOfYesterday) groups.yesterday.entries.push(entry);
-      else if (ms >= startOfWeek) groups.week.entries.push(entry);
-      else if (ms >= startOfMonth) groups.month.entries.push(entry);
-      else groups.older.entries.push(entry);
+    sessions.forEach(s => {
+      const ms = this._historyTimestamp(s);
+      if (!ms) { groups.older.entries.push(s); return; }
+      if (ms >= startOfToday) groups.today.entries.push(s);
+      else if (ms >= startOfYesterday) groups.yesterday.entries.push(s);
+      else if (ms >= startOfWeek) groups.week.entries.push(s);
+      else if (ms >= startOfMonth) groups.month.entries.push(s);
+      else groups.older.entries.push(s);
     });
 
     return Object.values(groups).filter(g => g.entries.length > 0);
   },
 
-  _createHistoryEntry(id, cwData, tmdb) {
+  _createHistoryEntry(sess, tmdb) {
+    const id = String(sess.tmdbID);
     const isMovie = !!tmdb.title;
     const title = tmdb.title || tmdb.name || 'Sans titre';
     const poster = tmdb.poster_path ? BBM.API.getPosterURL(tmdb.poster_path, 'w185') : null;
     const year = (tmdb.release_date || tmdb.first_air_date || '').slice(0, 4);
     const genres = (tmdb.genres || []).slice(0, 2).map(g => g.name).join(' · ');
 
-    const progress = Number(cwData.progress) || 0;
-    const duration = Number(cwData.duration) || 0;
-    const isWatched = !!cwData.allWatched || (duration > 0 && (progress / duration) >= 0.9);
+    const progress = Number(sess.progress) || 0;
+    const duration = Number(sess.duration) || 0;
+    const isWatched = !!sess.allWatched || (duration > 0 && (progress / duration) >= 0.9);
     const pct = duration > 0 ? Math.min(100, Math.round((progress / duration) * 100)) : 0;
 
     const subtitle = [];
-    if (!isMovie && cwData.season != null && cwData.episode != null) {
-      subtitle.push(`S${String(cwData.season).padStart(2, '0')}·E${String(cwData.episode).padStart(2, '0')}`);
+    if (!isMovie && sess.seasonNumber != null && sess.episodeNumber != null) {
+      subtitle.push(`S${String(sess.seasonNumber).padStart(2, '0')}·E${String(sess.episodeNumber).padStart(2, '0')}`);
     }
     if (year) subtitle.push(year);
     if (genres) subtitle.push(genres);
 
-    const ms = this._historyTimestamp(cwData);
+    const ms = this._historyTimestamp(sess);
     const d = ms ? new Date(ms) : null;
     const timeStr = d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
     const dateStr = d ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
@@ -616,6 +615,7 @@ BBM.Browse = {
     const entry = document.createElement('article');
     entry.className = 'history-entry';
     entry.dataset.tmdbid = id;
+    entry.dataset.sessionid = sess.sessionId;
     if (isWatched) entry.classList.add('is-watched');
 
     entry.innerHTML = `
@@ -662,22 +662,24 @@ BBM.Browse = {
         e.stopPropagation();
         const action = btn.dataset.action;
         if (action === 'play') {
-          this.playTitle(id, isMovie ? 'movie' : 'series');
+          // Pour les séries, lancer précisément l'épisode de cette session
+          if (!isMovie && sess.seasonNumber != null && sess.episodeNumber != null) {
+            this.playEpisode(id, sess.seasonNumber, sess.episodeNumber, '');
+          } else {
+            this.playTitle(id, isMovie ? 'movie' : 'series');
+          }
         } else if (action === 'markwatched') {
-          const dur = duration || 1;
-          await BBM.API.saveContinueWatching(id, {
-            progress: dur,
-            duration: dur,
-            category: isMovie ? 'movie' : 'series',
-            allWatched: true
-          });
-          this.continueWatching[id] = { ...(this.continueWatching[id] || {}), allWatched: true, progress: dur, duration: dur };
+          await BBM.API.markWatchHistoryWatched(sess.sessionId, id);
           BBM.Toast.show('Marqué comme vu');
           this.showHistory();
         } else if (action === 'remove') {
           entry.classList.add('removing');
-          await BBM.API.removeContinueWatching(id);
-          delete this.continueWatching[id];
+          await BBM.API.removeWatchHistorySession(sess.sessionId, id);
+          // Garde le state continueWatching local synchronisé pour la
+          // rangée "Reprendre" si on a supprimé une entrée legacy
+          if (sess.sessionId.startsWith('legacy_')) {
+            delete this.continueWatching[id];
+          }
           setTimeout(() => {
             const section = entry.closest('.history-section');
             entry.remove();

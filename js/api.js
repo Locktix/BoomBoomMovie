@@ -392,30 +392,199 @@ BBM.API = {
      Firestore — Continue Watching
      ---------------------------------------- */
 
+  /**
+   * Save current playback state.
+   *  - `continueWatching[tmdbID]` reflects the LATEST state for the rangée
+   *    "Reprendre" et la restauration de progression au lancement du player.
+   *  - `watchHistory[sessionId]` est append-only : chaque session de
+   *    visionnage (≤ 4h d'inactivité) génère une entrée distincte. Permet
+   *    d'avoir un vrai journal chronologique avec doublons.
+   */
+  _currentSessions: {},        // key → sessionId actif en mémoire
+  _sessionStartedSet: new Set(),
+
+  _sessionKey(tmdbID, season, episode) {
+    return `${tmdbID}_${season != null ? season : 0}_${episode != null ? episode : 0}`;
+  },
+
+  _msFromTimestamp(ts) {
+    if (!ts) return 0;
+    if (typeof ts.toMillis === 'function') return ts.toMillis();
+    if (ts.seconds) return ts.seconds * 1000;
+    if (typeof ts === 'number') return ts;
+    return 0;
+  },
+
   async saveContinueWatching(tmdbID, data) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
     const tid = String(tmdbID);
     const ref = BBM.db.collection('users').doc(user.uid);
-    // Write each field via dot-notation so we don't clobber sibling fields
-    // (e.g. watchedEpisodes accumulated across sessions).
+
+    // ---- 1. État courant (continueWatching) ----
     const update = {};
     for (const [k, v] of Object.entries(data)) {
       update[`continueWatching.${tid}.${k}`] = v;
     }
     update[`continueWatching.${tid}.updatedAt`] = firebase.firestore.FieldValue.serverTimestamp();
+
+    // ---- 2. Session de visionnage (watchHistory) ----
+    const season = data.seasonNumber != null ? data.seasonNumber : null;
+    const episode = data.episodeNumber != null ? data.episodeNumber : null;
+    const sessKey = this._sessionKey(tid, season, episode);
+
+    // Réutilise la session active en mémoire ; sinon cherche la session
+    // la plus récente dans le cache utilisateur, et l'accepte si < 4h.
+    let sessionId = this._currentSessions[sessKey];
+    if (!sessionId) {
+      const wh = (this._userDocCache && this._userDocCache.watchHistory) || {};
+      let bestId = null, bestMs = 0;
+      for (const [sid, e] of Object.entries(wh)) {
+        if (this._sessionKey(e.tmdbID, e.seasonNumber, e.episodeNumber) === sessKey) {
+          const ms = this._msFromTimestamp(e.updatedAt);
+          if (ms > bestMs) { bestMs = ms; bestId = sid; }
+        }
+      }
+      if (bestId && (Date.now() - bestMs) < 4 * 3600 * 1000) {
+        sessionId = bestId;
+        this._sessionStartedSet.add(sessionId); // déjà existant, ne pas réinitialiser startedAt
+      }
+    }
+    if (!sessionId) {
+      sessionId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+    this._currentSessions[sessKey] = sessionId;
+
+    const sessionData = {
+      tmdbID: tid,
+      seasonNumber: season,
+      episodeNumber: episode,
+      progress: Number(data.progress) || 0,
+      duration: Number(data.duration) || 0,
+      category: data.category || 'movie',
+      allWatched: !!data.allWatched
+    };
+    for (const [k, v] of Object.entries(sessionData)) {
+      update[`watchHistory.${sessionId}.${k}`] = v;
+    }
+    update[`watchHistory.${sessionId}.updatedAt`] = firebase.firestore.FieldValue.serverTimestamp();
+    if (!this._sessionStartedSet.has(sessionId)) {
+      update[`watchHistory.${sessionId}.startedAt`] = firebase.firestore.FieldValue.serverTimestamp();
+      this._sessionStartedSet.add(sessionId);
+    }
+
     try {
       await ref.update(update);
     } catch (e) {
       await ref.set({
         continueWatching: {
           [tid]: { ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
+        },
+        watchHistory: {
+          [sessionId]: {
+            ...sessionData,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            startedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }
         }
       }, { merge: true });
     }
+
     this.patchUserDoc(d => {
       d.continueWatching = d.continueWatching || {};
       d.continueWatching[tid] = { ...(d.continueWatching[tid] || {}), ...data };
+      d.watchHistory = d.watchHistory || {};
+      d.watchHistory[sessionId] = { ...(d.watchHistory[sessionId] || {}), ...sessionData };
+    });
+  },
+
+  /**
+   * Lit l'historique de visionnage. Retourne un array d'entrées triables
+   * (sessionId, tmdbID, seasonNumber, episodeNumber, progress, duration,
+   *  allWatched, updatedAt, _legacy?). Si `watchHistory` est vide, fallback
+   * sur `continueWatching` (1 entrée par tmdbID, marquée _legacy).
+   */
+  async getWatchHistory() {
+    const data = await this.getUserDoc();
+    if (!data) return [];
+    const wh = data.watchHistory || {};
+    if (Object.keys(wh).length > 0) {
+      return Object.entries(wh).map(([sid, e]) => ({
+        sessionId: sid,
+        tmdbID: e.tmdbID,
+        seasonNumber: e.seasonNumber != null ? e.seasonNumber : null,
+        episodeNumber: e.episodeNumber != null ? e.episodeNumber : null,
+        progress: Number(e.progress) || 0,
+        duration: Number(e.duration) || 0,
+        category: e.category || 'movie',
+        allWatched: !!e.allWatched,
+        updatedAt: e.updatedAt
+      }));
+    }
+    // Fallback rétrocompat : pas encore de watchHistory, on dérive de continueWatching
+    const cw = data.continueWatching || {};
+    return Object.entries(cw).map(([tid, e]) => ({
+      sessionId: `legacy_${tid}`,
+      tmdbID: tid,
+      seasonNumber: e.seasonNumber != null ? e.seasonNumber : (e.season != null ? e.season : null),
+      episodeNumber: e.episodeNumber != null ? e.episodeNumber : (e.episode != null ? e.episode : null),
+      progress: Number(e.progress) || 0,
+      duration: Number(e.duration) || 0,
+      category: e.category || 'movie',
+      allWatched: !!e.allWatched,
+      updatedAt: e.updatedAt,
+      _legacy: true
+    }));
+  },
+
+  /** Supprime une session du watchHistory. Pour les entrées _legacy, retombe
+   *  sur removeContinueWatching. */
+  async removeWatchHistorySession(sessionId, tmdbID) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !sessionId) return;
+    if (sessionId.startsWith('legacy_')) {
+      return this.removeContinueWatching(tmdbID || sessionId.slice(7));
+    }
+    await BBM.db.collection('users').doc(user.uid).update({
+      [`watchHistory.${sessionId}`]: firebase.firestore.FieldValue.delete()
+    });
+    this.patchUserDoc(d => { if (d.watchHistory) delete d.watchHistory[sessionId]; });
+    // Libère le sessionId du cache mémoire pour que la prochaine lecture
+    // reparte de zéro
+    for (const [k, v] of Object.entries(this._currentSessions)) {
+      if (v === sessionId) delete this._currentSessions[k];
+    }
+  },
+
+  /** Marque une session comme entièrement visionnée. */
+  async markWatchHistoryWatched(sessionId, tmdbID) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !sessionId) return;
+    if (sessionId.startsWith('legacy_')) {
+      const tid = tmdbID || sessionId.slice(7);
+      const cw = (this._userDocCache && this._userDocCache.continueWatching && this._userDocCache.continueWatching[tid]) || {};
+      const dur = Number(cw.duration) || 1;
+      return this.saveContinueWatching(tid, {
+        progress: dur,
+        duration: dur,
+        category: cw.category || 'movie',
+        seasonNumber: cw.seasonNumber != null ? cw.seasonNumber : null,
+        episodeNumber: cw.episodeNumber != null ? cw.episodeNumber : null,
+        allWatched: true
+      });
+    }
+    const sess = (this._userDocCache && this._userDocCache.watchHistory && this._userDocCache.watchHistory[sessionId]) || {};
+    const dur = Number(sess.duration) || 1;
+    await BBM.db.collection('users').doc(user.uid).update({
+      [`watchHistory.${sessionId}.allWatched`]: true,
+      [`watchHistory.${sessionId}.progress`]: dur,
+      [`watchHistory.${sessionId}.updatedAt`]: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    this.patchUserDoc(d => {
+      if (d.watchHistory && d.watchHistory[sessionId]) {
+        d.watchHistory[sessionId].allWatched = true;
+        d.watchHistory[sessionId].progress = dur;
+      }
     });
   },
 
