@@ -525,10 +525,38 @@ BBM.Browse = {
       return;
     }
 
-    ids.forEach(id => {
+    entries.forEach(([id, cwData]) => {
       const tmdb = this.tmdbCache.get(String(id));
       if (!tmdb) return;
-      grid.appendChild(this.createCard(String(id), tmdb));
+
+      const card = this.createCard(String(id), tmdb, true);
+
+      // Horodatage — date et heure précises du dernier visionnage
+      const ts = cwData.updatedAt;
+      if (ts) {
+        const ms = ts.toMillis ? ts.toMillis() : (ts.seconds ? ts.seconds * 1000 : 0);
+        if (ms) {
+          const d = new Date(ms);
+          const now = new Date();
+          const isToday = d.toDateString() === now.toDateString();
+          const isYesterday = d.toDateString() === new Date(now - 86400000).toDateString();
+          const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+          let dateLabel;
+          if (isToday) {
+            dateLabel = `Aujourd'hui à ${timeStr}`;
+          } else if (isYesterday) {
+            dateLabel = `Hier à ${timeStr}`;
+          } else {
+            dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + ` à ${timeStr}`;
+          }
+          const stamp = document.createElement('div');
+          stamp.className = 'history-timestamp';
+          stamp.textContent = dateLabel;
+          card.appendChild(stamp);
+        }
+      }
+
+      grid.appendChild(card);
     });
     this.observeLazyImages(grid);
   },
@@ -584,6 +612,42 @@ BBM.Browse = {
         }
       }
     });
+
+    // Fermer la barre au clic en dehors
+    document.addEventListener('click', (e) => {
+      if (searchContainer.classList.contains('open')
+          && !searchContainer.contains(e.target)) {
+        searchContainer.classList.remove('open');
+        searchInput.value = '';
+        this.hideTypeahead();
+        if (this.currentView === 'search') this.switchView('home');
+      }
+    });
+
+    // Champ de recherche du menu mobile
+    const mobileInput = document.getElementById('mobile-search-input');
+    if (mobileInput) {
+      let mobileTimeout;
+      mobileInput.addEventListener('input', () => {
+        clearTimeout(mobileTimeout);
+        mobileTimeout = setTimeout(() => {
+          const q = mobileInput.value.trim();
+          if (q.length >= 2) {
+            this.closeMobileMenu();
+            this.performSearch(q);
+          }
+        }, 350);
+      });
+      mobileInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const q = mobileInput.value.trim();
+          if (q.length >= 2) {
+            this.closeMobileMenu();
+            this.performSearch(q);
+          }
+        }
+      });
+    }
   },
 
   renderTypeahead(query) {

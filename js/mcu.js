@@ -240,10 +240,14 @@ BBM.MCU = {
       card.className = `mcu-card ${isAvailable ? 'available' : ''} ${!isAnnounced ? 'tba' : ''}`;
       card.style.animationDelay = `${index * 0.04}s`;
 
+      const escapedTitle = item.title.replace(/"/g, '&quot;');
       card.innerHTML = `
         <div class="mcu-card-number">${index + 1}</div>
         <div class="mcu-card-poster">
-          ${poster ? `<img src="${poster}" alt="${item.title}" loading="lazy">` : `<div class="mcu-card-placeholder">${item.title.substring(0, 2)}</div>`}
+          ${poster
+            ? `<img src="${poster}" alt="${escapedTitle}" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">`
+            : ''}
+          <div class="mcu-card-placeholder" style="${poster ? 'display:none' : ''}">${escapedTitle.substring(0, 2)}</div>
           ${isAvailable ? '<div class="mcu-play-badge">▶</div>' : ''}
         </div>
         <div class="mcu-card-content">

@@ -74,9 +74,6 @@
     privacy: [
       { key: 'privacy.saveProgress', type: 'toggle', label: 'Sauvegarder la progression de visionnage' },
       { key: 'privacy.saveHistory', type: 'toggle', label: 'Conserver l\'historique' }
-    ],
-    labs: [
-      { key: 'labs.betaFeatures', type: 'toggle', label: 'Activer les fonctionnalités beta', hint: 'Recherche avancée, player v2, et autres tests' }
     ]
   };
 

@@ -1043,6 +1043,17 @@ select:focus-visible {
   transition: width var(--bbm-duration) var(--bbm-ease);
 }
 
+/* History timestamp */
+.history-timestamp {
+  font-size: 0.72rem;
+  color: var(--bbm-text-muted);
+  margin-top: 5px;
+  padding: 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Watched badge on cards */
 .watched-badge {
   position: absolute;
@@ -1949,6 +1960,15 @@ select:focus-visible {
   width: 100%; height: 100%;
   object-fit: contain;
   background: #000;
+  transition: object-fit 0s;
+}
+.player-container.ultrawide-mode video {
+  object-fit: cover;
+}
+#btn-ultrawide.active {
+  color: var(--bbm-accent);
+  background: rgba(var(--bbm-accent-rgb), 0.15);
+  border-radius: 6px;
 }
 
 .player-overlay {
@@ -3301,6 +3321,29 @@ select:focus-visible {
   background: rgba(255,255,255,0.06);
   color: var(--bbm-text);
 }
+
+.mobile-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bbm-border);
+}
+.mobile-search-icon { font-size: 0.95rem; opacity: 0.6; }
+.mobile-search-input {
+  flex: 1;
+  background: var(--bbm-bg-card);
+  border: 1px solid var(--bbm-border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--bbm-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 160ms;
+}
+.mobile-search-input:focus { border-color: var(--bbm-accent); }
+.mobile-search-input::placeholder { color: var(--bbm-text-muted); }
 
 .mobile-menu-nav {
   display: flex;
@@ -5301,7 +5344,7 @@ select:focus-visible {
   position: absolute;
   left: -20px; bottom: -20px;
   font-family: var(--bbm-font-display);
-  font-size: 15rem;
+  font-size: clamp(7rem, 10vw, 15rem);
   font-weight: 900;
   line-height: 0.85;
   color: rgba(12, 12, 20, 0.85);
@@ -5321,7 +5364,7 @@ select:focus-visible {
 
 /* Double-digit "10" takes more space */
 .top10-item:nth-child(10) { padding-left: 130px; }
-.top10-item:nth-child(10) .top10-number { left: -30px; letter-spacing: -0.1em; font-size: 13rem; }
+.top10-item:nth-child(10) .top10-number { left: -30px; letter-spacing: -0.1em; font-size: clamp(8rem, 11vw, 13rem); }
 
 /* ============================================
    BENTO SPOTLIGHT
@@ -5698,10 +5741,10 @@ body::after {
   .billboard-logo { max-width: 260px; max-height: 110px; }
   .bento-spotlight { padding: 30px 20px 40px; }
   .bento-title { font-size: 1.4rem; }
-  .top10-number { font-size: 9rem; left: -15px; bottom: -18px; -webkit-text-stroke: 3px var(--bbm-accent); }
+  .top10-number { font-size: clamp(5rem, 9vw, 9rem); left: -15px; bottom: -18px; -webkit-text-stroke: 3px var(--bbm-accent); }
   .top10-item { min-width: 150px; padding-left: 55px; }
   .top10-item:nth-child(10) { padding-left: 85px; }
-  .top10-item:nth-child(10) .top10-number { font-size: 8rem; left: -20px; }
+  .top10-item:nth-child(10) .top10-number { font-size: clamp(5rem, 9vw, 8rem); left: -20px; }
   .row-top10-content { padding-left: 60px !important; }
   .billboard-info { left: 20px; bottom: 20%; }
 }

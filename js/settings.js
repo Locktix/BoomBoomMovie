@@ -62,10 +62,7 @@
 
     // Privacy
     'privacy.saveProgress': true,
-    'privacy.saveHistory': true,
-
-    // Labs
-    'labs.betaFeatures': false
+    'privacy.saveHistory': true
   });
 
   function loadRaw() {

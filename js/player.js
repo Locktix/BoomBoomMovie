@@ -681,6 +681,17 @@ BBM.Player = {
     document.addEventListener('webkitfullscreenchange', updateFsIcon);
     updateFsIcon();
 
+    // Ultra-wide 21:9 toggle
+    const uwBtn = document.getElementById('btn-ultrawide');
+    if (uwBtn) {
+      uwBtn.addEventListener('click', () => {
+        const container = document.querySelector('.player-container');
+        const active = container.classList.toggle('ultrawide-mode');
+        uwBtn.classList.toggle('active', active);
+        uwBtn.title = active ? 'Mode normal' : 'Mode Ultra-Wide 21:9';
+      });
+    }
+
     // Shortcuts overlay
     document.getElementById('btn-shortcuts')?.addEventListener('click', (e) => {
       e.stopPropagation();
