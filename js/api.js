@@ -499,42 +499,58 @@ BBM.API = {
   },
 
   /**
-   * Lit l'historique de visionnage. Retourne un array d'entrées triables
-   * (sessionId, tmdbID, seasonNumber, episodeNumber, progress, duration,
-   *  allWatched, updatedAt, _legacy?). Si `watchHistory` est vide, fallback
-   * sur `continueWatching` (1 entrée par tmdbID, marquée _legacy).
+   * Lit l'historique de visionnage. MERGE `watchHistory` (chronologie
+   * append-only) et `continueWatching` (état courant) pour ne perdre
+   * aucune entrée pendant la migration : un item présent uniquement dans
+   * `continueWatching` (visionnage antérieur au déploiement de
+   * watchHistory) est ajouté comme entrée legacy. La déduplication se
+   * fait par tmdbID + season + episode pour ne pas montrer en double une
+   * entrée qui existe déjà comme session.
    */
   async getWatchHistory() {
     const data = await this.getUserDoc();
     if (!data) return [];
+
     const wh = data.watchHistory || {};
-    if (Object.keys(wh).length > 0) {
-      return Object.entries(wh).map(([sid, e]) => ({
-        sessionId: sid,
-        tmdbID: e.tmdbID,
-        seasonNumber: e.seasonNumber != null ? e.seasonNumber : null,
-        episodeNumber: e.episodeNumber != null ? e.episodeNumber : null,
-        progress: Number(e.progress) || 0,
-        duration: Number(e.duration) || 0,
-        category: e.category || 'movie',
-        allWatched: !!e.allWatched,
-        updatedAt: e.updatedAt
-      }));
-    }
-    // Fallback rétrocompat : pas encore de watchHistory, on dérive de continueWatching
     const cw = data.continueWatching || {};
-    return Object.entries(cw).map(([tid, e]) => ({
-      sessionId: `legacy_${tid}`,
-      tmdbID: tid,
-      seasonNumber: e.seasonNumber != null ? e.seasonNumber : (e.season != null ? e.season : null),
-      episodeNumber: e.episodeNumber != null ? e.episodeNumber : (e.episode != null ? e.episode : null),
+
+    const sessions = Object.entries(wh).map(([sid, e]) => ({
+      sessionId: sid,
+      tmdbID: String(e.tmdbID),
+      seasonNumber: e.seasonNumber != null ? e.seasonNumber : null,
+      episodeNumber: e.episodeNumber != null ? e.episodeNumber : null,
       progress: Number(e.progress) || 0,
       duration: Number(e.duration) || 0,
       category: e.category || 'movie',
       allWatched: !!e.allWatched,
-      updatedAt: e.updatedAt,
-      _legacy: true
+      updatedAt: e.updatedAt
     }));
+
+    // Construit l'index des (tmdbID+s+e) déjà couverts par watchHistory.
+    const covered = new Set(sessions.map(s => this._sessionKey(s.tmdbID, s.seasonNumber, s.episodeNumber)));
+
+    // Ajoute les entrées de continueWatching non couvertes — typiquement
+    // les visionnages antérieurs à la mise en place de watchHistory.
+    Object.entries(cw).forEach(([tid, e]) => {
+      const season = e.seasonNumber != null ? e.seasonNumber : (e.season != null ? e.season : null);
+      const episode = e.episodeNumber != null ? e.episodeNumber : (e.episode != null ? e.episode : null);
+      const key = this._sessionKey(String(tid), season, episode);
+      if (covered.has(key)) return;
+      sessions.push({
+        sessionId: `legacy_${tid}`,
+        tmdbID: String(tid),
+        seasonNumber: season,
+        episodeNumber: episode,
+        progress: Number(e.progress) || 0,
+        duration: Number(e.duration) || 0,
+        category: e.category || 'movie',
+        allWatched: !!e.allWatched,
+        updatedAt: e.updatedAt,
+        _legacy: true
+      });
+    });
+
+    return sessions;
   },
 
   /** Supprime une session du watchHistory. Pour les entrées _legacy, retombe
