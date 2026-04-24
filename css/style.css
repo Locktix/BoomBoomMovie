@@ -1944,16 +1944,28 @@ select:focus-visible {
 .player-container {
   position: relative;
   width: 100%; height: 100%;
+  overflow: hidden;
 }
 
 .player-container video {
+  position: absolute;
+  left: 0; top: 0;
   width: 100%; height: 100%;
   object-fit: contain;
   background: #000;
-  transition: object-fit 0s;
+  transition: width 0.2s ease, height 0.2s ease, left 0.2s ease, top 0.2s ease;
 }
 .player-container.ultrawide-mode video {
-  object-fit: cover;
+  width: 131.25% !important;
+  height: 131.25% !important;
+  left: -15.625% !important;
+  top: -15.625% !important;
+}
+.player-container.ultrawide-mode:fullscreen {
+  overflow: hidden !important;
+}
+.player-container.ultrawide-mode:-webkit-full-screen {
+  overflow: hidden !important;
 }
 #btn-ultrawide.active {
   color: var(--bbm-accent);

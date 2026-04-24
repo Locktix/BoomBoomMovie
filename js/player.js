@@ -755,9 +755,23 @@ BBM.Player = {
     if (uwBtn) {
       uwBtn.addEventListener('click', () => {
         const container = document.querySelector('.player-container');
+        const video = document.getElementById('player-video');
         const active = container.classList.toggle('ultrawide-mode');
         uwBtn.classList.toggle('active', active);
         uwBtn.title = active ? 'Mode normal' : 'Mode Ultra-Wide 21:9';
+        if (video) {
+          if (active) {
+            video.style.setProperty('width', '131.25%', 'important');
+            video.style.setProperty('height', '131.25%', 'important');
+            video.style.setProperty('left', '-15.625%', 'important');
+            video.style.setProperty('top', '-15.625%', 'important');
+          } else {
+            video.style.removeProperty('width');
+            video.style.removeProperty('height');
+            video.style.removeProperty('left');
+            video.style.removeProperty('top');
+          }
+        }
       });
     }
 
