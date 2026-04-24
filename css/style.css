@@ -9495,3 +9495,184 @@ body.admin-body {
   .history-entry-title { font-size: 0.95rem; white-space: normal; }
   .history-entry-subtitle { white-space: normal; }
 }
+
+/* ============================================
+   JOIN WATCH PARTY — Modal
+   ============================================ */
+.join-party-modal { max-width: 640px; }
+
+.join-party-code-box {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+#join-party-code-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bbm-bg-glass);
+  border: 1px solid var(--bbm-border);
+  border-radius: 10px;
+  color: var(--bbm-text-bright);
+  font-family: var(--bbm-font-mono, ui-monospace, 'SF Mono', monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: border-color 180ms;
+}
+#join-party-code-input::placeholder {
+  color: var(--bbm-text-muted);
+  letter-spacing: 4px;
+}
+#join-party-code-input:focus {
+  outline: none;
+  border-color: var(--bbm-accent);
+  box-shadow: 0 0 0 3px rgba(var(--bbm-accent-rgb), 0.15);
+}
+
+.join-party-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  color: var(--bbm-text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.join-party-divider::before,
+.join-party-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bbm-border);
+}
+
+.join-party-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.join-party-card {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bbm-bg-glass);
+  border: 1px solid var(--bbm-border);
+  transition: all 200ms;
+}
+.join-party-card:hover {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--bbm-border-hover);
+  transform: translateX(3px);
+}
+
+.join-party-poster {
+  position: relative;
+  width: 60px;
+  height: 90px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+.join-party-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.join-party-poster-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--bbm-text-muted);
+}
+.join-party-live {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  background: rgba(239, 68, 68, 0.92);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+  animation: bbm-pulse 2s ease-in-out infinite;
+}
+@keyframes bbm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.join-party-info { min-width: 0; }
+.join-party-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--bbm-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.join-party-meta {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  color: var(--bbm-text-secondary);
+}
+.join-party-host {
+  margin: 0 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--bbm-text-muted);
+}
+.join-party-code {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(var(--bbm-accent-rgb), 0.12);
+  border: 1px solid rgba(var(--bbm-accent-rgb), 0.3);
+  color: var(--bbm-accent);
+  border-radius: 4px;
+  font-family: var(--bbm-font-mono, ui-monospace, 'SF Mono', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.join-party-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--bbm-text-secondary);
+}
+.join-party-empty-icon { font-size: 2.4rem; margin-bottom: 10px; }
+.join-party-empty p { margin: 4px 0; font-size: 0.9rem; }
+.join-party-empty-sub { font-size: 0.78rem !important; color: var(--bbm-text-muted); }
+
+@media (max-width: 600px) {
+  .join-party-modal { max-width: 100%; }
+  .join-party-card {
+    grid-template-columns: 56px 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px 12px;
+  }
+  .join-party-card .join-party-join {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+  .join-party-card .join-party-poster { grid-row: 1; grid-column: 1; }
+  .join-party-card .join-party-info { grid-row: 1; grid-column: 2; }
+  .join-party-join span { display: inline; }
+}

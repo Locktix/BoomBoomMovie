@@ -250,6 +250,26 @@
     </div>
   </div>
 
+  <!-- Join Watch Party Modal -->
+  <div class="request-overlay" id="join-party-overlay">
+    <div class="request-modal join-party-modal" id="join-party-modal">
+      <button class="modal-close" id="join-party-close">✕</button>
+      <h2>Rejoindre une Watch Party</h2>
+      <p class="request-subtitle">Entre un code à 6 caractères, ou choisis une session en cours</p>
+
+      <div class="join-party-code-box">
+        <input type="text" id="join-party-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" spellcheck="false">
+        <button class="btn-primary" id="join-party-code-btn" style="width:auto;padding:10px 24px;margin-top:0">Rejoindre</button>
+      </div>
+
+      <div class="join-party-divider"><span>Ou rejoins une session en cours</span></div>
+
+      <div class="join-party-list" id="join-party-list">
+        <div class="loader" style="margin:30px auto"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 

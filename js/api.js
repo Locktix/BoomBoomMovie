@@ -792,6 +792,44 @@ BBM.API = {
     catch (e) { /* noop */ }
   },
 
+  /** Liste les watch parties actives (mises à jour < `maxAgeHours`).
+   *  Exclut par défaut celles dont l'utilisateur courant est hôte. */
+  async listActiveWatchParties({ excludeOwn = true, maxAgeHours = 6 } = {}) {
+    try {
+      const snap = await BBM.db.collection('watchParties').get();
+      const uid = BBM.Auth.currentUser?.uid;
+      const cutoff = Date.now() - maxAgeHours * 3600 * 1000;
+      const parties = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (!data || !data.code) return;
+        if (excludeOwn && uid && data.hostUid === uid) return;
+        const updatedMs = this._msFromTimestamp(data.updatedAt) || this._msFromTimestamp(data.createdAt);
+        if (updatedMs && updatedMs < cutoff) return;
+        parties.push({
+          code: data.code,
+          hostName: data.hostName || 'Hôte',
+          hostUid: data.hostUid,
+          tmdbID: data.tmdbID,
+          title: data.title || '',
+          type: data.type || 'movie',
+          season: data.season != null ? data.season : null,
+          episode: data.episode != null ? data.episode : null,
+          isPlaying: !!data.isPlaying,
+          participantsCount: data.participants ? Object.keys(data.participants).length : 0,
+          updatedAt: data.updatedAt,
+          createdAt: data.createdAt
+        });
+      });
+      // Tri : les plus récemment actives en premier
+      parties.sort((a, b) => this._msFromTimestamp(b.updatedAt) - this._msFromTimestamp(a.updatedAt));
+      return parties;
+    } catch (e) {
+      console.warn('listActiveWatchParties failed:', e);
+      return [];
+    }
+  },
+
   /** Un-mark a single episode from watched. */
   async unmarkEpisodeWatched(tmdbID, season, episode) {
     const user = BBM.Auth.currentUser;

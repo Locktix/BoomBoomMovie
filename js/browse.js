@@ -252,22 +252,13 @@ BBM.Browse = {
       document.getElementById('btn-my-requests')?.click();
     });
 
-    // Join Watch Party (prompt for room code)
-    const promptJoinParty = () => {
-      const code = prompt('Entre le code de la Watch Party (6 caractères) :');
-      if (!code) return;
-      const clean = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-      if (clean.length !== 6) {
-        BBM.Toast.show('Code invalide (6 caractères attendus)', 'error');
-        return;
-      }
-      window.location.href = `watch.html?party=${clean}`;
-    };
-    document.getElementById('btn-join-party')?.addEventListener('click', promptJoinParty);
+    // Join Watch Party — ouvre la modal de sélection
+    this.setupJoinPartyModal();
+    document.getElementById('btn-join-party')?.addEventListener('click', () => this.openJoinPartyModal());
     const mobileJoinParty = document.getElementById('mobile-btn-join-party');
     if (mobileJoinParty) mobileJoinParty.addEventListener('click', () => {
       this.closeMobileMenu();
-      promptJoinParty();
+      this.openJoinPartyModal();
     });
 
     // Nav links
@@ -2637,6 +2628,115 @@ BBM.Browse = {
       searchBtn.addEventListener('click', doSearch);
       searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
     }
+  },
+
+  /* ----------------------------------------
+     Join Watch Party — Modal
+     ---------------------------------------- */
+  setupJoinPartyModal() {
+    if (this._joinPartyModalReady) return;
+    this._joinPartyModalReady = true;
+
+    const overlay = document.getElementById('join-party-overlay');
+    const closeBtn = document.getElementById('join-party-close');
+    const input = document.getElementById('join-party-code-input');
+    const submitBtn = document.getElementById('join-party-code-btn');
+
+    const close = () => {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    };
+    closeBtn?.addEventListener('click', close);
+    overlay?.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    // Force majuscules + alphanum
+    input?.addEventListener('input', () => {
+      const v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (v !== input.value) input.value = v;
+    });
+
+    const submit = () => {
+      const code = (input.value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (code.length !== 6) {
+        BBM.Toast.show('Code invalide (6 caractères attendus)', 'error');
+        input.focus();
+        return;
+      }
+      window.location.href = `watch.html?party=${code}`;
+    };
+    submitBtn?.addEventListener('click', submit);
+    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  },
+
+  async openJoinPartyModal() {
+    const overlay = document.getElementById('join-party-overlay');
+    const input = document.getElementById('join-party-code-input');
+    const list = document.getElementById('join-party-list');
+    if (!overlay) return;
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    if (input) input.value = '';
+    list.innerHTML = '<div class="loader" style="margin:30px auto"></div>';
+
+    const parties = await BBM.API.listActiveWatchParties();
+    this.renderJoinPartyList(parties);
+  },
+
+  renderJoinPartyList(parties) {
+    const list = document.getElementById('join-party-list');
+    if (!list) return;
+
+    if (!parties || parties.length === 0) {
+      list.innerHTML = `
+        <div class="join-party-empty">
+          <div class="join-party-empty-icon">👥</div>
+          <p>Aucune Watch Party en cours pour le moment.</p>
+          <p class="join-party-empty-sub">Lance-en une depuis le lecteur d'un film ou d'un épisode.</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    parties.forEach(p => {
+      const tmdb = this.tmdbCache.get(String(p.tmdbID));
+      const poster = tmdb?.poster_path ? BBM.API.getPosterURL(tmdb.poster_path, 'w185') : null;
+      const isSeries = p.type === 'series';
+      const seTag = isSeries && p.season != null && p.episode != null
+        ? `S${String(p.season).padStart(2, '0')}·E${String(p.episode).padStart(2, '0')}`
+        : '';
+      const meta = [
+        isSeries ? '📺 Série' : '🎬 Film',
+        seTag,
+        `${p.participantsCount} ${p.participantsCount > 1 ? 'participants' : 'participant'}`
+      ].filter(Boolean).join(' · ');
+
+      const card = document.createElement('article');
+      card.className = 'join-party-card';
+      card.innerHTML = `
+        <div class="join-party-poster">
+          ${poster ? `<img src="${poster}" alt="${p.title}" loading="lazy">` : '<div class="join-party-poster-ph">?</div>'}
+          ${p.isPlaying ? '<span class="join-party-live">● LIVE</span>' : ''}
+        </div>
+        <div class="join-party-info">
+          <h3 class="join-party-title">${p.title || 'Watch Party'}</h3>
+          <p class="join-party-meta">${meta}</p>
+          <p class="join-party-host">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            ${p.hostName}
+          </p>
+          <span class="join-party-code">${p.code}</span>
+        </div>
+        <button class="history-btn history-btn-primary join-party-join">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>
+          <span>Rejoindre</span>
+        </button>`;
+      card.querySelector('.join-party-join').addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.location.href = `watch.html?party=${p.code}`;
+      });
+      list.appendChild(card);
+    });
   },
 
   renderRequestResults(results) {
