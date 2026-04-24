@@ -351,6 +351,7 @@ BBM.Browse = {
 
     browseContent.style.display = 'none';
     categoryFilter.classList.remove('active');
+    categoryFilter.classList.remove('history-mode');
     searchResults.style.display = 'none';
     document.getElementById('genre-filters').innerHTML = '';
 
@@ -492,75 +493,210 @@ BBM.Browse = {
   },
 
   /* ----------------------------------------
-     Watch History
+     Watch History — Timeline Journal
      ---------------------------------------- */
   async showHistory() {
     const container = document.getElementById('category-filter');
     const header = container.querySelector('.category-filter-header h1');
-    const sortSelect = document.getElementById('sort-select');
     const grid = document.querySelector('.category-grid');
     const filtersEl = document.getElementById('genre-filters');
 
-    header.textContent = 'Historique';
-    sortSelect.value = 'default';
+    header.textContent = 'Journal de visionnage';
     this._activeGenre = null;
     filtersEl.innerHTML = '';
-    grid.innerHTML = '<div class="loader" style="margin:40px auto;grid-column:1/-1"></div>';
+    grid.innerHTML = '<div class="loader" style="margin:60px auto"></div>';
     container.classList.add('active');
+    container.classList.add('history-mode');
 
     const cw = await BBM.API.getContinueWatching();
     const entries = Object.entries(cw);
 
-    // Sort by most recent
-    entries.sort((a, b) => {
-      const ta = a[1].updatedAt?.toMillis ? a[1].updatedAt.toMillis() : (a[1].updatedAt?.seconds ? a[1].updatedAt.seconds * 1000 : 0);
-      const tb = b[1].updatedAt?.toMillis ? b[1].updatedAt.toMillis() : (b[1].updatedAt?.seconds ? b[1].updatedAt.seconds * 1000 : 0);
-      return tb - ta;
-    });
+    entries.sort((a, b) => this._historyTimestamp(b[1]) - this._historyTimestamp(a[1]));
 
-    const ids = entries.map(([id]) => id);
-    this._categoryIDs = ids;
     grid.innerHTML = '';
 
-    if (ids.length === 0) {
-      grid.innerHTML = '<div class="no-results" style="grid-column:1/-1"><p>Aucun historique de visionnage</p></div>';
+    if (entries.length === 0) {
+      grid.innerHTML = `
+        <div class="history-empty">
+          <div class="history-empty-icon">📺</div>
+          <h2>Aucun visionnage pour le moment</h2>
+          <p>Lance un film ou un épisode — il apparaîtra ici avec son horodatage précis.</p>
+        </div>`;
       return;
     }
 
-    entries.forEach(([id, cwData]) => {
-      const tmdb = this.tmdbCache.get(String(id));
-      if (!tmdb) return;
-
-      const card = this.createCard(String(id), tmdb, true);
-
-      // Horodatage — date et heure précises du dernier visionnage
-      const ts = cwData.updatedAt;
-      if (ts) {
-        const ms = ts.toMillis ? ts.toMillis() : (ts.seconds ? ts.seconds * 1000 : 0);
-        if (ms) {
-          const d = new Date(ms);
-          const now = new Date();
-          const isToday = d.toDateString() === now.toDateString();
-          const isYesterday = d.toDateString() === new Date(now - 86400000).toDateString();
-          const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-          let dateLabel;
-          if (isToday) {
-            dateLabel = `Aujourd'hui à ${timeStr}`;
-          } else if (isYesterday) {
-            dateLabel = `Hier à ${timeStr}`;
-          } else {
-            dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + ` à ${timeStr}`;
-          }
-          const stamp = document.createElement('div');
-          stamp.className = 'history-timestamp';
-          stamp.textContent = dateLabel;
-          card.appendChild(stamp);
-        }
-      }
-
-      grid.appendChild(card);
+    const groups = this._groupHistoryByPeriod(entries);
+    groups.forEach(group => {
+      const section = document.createElement('section');
+      section.className = 'history-section';
+      section.innerHTML = `
+        <header class="history-section-header">
+          <h2 class="history-section-title">${group.label}</h2>
+          <span class="history-section-count">${group.entries.length}</span>
+        </header>
+        <div class="history-section-body"></div>`;
+      const body = section.querySelector('.history-section-body');
+      group.entries.forEach(([id, cwData]) => {
+        const tmdb = this.tmdbCache.get(String(id));
+        if (!tmdb) return;
+        body.appendChild(this._createHistoryEntry(id, cwData, tmdb));
+      });
+      if (body.childElementCount > 0) grid.appendChild(section);
     });
-    this.observeLazyImages(grid);
+  },
+
+  _historyTimestamp(cw) {
+    const ts = cw && cw.updatedAt;
+    if (!ts) return 0;
+    if (typeof ts.toMillis === 'function') return ts.toMillis();
+    if (ts.seconds) return ts.seconds * 1000;
+    return 0;
+  },
+
+  _groupHistoryByPeriod(entries) {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfYesterday = startOfToday - 86400000;
+    const startOfWeek = startOfToday - 6 * 86400000;
+    const startOfMonth = startOfToday - 30 * 86400000;
+
+    const groups = {
+      today:     { label: "Aujourd'hui", entries: [] },
+      yesterday: { label: 'Hier',        entries: [] },
+      week:      { label: 'Cette semaine', entries: [] },
+      month:     { label: 'Ce mois-ci',  entries: [] },
+      older:     { label: 'Plus ancien', entries: [] }
+    };
+
+    entries.forEach(entry => {
+      const ms = this._historyTimestamp(entry[1]);
+      if (!ms) { groups.older.entries.push(entry); return; }
+      if (ms >= startOfToday) groups.today.entries.push(entry);
+      else if (ms >= startOfYesterday) groups.yesterday.entries.push(entry);
+      else if (ms >= startOfWeek) groups.week.entries.push(entry);
+      else if (ms >= startOfMonth) groups.month.entries.push(entry);
+      else groups.older.entries.push(entry);
+    });
+
+    return Object.values(groups).filter(g => g.entries.length > 0);
+  },
+
+  _createHistoryEntry(id, cwData, tmdb) {
+    const isMovie = !!tmdb.title;
+    const title = tmdb.title || tmdb.name || 'Sans titre';
+    const poster = tmdb.poster_path ? BBM.API.getPosterURL(tmdb.poster_path, 'w185') : null;
+    const year = (tmdb.release_date || tmdb.first_air_date || '').slice(0, 4);
+    const genres = (tmdb.genres || []).slice(0, 2).map(g => g.name).join(' · ');
+
+    const progress = Number(cwData.progress) || 0;
+    const duration = Number(cwData.duration) || 0;
+    const isWatched = !!cwData.allWatched || (duration > 0 && (progress / duration) >= 0.9);
+    const pct = duration > 0 ? Math.min(100, Math.round((progress / duration) * 100)) : 0;
+
+    const subtitle = [];
+    if (!isMovie && cwData.season != null && cwData.episode != null) {
+      subtitle.push(`S${String(cwData.season).padStart(2, '0')}·E${String(cwData.episode).padStart(2, '0')}`);
+    }
+    if (year) subtitle.push(year);
+    if (genres) subtitle.push(genres);
+
+    const ms = this._historyTimestamp(cwData);
+    const d = ms ? new Date(ms) : null;
+    const timeStr = d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+    const dateStr = d ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+
+    let pillHTML = '';
+    if (isWatched) {
+      pillHTML = '<span class="history-pill watched">✓ Terminé</span>';
+    } else if (duration > 0) {
+      const remainingMin = Math.max(1, Math.round((duration - progress) / 60));
+      pillHTML = `<span class="history-pill">${pct}% · ${remainingMin} min restantes</span>`;
+    }
+
+    const entry = document.createElement('article');
+    entry.className = 'history-entry';
+    entry.dataset.tmdbid = id;
+    if (isWatched) entry.classList.add('is-watched');
+
+    entry.innerHTML = `
+      <div class="history-entry-time">
+        <span class="history-time-hour">${timeStr}</span>
+        <span class="history-time-date">${dateStr}</span>
+      </div>
+      <div class="history-entry-poster">
+        ${poster
+          ? `<img src="${poster}" alt="${title}" loading="lazy">`
+          : '<div class="history-poster-ph">?</div>'}
+        <div class="history-poster-overlay">
+          <svg viewBox="0 0 24 24" fill="white" width="22" height="22"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+      </div>
+      <div class="history-entry-info">
+        <h3 class="history-entry-title">${title}</h3>
+        ${subtitle.length ? `<p class="history-entry-subtitle">${subtitle.join(' · ')}</p>` : ''}
+        ${pillHTML}
+        ${duration > 0 ? `
+          <div class="history-progress" aria-hidden="true">
+            <div class="history-progress-bar" style="width:${pct}%"></div>
+          </div>` : ''}
+      </div>
+      <div class="history-entry-actions">
+        <button class="history-btn history-btn-primary" data-action="play" title="${isWatched ? 'Revoir' : 'Reprendre'}">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>
+          <span>${isWatched ? 'Revoir' : 'Reprendre'}</span>
+        </button>
+        ${!isWatched ? `<button class="history-btn history-btn-icon" data-action="markwatched" title="Marquer comme vu" aria-label="Marquer comme vu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>` : ''}
+        <button class="history-btn history-btn-icon history-btn-danger" data-action="remove" title="Retirer de l'historique" aria-label="Retirer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        </button>
+      </div>`;
+
+    const openInfo = () => this.openModal(id, isMovie ? 'movie' : 'series');
+    entry.querySelector('.history-entry-poster').addEventListener('click', openInfo);
+    entry.querySelector('.history-entry-info').addEventListener('click', openInfo);
+
+    entry.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        if (action === 'play') {
+          this.playTitle(id, isMovie ? 'movie' : 'series');
+        } else if (action === 'markwatched') {
+          const dur = duration || 1;
+          await BBM.API.saveContinueWatching(id, {
+            progress: dur,
+            duration: dur,
+            category: isMovie ? 'movie' : 'series',
+            allWatched: true
+          });
+          this.continueWatching[id] = { ...(this.continueWatching[id] || {}), allWatched: true, progress: dur, duration: dur };
+          BBM.Toast.show('Marqué comme vu');
+          this.showHistory();
+        } else if (action === 'remove') {
+          entry.classList.add('removing');
+          await BBM.API.removeContinueWatching(id);
+          delete this.continueWatching[id];
+          setTimeout(() => {
+            const section = entry.closest('.history-section');
+            entry.remove();
+            if (section && section.querySelector('.history-section-body').childElementCount === 0) {
+              section.remove();
+            }
+            if (!document.querySelector('.history-entry')) {
+              this.showHistory();
+            } else if (section) {
+              const countEl = section.querySelector('.history-section-count');
+              if (countEl) countEl.textContent = section.querySelectorAll('.history-entry').length;
+            }
+          }, 220);
+          BBM.Toast.show("Retiré de l'historique");
+        }
+      });
+    });
+
+    return entry;
   },
 
   /* ----------------------------------------
