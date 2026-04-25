@@ -264,6 +264,73 @@
           </div>
         </div>
       </div>
+
+      <!-- Skip intro / outro buttons (visible for all users when in range) -->
+      <button class="skip-btn skip-btn-intro" id="skip-btn-intro" style="display:none">
+        Passer l'intro
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <polygon points="5 4 15 12 5 20 5 4"/>
+          <line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      </button>
+      <button class="skip-btn skip-btn-outro" id="skip-btn-outro" style="display:none">
+        Passer l'outro
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <polygon points="5 4 15 12 5 20 5 4"/>
+          <line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      </button>
+
+      <!-- Admin panel for setting intro/outro timecodes -->
+      <div class="skip-admin-panel" id="skip-admin-panel" style="display:none">
+        <div class="skip-admin-header">
+          <span class="skip-admin-title">Timecodes intro / outro</span>
+          <button class="skip-admin-close" id="skip-admin-close" aria-label="Fermer">✕</button>
+        </div>
+        <div class="skip-admin-body">
+          <div class="skip-admin-row">
+            <div class="skip-admin-label">
+              <span class="skip-admin-dot skip-admin-dot-intro"></span>
+              Début intro
+            </div>
+            <div class="skip-admin-time" id="skip-admin-intro-start-time">—</div>
+            <button class="skip-admin-btn" data-set="introStart">Set</button>
+            <button class="skip-admin-btn skip-admin-btn-clear" data-clear="introStart" aria-label="Effacer">✕</button>
+          </div>
+          <div class="skip-admin-row">
+            <div class="skip-admin-label">
+              <span class="skip-admin-dot skip-admin-dot-intro"></span>
+              Fin intro
+            </div>
+            <div class="skip-admin-time" id="skip-admin-intro-end-time">—</div>
+            <button class="skip-admin-btn" data-set="introEnd">Set</button>
+            <button class="skip-admin-btn skip-admin-btn-clear" data-clear="introEnd" aria-label="Effacer">✕</button>
+          </div>
+          <div class="skip-admin-sep"></div>
+          <div class="skip-admin-row">
+            <div class="skip-admin-label">
+              <span class="skip-admin-dot skip-admin-dot-outro"></span>
+              Début outro
+            </div>
+            <div class="skip-admin-time" id="skip-admin-outro-start-time">—</div>
+            <button class="skip-admin-btn" data-set="outroStart">Set</button>
+            <button class="skip-admin-btn skip-admin-btn-clear" data-clear="outroStart" aria-label="Effacer">✕</button>
+          </div>
+          <div class="skip-admin-row">
+            <div class="skip-admin-label">
+              <span class="skip-admin-dot skip-admin-dot-outro"></span>
+              Fin outro
+            </div>
+            <div class="skip-admin-time" id="skip-admin-outro-end-time">—</div>
+            <button class="skip-admin-btn" data-set="outroEnd">Set</button>
+            <button class="skip-admin-btn skip-admin-btn-clear" data-clear="outroEnd" aria-label="Effacer">✕</button>
+          </div>
+          <div class="skip-admin-footer">
+            <button class="skip-admin-save" id="skip-admin-save">Sauvegarder</button>
+            <span class="skip-admin-status" id="skip-admin-status"></span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Watch Party modal — shown after creating a room -->
@@ -299,73 +366,6 @@
         <div class="cast-active-label">Diffusion en cours</div>
         <div class="cast-active-device" id="cast-active-device">Appareil inconnu</div>
         <button class="cast-active-stop" id="cast-active-stop">Arrêter la diffusion</button>
-      </div>
-    </div>
-
-    <!-- Skip intro / outro buttons (visible for all users when in range) -->
-    <button class="skip-btn skip-btn-intro" id="skip-btn-intro" style="display:none">
-      Passer l'intro
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-        <polygon points="5 4 15 12 5 20 5 4"/>
-        <line x1="19" y1="5" x2="19" y2="19"/>
-      </svg>
-    </button>
-    <button class="skip-btn skip-btn-outro" id="skip-btn-outro" style="display:none">
-      Passer l'outro
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-        <polygon points="5 4 15 12 5 20 5 4"/>
-        <line x1="19" y1="5" x2="19" y2="19"/>
-      </svg>
-    </button>
-
-    <!-- Admin panel for setting intro/outro timecodes -->
-    <div class="skip-admin-panel" id="skip-admin-panel" style="display:none">
-      <div class="skip-admin-header">
-        <span class="skip-admin-title">Timecodes intro / outro</span>
-        <button class="skip-admin-close" id="skip-admin-close" aria-label="Fermer">✕</button>
-      </div>
-      <div class="skip-admin-body">
-        <div class="skip-admin-row">
-          <div class="skip-admin-label">
-            <span class="skip-admin-dot skip-admin-dot-intro"></span>
-            Début intro
-          </div>
-          <div class="skip-admin-time" id="skip-admin-intro-start-time">—</div>
-          <button class="skip-admin-btn" data-set="introStart">Set</button>
-          <button class="skip-admin-btn skip-admin-btn-clear" data-clear="introStart" aria-label="Effacer">✕</button>
-        </div>
-        <div class="skip-admin-row">
-          <div class="skip-admin-label">
-            <span class="skip-admin-dot skip-admin-dot-intro"></span>
-            Fin intro
-          </div>
-          <div class="skip-admin-time" id="skip-admin-intro-end-time">—</div>
-          <button class="skip-admin-btn" data-set="introEnd">Set</button>
-          <button class="skip-admin-btn skip-admin-btn-clear" data-clear="introEnd" aria-label="Effacer">✕</button>
-        </div>
-        <div class="skip-admin-sep"></div>
-        <div class="skip-admin-row">
-          <div class="skip-admin-label">
-            <span class="skip-admin-dot skip-admin-dot-outro"></span>
-            Début outro
-          </div>
-          <div class="skip-admin-time" id="skip-admin-outro-start-time">—</div>
-          <button class="skip-admin-btn" data-set="outroStart">Set</button>
-          <button class="skip-admin-btn skip-admin-btn-clear" data-clear="outroStart" aria-label="Effacer">✕</button>
-        </div>
-        <div class="skip-admin-row">
-          <div class="skip-admin-label">
-            <span class="skip-admin-dot skip-admin-dot-outro"></span>
-            Fin outro
-          </div>
-          <div class="skip-admin-time" id="skip-admin-outro-end-time">—</div>
-          <button class="skip-admin-btn" data-set="outroEnd">Set</button>
-          <button class="skip-admin-btn skip-admin-btn-clear" data-clear="outroEnd" aria-label="Effacer">✕</button>
-        </div>
-        <div class="skip-admin-footer">
-          <button class="skip-admin-save" id="skip-admin-save">Sauvegarder</button>
-          <span class="skip-admin-status" id="skip-admin-status"></span>
-        </div>
       </div>
     </div>
 
