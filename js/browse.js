@@ -790,8 +790,23 @@ BBM.Browse = {
       document.body.appendChild(panel);
     }
     const results = BBM.API.search(query).slice(0, 6);
+    const safeQuery = query.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const requestRow = `
+      <div class="typeahead-item typeahead-request" data-request-query="${safeQuery}">
+        <div class="typeahead-request-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </div>
+        <div class="typeahead-meta">
+          <div class="typeahead-title">Demander « ${safeQuery} »</div>
+          <div class="typeahead-sub"><span>Pas dans le catalogue ? Fais une demande</span></div>
+        </div>
+      </div>
+    `;
     if (results.length === 0) {
-      panel.innerHTML = `<div class="typeahead-empty">Aucun résultat pour « ${query} »</div>`;
+      panel.innerHTML = `<div class="typeahead-empty">Aucun résultat pour « ${safeQuery} »</div>` + requestRow;
     } else {
       panel.innerHTML = results.map(r => {
         const tmdb = this.tmdbCache.get(String(r.tmdbID));
@@ -814,7 +829,7 @@ BBM.Browse = {
             </div>
           </div>
         `;
-      }).join('') + `<div class="typeahead-footer">Appuyer sur Entrée pour voir tous les résultats</div>`;
+      }).join('') + requestRow + `<div class="typeahead-footer">Appuyer sur Entrée pour voir tous les résultats</div>`;
     }
     // Position below input
     const searchInput = document.getElementById('search-input');
@@ -827,7 +842,11 @@ BBM.Browse = {
       it.addEventListener('mousedown', (e) => {
         e.preventDefault();
         this.hideTypeahead();
-        this.openModal(it.dataset.tmdbid, it.dataset.type);
+        if (it.dataset.requestQuery != null) {
+          this.openRequestModalWithQuery(it.dataset.requestQuery);
+        } else {
+          this.openModal(it.dataset.tmdbid, it.dataset.type);
+        }
       });
     });
   },
@@ -919,10 +938,22 @@ BBM.Browse = {
     grid.innerHTML = '';
 
     if (results.length === 0) {
+      const safeQuery = query.replace(/"/g, '&quot;').replace(/</g, '&lt;');
       grid.innerHTML = `<div class="no-results" style="grid-column: 1 / -1">
-        <p>Aucun résultat pour "${query}"</p>
-        <p style="font-size: 0.9rem; margin-top: 8px; color: var(--bbm-text-muted)">Essaie un autre titre ou ajuste les filtres</p>
+        <p>Aucun résultat pour "${safeQuery}"</p>
+        <p style="font-size: 0.9rem; margin-top: 8px; color: var(--bbm-text-muted)">Pas dans le catalogue ? Demande-le et on l'ajoute.</p>
+        <button class="no-results-request-btn" id="no-results-request-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Demander "${safeQuery}"
+        </button>
       </div>`;
+      const reqBtn = document.getElementById('no-results-request-btn');
+      if (reqBtn) {
+        reqBtn.addEventListener('click', () => this.openRequestModalWithQuery(query));
+      }
     } else {
       results.forEach(item => {
         const tmdb = this.tmdbCache.get(String(item.tmdbID));
@@ -2570,6 +2601,20 @@ BBM.Browse = {
   /* ----------------------------------------
      Request Modal
      ---------------------------------------- */
+  openRequestModalWithQuery(query) {
+    const overlay = document.getElementById('request-overlay');
+    const input = document.getElementById('request-search-input');
+    const searchBtn = document.getElementById('request-search-btn');
+    if (!overlay || !input) return;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    input.value = query || '';
+    input.focus();
+    if (query && query.trim().length >= 2 && searchBtn) {
+      searchBtn.click();
+    }
+  },
+
   setupRequestModal() {
     // Open request modal
     const btnRequest = document.getElementById('btn-request');

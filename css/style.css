@@ -1836,6 +1836,28 @@ select:focus-visible {
   color: var(--bbm-text-muted);
   font-size: 1rem;
 }
+.no-results-request-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--bbm-accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter var(--bbm-duration-fast), transform var(--bbm-duration-fast);
+  box-shadow: 0 4px 16px var(--bbm-accent-glow);
+}
+.no-results-request-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.no-results-request-btn:active { transform: translateY(0); }
 
 /* ============================================
    CATEGORY FILTER
@@ -5885,6 +5907,27 @@ select:focus-visible {
   color: var(--bbm-text-secondary);
   font-size: 0.85rem;
   text-align: center;
+}
+.typeahead-item.typeahead-request {
+  background: rgba(var(--bbm-accent-rgb), 0.06);
+}
+.typeahead-item.typeahead-request:hover {
+  background: rgba(var(--bbm-accent-rgb), 0.18);
+}
+.typeahead-item.typeahead-request .typeahead-title {
+  color: var(--bbm-accent);
+  font-weight: 600;
+}
+.typeahead-request-icon {
+  flex: none;
+  width: 48px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bbm-accent);
+  background: rgba(var(--bbm-accent-rgb), 0.12);
+  border-radius: 6px;
 }
 .typeahead-footer {
   padding: 10px 14px;
