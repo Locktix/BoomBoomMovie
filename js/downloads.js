@@ -1,5 +1,57 @@
 /* ============================================
    BoomBoomMovie — Downloads library page
+   ============================================
+
+   ÉTAT ACTUEL : Cette page liste les contenus téléchargés via le bouton
+   "Télécharger" du modal — qui déclenche un download navigateur natif
+   (<a download>) sauvegardant le fichier directement dans le dossier
+   Téléchargements de l'OS de l'utilisateur. Firestore stocke uniquement
+   les métadonnées (titre, tmdbID, type, url, season, episode) pour
+   afficher l'historique sur cette page.
+
+   À FAIRE PLUS TARD — TÉLÉCHARGEMENTS OFFLINE RÉELS (PWA)
+
+   L'objectif serait que l'utilisateur puisse REGARDER les contenus sans
+   réseau depuis l'app (avion, métro, zone blanche). Plan d'implémentation
+   quand on s'y mettra :
+
+   1) Stockage : Cache API du navigateur (mieux qu'IndexedDB pour des
+      fichiers vidéo volumineux). Une cache nommée "bbm-offline" qui
+      stocke les blobs vidéo keyés par leur URL d'origine.
+
+   2) Download avec progression :
+      - fetch() en streaming via ReadableStream + ReadableStreamDefaultReader
+      - Suivi de la progression via Content-Length + bytes lus
+      - Stockage du blob final dans Cache API
+      - Reprise sur erreur (Range requests si le serveur supporte)
+
+   3) Interception via Service Worker :
+      - sw.js intercepte les requêtes GET sur les URLs vidéo
+      - Si présent en cache "bbm-offline" → respond avec le blob local
+      - Sinon → réseau
+
+   4) Cas HLS (m3u8) — le plus complexe :
+      - Télécharger le manifest puis tous les segments .ts
+      - Stocker manifest réécrit (URLs réécrites pour pointer vers cache)
+      - Énorme volume de petits fichiers — lourd à gérer
+
+   5) Cas MP4 — plus simple :
+      - Un seul fichier, simple put() dans la cache
+      - Mais 1-5 Go par film, gérer le quota navigateur (~50% du disque
+        libre selon le navigateur, peut être purgé sans préavis)
+
+   6) UI à ajouter sur cette page :
+      - Bouton "Disponible hors-ligne" / "Supprimer du cache"
+      - Barre de progression pendant le téléchargement
+      - Indication taille occupée + quota restant
+
+   7) Côté player (player.js _attachVideoSource) :
+      - Avant de hit le réseau, tester si l'URL est dans la cache offline
+      - Si oui : créer un blob URL et l'utiliser comme src
+
+   Décision actuelle : reporté. Le download direct (filesystem) couvre
+   ~80% du besoin pour les power users, et l'implémentation est ~3-5
+   jours de boulot bien fait.
    ============================================ */
 
 BBM.Downloads = {
