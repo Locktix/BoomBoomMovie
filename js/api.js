@@ -1070,6 +1070,19 @@ BBM.API = {
     });
   },
 
+  /** Composite key for episode ratings (stored in the same `ratings` map). */
+  episodeRatingKey(tmdbID, season, episode) {
+    return `${tmdbID}_s${season}_e${episode}`;
+  },
+
+  async setEpisodeRating(tmdbID, season, episode, rating) {
+    return this.setRating(this.episodeRatingKey(tmdbID, season, episode), rating);
+  },
+
+  async removeEpisodeRating(tmdbID, season, episode) {
+    return this.removeRating(this.episodeRatingKey(tmdbID, season, episode));
+  },
+
   async removeRating(tmdbID) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
@@ -1239,5 +1252,49 @@ BBM.API = {
       }
     });
     return Array.from(collections.values());
+  }
+};
+
+/* ============================================
+   BBM.Notify — Browser notifications + Toast
+   Combines the in-app toast with a native Notification API call when
+   the user has opted in via Settings and granted browser permission.
+   ============================================ */
+BBM.Notify = {
+  hasPermission() {
+    return typeof Notification !== 'undefined' && Notification.permission === 'granted';
+  },
+
+  async requestPermission() {
+    if (typeof Notification === 'undefined') return 'unsupported';
+    if (Notification.permission === 'granted') return 'granted';
+    if (Notification.permission === 'denied') return 'denied';
+    try { return await Notification.requestPermission(); } catch (e) { return 'denied'; }
+  },
+
+  /**
+   * Show a toast and (optionally) a browser notification.
+   * @param {string} title - Headline shown in both surfaces.
+   * @param {object} opts - { body, type ('success'|'error'|'info'), duration, icon, tag, browser (force-disable with false) }
+   */
+  show(title, opts = {}) {
+    const type = opts.type || 'success';
+    const duration = opts.duration || 3000;
+    const fullText = opts.body ? `${title} — ${opts.body}` : title;
+    if (BBM.Toast?.show) BBM.Toast.show(fullText, type, duration);
+    const allowBrowser = opts.browser !== false
+      && BBM.Settings?.get?.('notifications.browserPush') === true
+      && this.hasPermission()
+      && document.visibilityState !== 'visible'; // don't double-notify when tab is focused
+    if (allowBrowser) {
+      try {
+        new Notification(title, {
+          body: opts.body || '',
+          icon: opts.icon || '/icons/icon-192.png',
+          tag: opts.tag || undefined,
+          silent: false
+        });
+      } catch (e) { /* ignore — toast already shown */ }
+    }
   }
 };

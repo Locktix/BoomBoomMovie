@@ -62,7 +62,8 @@
     ],
     notifications: [
       { key: 'notifications.requestApproved', type: 'toggle', label: 'Mes demandes ont été approuvées', hint: 'Toast affiché au retour sur le site' },
-      { key: 'notifications.newContent', type: 'toggle', label: 'Nouveau contenu correspondant à Ma Liste' }
+      { key: 'notifications.newContent', type: 'toggle', label: 'Nouveau contenu correspondant à Ma Liste' },
+      { key: 'notifications.browserPush', type: 'toggle', label: 'Notifications navigateur', hint: 'Recevoir les alertes dans le centre de notifications de l\'OS quand l\'onglet n\'est pas au premier plan' }
     ],
     tv: [
       { key: 'tv.forceTvMode', type: 'toggle', label: 'Forcer le mode TV', hint: 'Active la navigation D-pad même sur PC' },
@@ -238,6 +239,23 @@
       }
       BBM.Settings.set(key, val);
       applyDisabledState();
+
+      // Special handling: when enabling browser push, request OS permission
+      if (key === 'notifications.browserPush' && val === true) {
+        BBM.Notify?.requestPermission().then(result => {
+          if (result === 'granted') {
+            BBM.Toast?.show('Notifications navigateur activées', 'success');
+          } else if (result === 'denied') {
+            BBM.Toast?.show('Permission refusée par le navigateur', 'error');
+            BBM.Settings.set('notifications.browserPush', false);
+            el.checked = false;
+          } else if (result === 'unsupported') {
+            BBM.Toast?.show('Notifications non supportées sur ce navigateur', 'error');
+            BBM.Settings.set('notifications.browserPush', false);
+            el.checked = false;
+          }
+        });
+      }
     });
   }
 

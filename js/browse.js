@@ -61,7 +61,13 @@ BBM.Browse = {
       // Auto-approve pending requests whose content is now available
       BBM.API.checkAndAutoApproveRequests().then(approved => {
         approved.forEach(req => {
-          BBM.Toast.show(`🎬 "${req.title}" que vous avez demandé est maintenant disponible !`, 'success', 5000);
+          if (BBM.Settings?.get?.('notifications.requestApproved') === false) return;
+          BBM.Notify.show(`🎬 Demande approuvée`, {
+            body: `"${req.title}" est maintenant disponible !`,
+            type: 'success',
+            duration: 5000,
+            tag: `request-approved-${req.id || req.tmdbID}`
+          });
         });
       }).catch(e => console.warn('Auto-approve check failed:', e));
     } catch (err) {
@@ -135,11 +141,22 @@ BBM.Browse = {
     const count = uniqueNew.size;
     if (count === 0) return;
 
+    if (BBM.Settings?.get?.('notifications.newContent') === false) return;
     if (count <= 3) {
       const titles = Array.from(uniqueNew.values());
-      BBM.Toast.show(`🆕 Nouveau : ${titles.join(', ')}`, 'success', 6000);
+      BBM.Notify.show(`🆕 Nouveau contenu`, {
+        body: titles.join(', '),
+        type: 'success',
+        duration: 6000,
+        tag: 'new-content'
+      });
     } else {
-      BBM.Toast.show(`🆕 ${count} nouveaux titres ajoutés depuis ta dernière visite !`, 'success', 5000);
+      BBM.Notify.show(`🆕 ${count} nouveaux titres`, {
+        body: `Ajoutés depuis ta dernière visite`,
+        type: 'success',
+        duration: 5000,
+        tag: 'new-content'
+      });
     }
   },
 
@@ -2058,6 +2075,17 @@ BBM.Browse = {
           </svg>
         </button>` : '';
 
+      // Episode rating widget — 5 small clickable stars
+      const epRatingKey = BBM.API.episodeRatingKey(tmdbID, ep.seasonNumber, ep.episodeNumber);
+      const epRating = this.userRatings[epRatingKey] || 0;
+      let epStarsHTML = '<div class="episode-rating" data-season="' + ep.seasonNumber + '" data-episode="' + ep.episodeNumber + '" title="Noter cet épisode">';
+      for (let i = 1; i <= 5; i++) {
+        epStarsHTML += `<span class="ep-star${epRating >= i ? ' filled' : ''}" data-value="${i}">
+          <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </span>`;
+      }
+      epStarsHTML += '</div>';
+
       const item = document.createElement('div');
       item.className = 'episode-item' + epWatchedClass;
       item.innerHTML = `
@@ -2074,6 +2102,7 @@ BBM.Browse = {
             <span class="episode-title">${epTitle}</span>
             <div class="episode-details-meta">
               <span class="episode-duration">${epRuntime}</span>
+              ${epStarsHTML}
               ${downloadHTML}
               ${toggleHTML}
             </div>
@@ -2087,6 +2116,47 @@ BBM.Browse = {
         this.closeModal();
         this.playEpisode(tmdbID, ep.seasonNumber, ep.episodeNumber, epTitle);
       });
+
+      // Episode rating handler
+      const epRatingEl = item.querySelector('.episode-rating');
+      if (epRatingEl) {
+        epRatingEl.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const star = e.target.closest('.ep-star');
+          if (!star) return;
+          const val = parseInt(star.dataset.value);
+          const s = parseInt(epRatingEl.dataset.season);
+          const epNum = parseInt(epRatingEl.dataset.episode);
+          const ratingKey = BBM.API.episodeRatingKey(tmdbID, s, epNum);
+          const current = this.userRatings[ratingKey] || 0;
+          if (val === current) {
+            delete this.userRatings[ratingKey];
+            await BBM.API.removeEpisodeRating(tmdbID, s, epNum);
+            BBM.Toast.show('Note retirée');
+            epRatingEl.querySelectorAll('.ep-star').forEach(st => st.classList.remove('filled'));
+          } else {
+            this.userRatings[ratingKey] = val;
+            await BBM.API.setEpisodeRating(tmdbID, s, epNum, val);
+            BBM.Toast.show(`Épisode noté ${val}/5 ⭐`, 'success');
+            epRatingEl.querySelectorAll('.ep-star').forEach(st => {
+              const v = parseInt(st.dataset.value);
+              st.classList.toggle('filled', v <= val);
+            });
+          }
+        });
+        epRatingEl.addEventListener('mousemove', (e) => {
+          const star = e.target.closest('.ep-star');
+          if (!star) return;
+          const val = parseInt(star.dataset.value);
+          epRatingEl.querySelectorAll('.ep-star').forEach(st => {
+            const v = parseInt(st.dataset.value);
+            st.classList.toggle('hover', v <= val);
+          });
+        });
+        epRatingEl.addEventListener('mouseleave', () => {
+          epRatingEl.querySelectorAll('.ep-star').forEach(st => st.classList.remove('hover'));
+        });
+      }
 
       const dlEpBtn = item.querySelector('.episode-download-btn');
       if (dlEpBtn) {

@@ -1453,6 +1453,24 @@ select:focus-visible {
   align-items: center;
   gap: 10px;
 }
+
+/* Per-episode rating stars */
+.episode-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.episode-rating .ep-star {
+  width: 14px; height: 14px;
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.25);
+  transition: color var(--bbm-duration-fast), transform var(--bbm-duration-fast);
+}
+.episode-rating .ep-star svg { width: 100%; height: 100%; fill: currentColor; }
+.episode-rating .ep-star:hover { transform: scale(1.15); }
+.episode-rating .ep-star.filled { color: #FACC15; }
+.episode-rating .ep-star.hover { color: #FDE68A; }
 .episode-toggle-watched {
   width: 26px; height: 26px;
   display: inline-flex; align-items: center; justify-content: center;

@@ -54,6 +54,7 @@
     // Notifications
     'notifications.requestApproved': true,
     'notifications.newContent': true,
+    'notifications.browserPush': false,
 
     // TV
     'tv.forceTvMode': false,

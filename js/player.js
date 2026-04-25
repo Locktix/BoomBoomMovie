@@ -1341,7 +1341,7 @@ BBM.Player = {
       }
     });
 
-    // Watch currentTime to show/hide skip buttons
+    // Watch currentTime to show/hide skip buttons (and auto-skip intro if enabled)
     const tick = () => {
       if (!this.video || !this._skipMarkers) return;
       const t = this.video.currentTime;
@@ -1352,6 +1352,13 @@ BBM.Player = {
         && t >= m.outroStart && t < m.outroEnd;
       if (introBtn) introBtn.style.display = inIntro ? '' : 'none';
       if (outroBtn) outroBtn.style.display = inOutro ? '' : 'none';
+      // Auto-skip intro if user opted in via settings (only once per session,
+      // so a manual seek back into the intro doesn't get auto-skipped again)
+      const autoSkip = window.BBM?.Settings?.get?.('playback.skipIntro');
+      if (autoSkip && inIntro && !this._autoSkippedIntro) {
+        this._autoSkippedIntro = true;
+        this.video.currentTime = m.introEnd + 0.1;
+      }
     };
     this.video.addEventListener('timeupdate', tick);
     this.video.addEventListener('seeked', tick);
