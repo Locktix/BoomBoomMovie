@@ -1308,24 +1308,24 @@ BBM.Player = {
   async setupSkipMarkers() {
     if (!this.tmdbID) return;
 
-    this._skipMarkers = { introStart: null, introEnd: null, outroStart: null, outroEnd: null };
+    this._skipMarkers = { introStart: null, introEnd: null, outroStart: null, outroEnd: null, postCreditsAt: null };
 
     const introBtn = document.getElementById('skip-btn-intro');
     const outroBtn = document.getElementById('skip-btn-outro');
-    const introMark = document.getElementById('skip-marker-intro');
-    const outroMark = document.getElementById('skip-marker-outro');
+    const outroBtnLabel = outroBtn?.querySelector('.skip-btn-label');
 
     // Load stored markers
     try {
       const data = await BBM.API.getSkipMarkers(this.tmdbID, this.type, this.season, this.episode);
       if (data) {
-        ['introStart', 'introEnd', 'outroStart', 'outroEnd'].forEach(k => {
+        ['introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt'].forEach(k => {
           if (data[k] != null && !isNaN(data[k])) this._skipMarkers[k] = Number(data[k]);
         });
       }
     } catch (e) { /* ignore — markers simply won't appear */ }
 
     this._renderSkipMarkers();
+    this._refreshOutroBtnLabel();
 
     // Skip buttons — click handlers
     introBtn?.addEventListener('click', () => {
@@ -1335,9 +1335,13 @@ BBM.Player = {
       }
     });
     outroBtn?.addEventListener('click', () => {
-      const end = this._skipMarkers.outroEnd;
-      if (end != null && this.video) {
-        this.video.currentTime = end + 0.1;
+      // If a post-credits scene is registered, skip to it instead of past
+      // the entire outro — preserves the scene for the user.
+      const target = this._skipMarkers.postCreditsAt != null
+        ? this._skipMarkers.postCreditsAt
+        : this._skipMarkers.outroEnd;
+      if (target != null && this.video) {
+        this.video.currentTime = target + 0.1;
       }
     });
 
@@ -1377,10 +1381,12 @@ BBM.Player = {
   _renderSkipMarkers() {
     const introMark = document.getElementById('skip-marker-intro');
     const outroMark = document.getElementById('skip-marker-outro');
+    const postMark = document.getElementById('skip-marker-postcredits');
     const duration = this.video?.duration;
     if (!duration || isNaN(duration)) {
       if (introMark) introMark.style.display = 'none';
       if (outroMark) outroMark.style.display = 'none';
+      if (postMark) postMark.style.display = 'none';
       return;
     }
     const m = this._skipMarkers || {};
@@ -1393,8 +1399,24 @@ BBM.Player = {
       el.style.width = Math.max(0, right - left) + '%';
       el.style.display = '';
     };
+    const placePoint = (el, t) => {
+      if (!el) return;
+      if (t == null || isNaN(t) || t < 0 || t > duration) { el.style.display = 'none'; return; }
+      el.style.left = ((t / duration) * 100) + '%';
+      el.style.display = '';
+    };
     placeRange(introMark, m.introStart, m.introEnd);
     placeRange(outroMark, m.outroStart, m.outroEnd);
+    placePoint(postMark, m.postCreditsAt);
+  },
+
+  _refreshOutroBtnLabel() {
+    const outroBtn = document.getElementById('skip-btn-outro');
+    if (!outroBtn) return;
+    const labelEl = outroBtn.querySelector('.skip-btn-label');
+    if (!labelEl) return;
+    const hasPost = this._skipMarkers?.postCreditsAt != null;
+    labelEl.textContent = hasPost ? 'Aller au post-générique' : 'Passer l\'outro';
   },
 
   _setupSkipAdminPanel() {
@@ -1414,6 +1436,8 @@ BBM.Player = {
       document.getElementById('skip-admin-intro-end-time').textContent = fmt(m.introEnd);
       document.getElementById('skip-admin-outro-start-time').textContent = fmt(m.outroStart);
       document.getElementById('skip-admin-outro-end-time').textContent = fmt(m.outroEnd);
+      const postEl = document.getElementById('skip-admin-postcredits-time');
+      if (postEl) postEl.textContent = fmt(m.postCreditsAt);
     };
     refreshDisplay();
 
@@ -1432,6 +1456,7 @@ BBM.Player = {
         this._skipMarkers[key] = this.video.currentTime;
         refreshDisplay();
         this._renderSkipMarkers();
+        this._refreshOutroBtnLabel();
         if (statusEl) statusEl.textContent = 'Modifié (non sauvegardé)';
       });
     });
@@ -1442,6 +1467,7 @@ BBM.Player = {
         this._skipMarkers[key] = null;
         refreshDisplay();
         this._renderSkipMarkers();
+        this._refreshOutroBtnLabel();
         if (statusEl) statusEl.textContent = 'Modifié (non sauvegardé)';
       });
     });

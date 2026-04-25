@@ -142,6 +142,7 @@
             <div class="player-progress-filled" id="progress-filled"></div>
             <div class="skip-marker skip-marker-intro" id="skip-marker-intro" style="display:none"></div>
             <div class="skip-marker skip-marker-outro" id="skip-marker-outro" style="display:none"></div>
+            <div class="skip-marker-point skip-marker-postcredits" id="skip-marker-postcredits" style="display:none" title="Scène post-générique"></div>
             <div class="player-progress-thumb" id="progress-thumb"></div>
           </div>
 
@@ -274,7 +275,7 @@
         </svg>
       </button>
       <button class="skip-btn skip-btn-outro" id="skip-btn-outro" style="display:none">
-        Passer l'outro
+        <span class="skip-btn-label">Passer l'outro</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
           <polygon points="5 4 15 12 5 20 5 4"/>
           <line x1="19" y1="5" x2="19" y2="19"/>
@@ -324,6 +325,16 @@
             <div class="skip-admin-time" id="skip-admin-outro-end-time">—</div>
             <button class="skip-admin-btn" data-set="outroEnd">Set</button>
             <button class="skip-admin-btn skip-admin-btn-clear" data-clear="outroEnd" aria-label="Effacer">✕</button>
+          </div>
+          <div class="skip-admin-sep"></div>
+          <div class="skip-admin-row">
+            <div class="skip-admin-label">
+              <span class="skip-admin-dot skip-admin-dot-postcredits"></span>
+              Post-générique
+            </div>
+            <div class="skip-admin-time" id="skip-admin-postcredits-time">—</div>
+            <button class="skip-admin-btn" data-set="postCreditsAt">Set</button>
+            <button class="skip-admin-btn skip-admin-btn-clear" data-clear="postCreditsAt" aria-label="Effacer">✕</button>
           </div>
           <div class="skip-admin-footer">
             <button class="skip-admin-save" id="skip-admin-save">Sauvegarder</button>

@@ -2266,6 +2266,20 @@ select:focus-visible {
 .skip-marker-intro { background: #22c55e; }
 .skip-marker-outro { background: #f59e0b; }
 
+/* Single point marker (post-credits scene location) */
+.skip-marker-point {
+  position: absolute;
+  top: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
 /* Skip buttons — Netflix-style floating over the player, bottom-right */
 .skip-btn {
   position: absolute;
@@ -2370,6 +2384,7 @@ select:focus-visible {
 }
 .skip-admin-dot-intro { background: #22c55e; }
 .skip-admin-dot-outro { background: #f59e0b; }
+.skip-admin-dot-postcredits { background: #38bdf8; }
 .skip-admin-time {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
