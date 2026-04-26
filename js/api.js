@@ -893,11 +893,18 @@ BBM.API = {
     const ref = BBM.db.collection('watchParties').doc(code);
     const doc = await ref.get();
     if (!doc.exists) throw new Error('Watch party introuvable');
+    const data = doc.data();
     const name = user.displayName || (user.email || '').split('@')[0] || 'Invité';
+    const wasAlreadyIn = !!(data.participants && data.participants[user.uid]);
     await ref.update({
       [`participants.${user.uid}`]: { name, joinedAt: firebase.firestore.Timestamp.now() }
     });
-    return doc.data();
+    // Post a system "X a rejoint" message — only on the first join
+    // (refreshes / reconnects don't need to re-announce)
+    if (!wasAlreadyIn) {
+      this.sendSystemMessage(code, `${name} a rejoint la session`).catch(() => {});
+    }
+    return data;
   },
 
   async updateWatchPartyState(code, state) {
@@ -922,6 +929,13 @@ BBM.API = {
 
   async leaveWatchParty(code, uid) {
     if (!code || !uid) return;
+    // Post a "X est parti" system message BEFORE removing the entry, so
+    // the message has the correct senderUid/senderName for the rules
+    const user = BBM.Auth.currentUser;
+    if (user && user.uid === uid) {
+      const name = user.displayName || (user.email || '').split('@')[0] || 'Anon';
+      this.sendSystemMessage(code, `${name} a quitté la session`).catch(() => {});
+    }
     try {
       await BBM.db.collection('watchParties').doc(code).update({
         [`participants.${uid}`]: firebase.firestore.FieldValue.delete()
@@ -1045,6 +1059,22 @@ BBM.API = {
       senderName: name,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+  },
+
+  /** System message (join / leave / etc.) — different style in the UI,
+   *  no rate-limit since it's automated. */
+  async sendSystemMessage(code, text) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !code || !text) return;
+    try {
+      await BBM.db.collection('watchParties').doc(code).collection('messages').add({
+        text: String(text).slice(0, 200),
+        system: true,
+        senderUid: user.uid,
+        senderName: user.displayName || (user.email || '').split('@')[0] || 'Anon',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (e) { /* best effort */ }
   },
 
   /** Returns an unsubscribe function. Callback receives the latest 100

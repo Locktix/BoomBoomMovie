@@ -612,8 +612,12 @@ BBM.Player = {
       const myUid = BBM.Auth.currentUser?.uid;
       const wasNearBottom = messagesEl.scrollTop + messagesEl.clientHeight >= messagesEl.scrollHeight - 50;
       messagesEl.innerHTML = msgs.map(m => {
-        const isMine = m.senderUid === myUid;
         const safeText = String(m.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+        // System message — join/leave events, no bubble, centered italic
+        if (m.system) {
+          return `<div class="wp-chat-msg-system">${safeText}</div>`;
+        }
+        const isMine = m.senderUid === myUid;
         const safeName = String(m.senderName || 'Anon').replace(/&/g, '&amp;').replace(/</g, '&lt;');
         return `
           <div class="wp-chat-msg${isMine ? ' is-mine' : ''}">

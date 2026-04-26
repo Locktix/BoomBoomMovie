@@ -2722,6 +2722,17 @@ select:focus-visible {
   background: var(--bbm-accent);
   border-radius: 14px 14px 4px 14px;
 }
+.wp-chat-msg-system {
+  align-self: center;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 100px;
+  margin: 4px 0;
+}
 .wp-chat-form {
   display: flex;
   gap: 8px;
