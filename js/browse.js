@@ -43,7 +43,7 @@ BBM.Browse = {
 
       // Prepare unique items for TMDB fetch
       const uniqueItems = this.getUniqueItems(items);
-      this.tmdbCache = await BBM.API.batchFetchTMDB(uniqueItems, 12, (done, total) => {
+      this.tmdbCache = await BBM.API.batchFetchTMDB(uniqueItems, 6, (done, total) => {
         this.updateLoadingProgress(done, total);
       });
 

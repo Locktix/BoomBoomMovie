@@ -2,7 +2,7 @@
  * Tests étendus de BBM.API — couverture des fonctions d'image, de timestamp,
  * de cache, de validation et de transformations diverses.
  */
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { loadBBM } from './load-bbm.js';
 
 let BBM;
@@ -208,5 +208,57 @@ describe('setUserAdmin — guards', () => {
   test('uid manquant — pas d\'op', async () => {
     await expect(BBM.API.setUserAdmin(null, true)).resolves.toBeUndefined();
     await expect(BBM.API.setUserAdmin('', true)).resolves.toBeUndefined();
+  });
+});
+
+describe('getTMDBData — retry sur NetworkError', () => {
+  let originalFetch;
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    localStorage.clear();
+    BBM.API._cache = {}; // reset cache
+  });
+  afterEach(() => { globalThis.fetch = originalFetch; });
+
+  test('succès au 1er essai', async () => {
+    let calls = 0;
+    globalThis.fetch = () => {
+      calls++;
+      return Promise.resolve({ ok: true, json: async () => ({ title: 'OK', poster_path: '/x.jpg' }) });
+    };
+    const data = await BBM.API.getTMDBData('1', 'movie');
+    expect(calls).toBe(1);
+    expect(data.title).toBe('OK');
+  });
+
+  test('retry après NetworkError, succès au 2e essai', async () => {
+    let calls = 0;
+    globalThis.fetch = () => {
+      calls++;
+      if (calls === 1) return Promise.reject(new TypeError('NetworkError'));
+      return Promise.resolve({ ok: true, json: async () => ({ title: 'recovered' }) });
+    };
+    const data = await BBM.API.getTMDBData('2', 'movie');
+    expect(calls).toBe(2);
+    expect(data.title).toBe('recovered');
+  });
+
+  test('null après 2 échecs (1 + retry)', async () => {
+    let calls = 0;
+    globalThis.fetch = () => { calls++; return Promise.reject(new TypeError('NetworkError')); };
+    const data = await BBM.API.getTMDBData('3', 'movie');
+    expect(calls).toBe(2);
+    expect(data).toBeNull();
+  });
+
+  test('null si !res.ok (pas de retry sur 404/401)', async () => {
+    let calls = 0;
+    globalThis.fetch = () => {
+      calls++;
+      return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+    };
+    const data = await BBM.API.getTMDBData('4', 'movie');
+    expect(calls).toBe(1);
+    expect(data).toBeNull();
   });
 });

@@ -201,27 +201,38 @@ BBM.API = {
       }
     } catch (e) { /* ignore */ }
 
-    // Fetch from TMDB
+    // Fetch from TMDB — avec un retry sur NetworkError car beaucoup de
+    // requêtes parallèles peuvent se faire silence par le navigateur ou
+    // un blocker, et un seul échec crée un trou dans la grille.
     const endpoint = type === 'movie' ? 'movie' : 'tv';
     const url = `${BBM.Config.tmdb.baseURL}/${endpoint}/${tmdbID}?api_key=${BBM.Config.tmdb.apiKey}&language=${BBM.Config.tmdb.language}&append_to_response=credits,videos,images&include_image_language=fr,en,null`;
 
-    try {
+    const tryFetch = async () => {
       const res = await fetch(url);
       if (!res.ok) return null;
-      const data = await res.json();
-      data._cachedAt = Date.now();
+      return await res.json();
+    };
 
-      // Save to localStorage
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-      } catch (e) { /* localStorage full */ }
-
-      this._cache[cacheKey] = data;
-      return data;
+    let data = null;
+    try {
+      data = await tryFetch();
     } catch (e) {
-      console.error(`TMDB fetch error for ${tmdbID}:`, e);
-      return null;
+      // Un retry après 1,5s — couvre les network blips, rate-limits TMDB,
+      // les extensions qui bloquent sporadiquement
+      await new Promise(r => setTimeout(r, 1500));
+      try { data = await tryFetch(); }
+      catch (e2) {
+        console.warn(`TMDB ${tmdbID}: échec après retry`, e2.message || e2);
+        return null;
+      }
     }
+    if (!data) return null;
+
+    data._cachedAt = Date.now();
+    try { localStorage.setItem(cacheKey, JSON.stringify(data)); }
+    catch (e) { /* localStorage full */ }
+    this._cache[cacheKey] = data;
+    return data;
   },
 
   /** Fetch TMDB season data */
@@ -293,7 +304,7 @@ BBM.API = {
   },
 
   /** Batch fetch TMDB data avec concurrency limit */
-  async batchFetchTMDB(items, concurrency = 12, onProgress = null) {
+  async batchFetchTMDB(items, concurrency = 6, onProgress = null) {
     const results = new Map();
     const queue = [...items];
     const total = queue.length;
