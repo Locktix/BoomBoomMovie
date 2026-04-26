@@ -64,14 +64,18 @@ BBM.Player = {
     // pas de support natif (Chrome/Firefox/Edge)
     this._attachVideoSource(videoURL);
 
-    // Cleanup hls.js on page unload + save mini-player state for resume
+    // Cleanup hls.js on page unload + save mini-player state for resume.
+    // Stash the closure refs so other handlers (back button, etc.) can
+    // trigger a save without rebuilding the args.
+    this._currentVideoURL = videoURL;
+    this._currentTitle = title;
     window.addEventListener('beforeunload', () => {
       if (this._hls) { try { this._hls.destroy(); } catch (e) {} }
-      this._saveMiniPlayerState(videoURL, title);
+      this._saveMiniPlayerState(this._currentVideoURL, this._currentTitle);
     });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        this._saveMiniPlayerState(videoURL, title);
+        this._saveMiniPlayerState(this._currentVideoURL, this._currentTitle);
       }
     });
 
@@ -672,6 +676,7 @@ BBM.Player = {
     // Back button
     document.getElementById('player-back').addEventListener('click', () => {
       this.saveProgress();
+      this._saveMiniPlayerState(this._currentVideoURL, this._currentTitle);
       window.location.href = 'browse.html';
     });
 

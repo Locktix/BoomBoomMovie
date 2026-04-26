@@ -1688,19 +1688,21 @@ BBM.Browse = {
       // iframe after a small delay (so quick passes don't load the video)
       const previewOn = !S || (S.get('performance.previewVideo') !== false
         && !S.get('performance.potatoMode'));
-      if (previewOn) {
+      const trailer = previewOn ? (
+        (tmdb.videos?.results || []).find(v =>
+          v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+        ) || (tmdb.videos?.results || []).find(v => v.site === 'YouTube')
+      ) : null;
+      if (trailer && trailer.key) {
         previewTimer = setTimeout(() => {
-          const trailer = (tmdb.videos?.results || []).find(v =>
-            v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
-          ) || (tmdb.videos?.results || []).find(v => v.site === 'YouTube');
-          if (!trailer || !trailer.key) return;
+          if (!panel) return; // panel was removed before timer fired
           const imgWrap = panel.querySelector('.hover-panel-img');
           if (!imgWrap) return;
           const iframe = document.createElement('iframe');
           iframe.className = 'hover-panel-trailer';
           iframe.allow = 'autoplay; encrypted-media';
           iframe.setAttribute('frameborder', '0');
-          iframe.src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&loop=1&playlist=${trailer.key}&iv_load_policy=3`;
+          iframe.src = `https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&loop=1&playlist=${trailer.key}&iv_load_policy=3&disablekb=1`;
           imgWrap.appendChild(iframe);
         }, 1500);
       }

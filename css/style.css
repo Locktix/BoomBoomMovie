@@ -5900,14 +5900,13 @@ select:focus-visible {
 }
 .hover-panel-trailer {
   position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  /* YouTube embed needs 16:9 area, but we scale up to fully cover the
-     16:9 panel area accounting for chrome around the iframe video. */
-  width: 177.78%;
+  inset: 0;
+  width: 100%;
   height: 100%;
   border: 0;
   pointer-events: none;
+  z-index: 1;
+  opacity: 1;
   animation: hoverPanelTrailerIn 0.4s ease;
 }
 @keyframes hoverPanelTrailerIn {
