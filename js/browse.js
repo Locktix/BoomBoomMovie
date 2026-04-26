@@ -1129,7 +1129,9 @@ BBM.Browse = {
         iframe.setAttribute('frameborder', '0');
         iframe.setAttribute('tabindex', '-1');
         trailerSlot.appendChild(iframe);
-        requestAnimationFrame(() => trailerSlot.classList.add('active'));
+        // Don't reveal the iframe yet — we wait for YouTube to confirm
+        // the video is actually playing (state=1 or 3) so the pause/play
+        // button isn't visible during the fade-in.
 
         const muteBtn = document.getElementById('hero-mute');
         if (muteBtn) {
@@ -1164,6 +1166,11 @@ BBM.Browse = {
               : data.info;
             if (typeof state === 'number' && (state === 1 || state === 3)) {
               trailerLivePlay = true;
+              // Now that the video is actually playing, reveal the iframe
+              // so the pre-roll play button isn't shown during fade-in
+              if (!trailerSlot.classList.contains('active')) {
+                trailerSlot.classList.add('active');
+              }
             }
           }
         };
@@ -1700,11 +1707,54 @@ BBM.Browse = {
           const imgWrap = panel.querySelector('.hover-panel-img');
           if (!imgWrap) return;
           const iframe = document.createElement('iframe');
+          iframe.id = 'hp-trailer-' + tmdbID;
           iframe.className = 'hover-panel-trailer';
           iframe.allow = 'autoplay; encrypted-media';
           iframe.setAttribute('frameborder', '0');
-          iframe.src = `https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&loop=1&playlist=${trailer.key}&iv_load_policy=3&disablekb=1`;
+          iframe.setAttribute('tabindex', '-1');
+          iframe.src = `https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&loop=1&playlist=${trailer.key}&iv_load_policy=3&disablekb=1&showinfo=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
           imgWrap.appendChild(iframe);
+
+          // Reveal only when YouTube confirms playing state — hides the
+          // pre-roll play button. Fallback timer in case postMessage never
+          // fires (e.g. YT errors out): drop the iframe silently.
+          const onMsg = (ev) => {
+            if (!ev.data || typeof ev.data !== 'string') return;
+            if (!ev.origin.includes('youtube')) return;
+            let data;
+            try { data = JSON.parse(ev.data); } catch (e) { return; }
+            if (data.event === 'onError') {
+              cleanup();
+              try { iframe.remove(); } catch (e) {}
+              return;
+            }
+            if (data.event === 'onStateChange' || data.event === 'infoDelivery') {
+              const state = (data.info && typeof data.info === 'object')
+                ? data.info.playerState : data.info;
+              if (typeof state === 'number' && (state === 1 || state === 3)) {
+                iframe.classList.add('visible');
+                cleanup();
+              }
+            }
+          };
+          const cleanup = () => {
+            window.removeEventListener('message', onMsg);
+            clearTimeout(failsafe);
+          };
+          window.addEventListener('message', onMsg);
+          iframe.addEventListener('load', () => {
+            try {
+              iframe.contentWindow.postMessage(
+                JSON.stringify({ event: 'listening', id: iframe.id, channel: 'widget' }),
+                '*'
+              );
+            } catch (e) {}
+          });
+          // 5s failsafe — if YT never reports playing, drop the iframe
+          const failsafe = setTimeout(() => {
+            cleanup();
+            try { iframe.remove(); } catch (e) {}
+          }, 5000);
         }, 1500);
       }
     };

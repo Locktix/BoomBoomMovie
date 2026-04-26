@@ -1288,12 +1288,15 @@ BBM.Notify = {
       && document.visibilityState !== 'visible'; // don't double-notify when tab is focused
     if (allowBrowser) {
       try {
-        new Notification(title, {
+        const notifOpts = {
           body: opts.body || '',
-          icon: opts.icon || '/icons/icon-192.png',
           tag: opts.tag || undefined,
           silent: false
-        });
+        };
+        // Optional icon — only if the caller passes one. The site uses a
+        // data: URL favicon, no static PNG asset, so we don't default.
+        if (opts.icon) notifOpts.icon = opts.icon;
+        new Notification(title, notifOpts);
       } catch (e) { /* ignore — toast already shown */ }
     }
   }
