@@ -5902,10 +5902,12 @@ select:focus-visible {
   position: absolute;
   top: 50%;
   left: 50%;
-  /* Crop YouTube branding/logo by oversizing + centering. The container
-     has overflow:hidden so the YT logo at the corners is hidden. */
-  width: 140%;
-  height: 140%;
+  /* Crop YouTube branding/logo/controls aggressively by oversizing.
+     1.7x means 35% extra on each side — hides the YT logo (bottom-right),
+     the controls bar (bottom), and any chrome at the top. The container
+     has overflow:hidden so the overflow is clipped. */
+  width: 170%;
+  height: 170%;
   transform: translate(-50%, -50%);
   border: 0;
   pointer-events: none;

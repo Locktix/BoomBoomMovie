@@ -47,7 +47,8 @@
       "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('js/browse.js','utf8'\\)\\); console.log\\('browse.js OK'\\);\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(awk 'NR==263,NR==350 {indent=match\\($0,/[^ ]/\\)-1; if \\(match\\($0,/\\(player-container|skip-btn|skip-admin-panel|next-episode|wp-modal|cast-active-overlay|shortcuts-overlay\\)/\\)\\) print NR\": \"indent\" \"$0}' /home/alanbilla/Documents/GitHub/BoomBoomMovie/watch.html)"
     ]
   }
 }

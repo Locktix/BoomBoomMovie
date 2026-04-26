@@ -1750,11 +1750,14 @@ BBM.Browse = {
               );
             } catch (e) {}
           });
-          // 5s failsafe — if YT never reports playing, drop the iframe
+          // Failsafe — if YouTube's postMessage state never arrives (some
+          // ad-blockers or strict CSPs swallow it), reveal the iframe
+          // anyway after 2,5s. The video is autoplay+muted so it should
+          // be playing by then; the aggressive scale crops the YT chrome.
           const failsafe = setTimeout(() => {
             cleanup();
-            try { iframe.remove(); } catch (e) {}
-          }, 5000);
+            iframe.classList.add('visible');
+          }, 2500);
         }, 1500);
       }
     };
