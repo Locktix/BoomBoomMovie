@@ -155,9 +155,21 @@
     });
   }
 
-  // Refresh button
-  document.addEventListener('click', (e) => {
-    if (e.target.closest('#parties-refresh')) loadWatchParties();
+  // Refresh + purge buttons
+  document.addEventListener('click', async (e) => {
+    if (e.target.closest('#parties-refresh')) {
+      loadWatchParties();
+      return;
+    }
+    const purgeBtn = e.target.closest('#parties-purge');
+    if (purgeBtn) {
+      if (!confirm('Supprimer toutes les Watch Parties inactives depuis plus de 6 heures ?')) return;
+      purgeBtn.disabled = true;
+      const removed = await BBM.API.purgeStaleWatchParties({ staleHours: 6 });
+      BBM.Toast?.show(`${removed} session${removed > 1 ? 's' : ''} purgée${removed > 1 ? 's' : ''}`, 'success');
+      purgeBtn.disabled = false;
+      await loadWatchParties();
+    }
   });
 
   /* ---------- Requests ---------- */

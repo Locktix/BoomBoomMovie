@@ -58,6 +58,10 @@ BBM.Browse = {
       // Notify new content since last visit
       this.notifyNewContent();
 
+      // Lazy cleanup of own stale watch parties (>6h since last update).
+      // Replaces the Cloud Functions cron we don't have on the free plan.
+      BBM.API.cleanupOwnStaleWatchParties().catch(() => {});
+
       // Auto-approve pending requests whose content is now available
       BBM.API.checkAndAutoApproveRequests().then(approved => {
         approved.forEach(req => {

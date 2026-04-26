@@ -261,10 +261,16 @@
         <div class="admin-card">
           <div class="admin-card-header">
             <h3 id="parties-count-label">— sessions</h3>
-            <button class="admin-btn-ghost" id="parties-refresh">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              Rafraîchir
-            </button>
+            <div style="display:flex; gap:8px">
+              <button class="admin-btn-ghost" id="parties-purge" title="Supprime toutes les parties inactives depuis plus de 6h">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Purger les inactives
+              </button>
+              <button class="admin-btn-ghost" id="parties-refresh">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Rafraîchir
+              </button>
+            </div>
           </div>
           <div class="admin-parties-list" id="admin-parties-list">
             <div class="admin-empty-state">Chargement…</div>

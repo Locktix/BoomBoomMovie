@@ -932,6 +932,64 @@ BBM.API = {
     catch (e) { /* noop */ }
   },
 
+  /** Cleanup pattern (no Cloud Functions cron) :
+   *  À chaque démarrage de page, l'utilisateur courant supprime ses
+   *  propres parties dont `updatedAt` est vieux de plus de
+   *  `staleHours` heures. Toute party active continue de heartbeat
+   *  toutes les 8s, donc seules les sessions abandonnées disparaissent.
+   *  Retourne le nombre de parties supprimées.
+   */
+  async cleanupOwnStaleWatchParties({ staleHours = 6 } = {}) {
+    const user = BBM.Auth.currentUser;
+    if (!user) return 0;
+    try {
+      const cutoff = Date.now() - staleHours * 3600 * 1000;
+      const snap = await BBM.db.collection('watchParties')
+        .where('hostUid', '==', user.uid).get();
+      let removed = 0;
+      const batch = BBM.db.batch();
+      snap.forEach(doc => {
+        const data = doc.data();
+        const updatedMs = this._msFromTimestamp(data.updatedAt) || this._msFromTimestamp(data.createdAt);
+        if (updatedMs && updatedMs < cutoff) {
+          batch.delete(doc.ref);
+          removed++;
+        }
+      });
+      if (removed > 0) await batch.commit();
+      return removed;
+    } catch (e) {
+      console.warn('cleanupOwnStaleWatchParties failed:', e);
+      return 0;
+    }
+  },
+
+  /** Admin only — purge ALL parties whose updatedAt > staleHours ago.
+   *  Échoue côté Firestore si l'user n'est pas admin (cf. rules).
+   *  Retourne le nombre de parties supprimées.
+   */
+  async purgeStaleWatchParties({ staleHours = 6 } = {}) {
+    try {
+      const cutoff = Date.now() - staleHours * 3600 * 1000;
+      const snap = await BBM.db.collection('watchParties').get();
+      let removed = 0;
+      const batch = BBM.db.batch();
+      snap.forEach(doc => {
+        const data = doc.data();
+        const updatedMs = this._msFromTimestamp(data.updatedAt) || this._msFromTimestamp(data.createdAt);
+        if (updatedMs && updatedMs < cutoff) {
+          batch.delete(doc.ref);
+          removed++;
+        }
+      });
+      if (removed > 0) await batch.commit();
+      return removed;
+    } catch (e) {
+      console.warn('purgeStaleWatchParties failed:', e);
+      return 0;
+    }
+  },
+
   /* --- Chat -------------------------------------------------------- */
 
   async sendChatMessage(code, text) {
