@@ -35,6 +35,25 @@ service cloud.firestore {
       // Only the host can delete the room
       allow delete: if request.auth != null
         && resource.data.hostUid == request.auth.uid;
+
+      // Chat messages — any auth participant can read+post; only the
+      // sender can edit/delete their own message
+      match /messages/{messageId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.senderUid == request.auth.uid;
+        allow update, delete: if request.auth != null
+          && resource.data.senderUid == request.auth.uid;
+      }
+
+      // Ephemeral reactions — same rules as messages
+      match /reactions/{reactionId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.senderUid == request.auth.uid;
+        allow update, delete: if request.auth != null
+          && resource.data.senderUid == request.auth.uid;
+      }
     }
   }
 }

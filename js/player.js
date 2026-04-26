@@ -280,7 +280,10 @@ BBM.Player = {
         if (codeDisplay) codeDisplay.textContent = this._partyCode;
       }
       if (btn) btn.style.display = 'none'; // guest can't re-create
+      this._showLobby({ isHost: false });
       this._attachPartyListener();
+      this._attachPartyChat();
+      this._attachPartyReactions();
       return;
     }
 
@@ -292,6 +295,8 @@ BBM.Player = {
       }
       this._attachPartyListener();
       this._attachPartyHostBindings();
+      this._attachPartyChat();
+      this._attachPartyReactions();
       return;
     }
 
@@ -310,15 +315,16 @@ BBM.Player = {
         });
         this._partyCode = code;
         this._isPartyHost = true;
-        this._showWatchPartyModal(code);
         if (badge) {
           badge.style.display = '';
           if (codeDisplay) codeDisplay.textContent = code;
         }
+        this._showLobby({ isHost: true });
+        this.video.pause();
         this._attachPartyListener();
         this._attachPartyHostBindings();
-        // Push current state so late joiners catch up
-        this._pushPartyState();
+        this._attachPartyChat();
+        this._attachPartyReactions();
       } catch (err) {
         console.error('Watch party create failed:', err);
         BBM.Toast.show('Impossible de créer la Watch Party', 'error');
@@ -326,6 +332,98 @@ BBM.Player = {
         btn.disabled = false;
       }
     });
+  },
+
+  /* --- Lobby ------------------------------------------------------ */
+
+  _showLobby({ isHost }) {
+    const lobby = document.getElementById('wp-lobby');
+    if (!lobby) return;
+    lobby.style.display = '';
+    document.getElementById('wp-lobby-code').textContent = this._partyCode || '------';
+    document.getElementById('wp-lobby-start').style.display = isHost ? '' : 'none';
+    document.getElementById('wp-lobby-waiting').style.display = isHost ? 'none' : '';
+    if (this.video) this.video.pause();
+    this._lobbyVisible = true;
+
+    // Copy share link
+    const copyBtn = document.getElementById('wp-lobby-copy');
+    if (copyBtn && !copyBtn._wired) {
+      copyBtn._wired = true;
+      copyBtn.addEventListener('click', async () => {
+        const shareURL = `${location.origin}${location.pathname.replace(/watch\.html$/, '')}watch.html?party=${this._partyCode}`;
+        try {
+          await navigator.clipboard.writeText(shareURL);
+          BBM.Toast.show('Lien copié !', 'success');
+        } catch (e) { BBM.Toast.show('Impossible de copier', 'error'); }
+      });
+    }
+
+    // Start button (host only)
+    const startBtn = document.getElementById('wp-lobby-start');
+    if (startBtn && !startBtn._wired) {
+      startBtn._wired = true;
+      startBtn.addEventListener('click', async () => {
+        startBtn.disabled = true;
+        await BBM.API.startWatchParty(this._partyCode);
+        // The party listener will hide the lobby once started=true echoes back
+      });
+    }
+
+    // Leave button
+    const leaveBtn = document.getElementById('wp-lobby-leave');
+    if (leaveBtn && !leaveBtn._wired) {
+      leaveBtn._wired = true;
+      leaveBtn.addEventListener('click', async () => {
+        if (this._isPartyHost) {
+          if (!confirm('Terminer la Watch Party ? Les invités seront éjectés.')) return;
+          await BBM.API.endWatchParty(this._partyCode);
+        } else {
+          await BBM.API.leaveWatchParty(this._partyCode, BBM.Auth.currentUser?.uid);
+        }
+        window.location.href = 'browse.html';
+      });
+    }
+  },
+
+  _hideLobby() {
+    const lobby = document.getElementById('wp-lobby');
+    if (lobby) lobby.style.display = 'none';
+    this._lobbyVisible = false;
+    // Reveal chat / reactions buttons in the player controls
+    const chatBtn = document.getElementById('btn-wp-chat');
+    const reactBtn = document.getElementById('btn-wp-reactions');
+    if (chatBtn) chatBtn.style.display = '';
+    if (reactBtn) reactBtn.style.display = '';
+    // For host, start playback
+    if (this._isPartyHost && this.video?.paused) {
+      this.video.play().catch(() => {});
+    }
+  },
+
+  _renderLobbyParticipants(state) {
+    const list = document.getElementById('wp-lobby-participants');
+    const countEl = document.getElementById('wp-lobby-count');
+    const pluralEl = document.getElementById('wp-lobby-plural');
+    const hostNameEl = document.getElementById('wp-lobby-host-name');
+    if (!list) return;
+    const parts = state.participants || {};
+    const entries = Object.entries(parts);
+    if (countEl) countEl.textContent = String(entries.length);
+    if (pluralEl) pluralEl.textContent = entries.length > 1 ? 's' : '';
+    if (hostNameEl) hostNameEl.textContent = state.hostName || 'l\'hôte';
+    list.innerHTML = entries.map(([uid, p]) => {
+      const isHost = uid === state.hostUid;
+      const initial = (p.name || '?').charAt(0).toUpperCase();
+      const safeName = String(p.name || 'Anon').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      return `
+        <div class="wp-lobby-participant${isHost ? ' is-host' : ''}">
+          <div class="wp-lobby-avatar">${initial}</div>
+          <div class="wp-lobby-name">${safeName}</div>
+          ${isHost ? '<div class="wp-lobby-host-badge">HOST</div>' : ''}
+        </div>
+      `;
+    }).join('');
   },
 
   _showWatchPartyModal(code) {
@@ -377,12 +475,22 @@ BBM.Player = {
       if (countDisplay && state.participants) {
         countDisplay.textContent = Object.keys(state.participants).length;
       }
-      // If I'm a guest, mirror the host's state
-      if (!this._isPartyHost) this._applyPartyState(state);
+      // Re-render lobby roster
+      if (this._lobbyVisible) this._renderLobbyParticipants(state);
+      // Handle lobby → playback transition
+      if (state.started === true && this._lobbyVisible) {
+        this._hideLobby();
+      }
+      // If I'm a guest, mirror the host's state (only after start)
+      if (!this._isPartyHost && state.started === true) {
+        this._applyPartyState(state);
+      }
     });
 
     window.addEventListener('beforeunload', () => {
       if (this._partyUnsubscribe) this._partyUnsubscribe();
+      if (this._chatUnsubscribe) this._chatUnsubscribe();
+      if (this._reactionsUnsubscribe) this._reactionsUnsubscribe();
       if (this._partyCode) {
         BBM.API.leaveWatchParty(this._partyCode, BBM.Auth.currentUser?.uid);
       }
@@ -423,6 +531,120 @@ BBM.Player = {
       currentTime: this.video.currentTime || 0,
       isPlaying: !this.video.paused
     });
+  },
+
+  /* --- Watch Party — Chat ----------------------------------------- */
+
+  _attachPartyChat() {
+    const btn = document.getElementById('btn-wp-chat');
+    const chat = document.getElementById('wp-chat');
+    const closeBtn = document.getElementById('wp-chat-close');
+    const form = document.getElementById('wp-chat-form');
+    const input = document.getElementById('wp-chat-input');
+    const messagesEl = document.getElementById('wp-chat-messages');
+    const unreadDot = document.getElementById('chat-unread-dot');
+    if (!chat || !form || !input || !messagesEl) return;
+
+    let lastMsgCount = 0;
+    let chatOpen = false;
+
+    const renderMessages = (msgs) => {
+      const myUid = BBM.Auth.currentUser?.uid;
+      const wasNearBottom = messagesEl.scrollTop + messagesEl.clientHeight >= messagesEl.scrollHeight - 50;
+      messagesEl.innerHTML = msgs.map(m => {
+        const isMine = m.senderUid === myUid;
+        const safeText = String(m.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+        const safeName = String(m.senderName || 'Anon').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        return `
+          <div class="wp-chat-msg${isMine ? ' is-mine' : ''}">
+            ${isMine ? '' : `<div class="wp-chat-msg-author">${safeName}</div>`}
+            <div class="wp-chat-msg-bubble">${safeText}</div>
+          </div>
+        `;
+      }).join('');
+      if (wasNearBottom || chatOpen) messagesEl.scrollTop = messagesEl.scrollHeight;
+      // Unread badge — only when chat is closed AND there are new messages
+      if (!chatOpen && msgs.length > lastMsgCount && unreadDot) {
+        unreadDot.style.display = '';
+      }
+      lastMsgCount = msgs.length;
+    };
+
+    this._chatUnsubscribe = BBM.API.listenChatMessages(this._partyCode, renderMessages);
+
+    btn?.addEventListener('click', () => {
+      chatOpen = !chatOpen;
+      chat.classList.toggle('open', chatOpen);
+      if (chatOpen) {
+        input.focus();
+        if (unreadDot) unreadDot.style.display = 'none';
+      }
+    });
+    closeBtn?.addEventListener('click', () => {
+      chatOpen = false;
+      chat.classList.remove('open');
+    });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value;
+      input.value = '';
+      if (!text.trim()) return;
+      try {
+        await BBM.API.sendChatMessage(this._partyCode, text);
+      } catch (err) {
+        BBM.Toast.show('Message non envoyé', 'error');
+      }
+    });
+  },
+
+  /* --- Watch Party — Reactions ------------------------------------ */
+
+  _attachPartyReactions() {
+    const btn = document.getElementById('btn-wp-reactions');
+    const picker = document.getElementById('wp-reactions-picker');
+    const layer = document.getElementById('wp-reactions-layer');
+    if (!btn || !picker || !layer) return;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      picker.style.display = picker.style.display === 'none' ? '' : 'none';
+    });
+    document.addEventListener('click', (e) => {
+      if (picker.style.display !== 'none'
+          && !picker.contains(e.target)
+          && e.target !== btn
+          && !btn.contains(e.target)) {
+        picker.style.display = 'none';
+      }
+    });
+
+    picker.querySelectorAll('.wp-reaction-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        const emoji = b.dataset.emoji;
+        BBM.API.sendReaction(this._partyCode, emoji);
+        picker.style.display = 'none';
+      });
+    });
+
+    this._reactionsUnsubscribe = BBM.API.listenReactions(this._partyCode, (reaction) => {
+      this._floatReaction(reaction.emoji, reaction.senderName);
+    });
+  },
+
+  _floatReaction(emoji, senderName) {
+    const layer = document.getElementById('wp-reactions-layer');
+    if (!layer) return;
+    const el = document.createElement('div');
+    el.className = 'wp-reaction-float';
+    el.innerHTML = `
+      <div class="wp-reaction-emoji">${emoji}</div>
+      ${senderName ? `<div class="wp-reaction-author">${String(senderName).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>` : ''}
+    `;
+    // Random horizontal start within 60-90% of width
+    el.style.left = (60 + Math.random() * 30) + '%';
+    el.style.animationDelay = (Math.random() * 0.2) + 's';
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
   },
 
   /* ----------------------------------------

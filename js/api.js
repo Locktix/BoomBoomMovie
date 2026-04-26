@@ -861,6 +861,8 @@ BBM.API = {
       episode: episode != null ? episode : null,
       currentTime: 0,
       isPlaying: false,
+      // Lobby flag — guests wait until host clicks "Démarrer"
+      started: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       participants: {
@@ -868,6 +870,19 @@ BBM.API = {
       }
     });
     return code;
+  },
+
+  /** Host clicks "Démarrer" — closes the lobby, guests start watching */
+  async startWatchParty(code) {
+    if (!code) return;
+    try {
+      await BBM.db.collection('watchParties').doc(code).update({
+        started: true,
+        currentTime: 0,
+        isPlaying: true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (e) { /* noop */ }
   },
 
   async joinWatchParty(code) {
@@ -915,6 +930,71 @@ BBM.API = {
     if (!code) return;
     try { await BBM.db.collection('watchParties').doc(code).delete(); }
     catch (e) { /* noop */ }
+  },
+
+  /* --- Chat -------------------------------------------------------- */
+
+  async sendChatMessage(code, text) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !code) return;
+    const trimmed = String(text || '').trim().slice(0, 500);
+    if (!trimmed) return;
+    const name = user.displayName || (user.email || '').split('@')[0] || 'Anon';
+    await BBM.db.collection('watchParties').doc(code).collection('messages').add({
+      text: trimmed,
+      senderUid: user.uid,
+      senderName: name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  },
+
+  /** Returns an unsubscribe function. Callback receives the latest 100
+      messages in chronological order. */
+  listenChatMessages(code, callback) {
+    if (!code) return () => {};
+    return BBM.db.collection('watchParties').doc(code)
+      .collection('messages')
+      .orderBy('createdAt', 'asc')
+      .limit(200)
+      .onSnapshot(snap => {
+        const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(msgs);
+      });
+  },
+
+  /* --- Reactions (ephemeral floating emojis) ----------------------- */
+
+  async sendReaction(code, emoji) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !code || !emoji) return;
+    const name = user.displayName || (user.email || '').split('@')[0] || 'Anon';
+    await BBM.db.collection('watchParties').doc(code).collection('reactions').add({
+      emoji: String(emoji).slice(0, 8),
+      senderUid: user.uid,
+      senderName: name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  },
+
+  /** Listen for reactions. The callback receives docChanges so the player
+      can animate only newly-added reactions and ignore the initial dump
+      of historical ones. */
+  listenReactions(code, onAdded) {
+    if (!code) return () => {};
+    return BBM.db.collection('watchParties').doc(code)
+      .collection('reactions')
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .onSnapshot(snap => {
+        const cutoff = Date.now() - 8000; // ignore reactions older than 8s
+        snap.docChanges().forEach(change => {
+          if (change.type !== 'added') return;
+          const data = change.doc.data();
+          const ts = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
+          if (ts < cutoff) return; // skip historical dump on first attach
+          onAdded({ id: change.doc.id, ...data });
+        });
+      });
   },
 
   /** Liste les watch parties actives (mises à jour < `maxAgeHours`).

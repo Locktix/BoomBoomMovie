@@ -181,6 +181,17 @@
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
               </button>
+              <button class="ctrl-btn" id="btn-wp-chat" title="Chat de la Watch Party" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span class="chat-unread-dot" id="chat-unread-dot" style="display:none"></span>
+              </button>
+              <button class="ctrl-btn" id="btn-wp-reactions" title="Envoyer une réaction" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
               <button class="ctrl-btn" id="btn-cast" title="Diffuser (Cast / AirPlay)" style="display:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2 16a6 6 0 0 1 6 6"/>
@@ -368,6 +379,72 @@
           </div>
         </div>
       </div>
+
+      <!-- Watch Party — Lobby (shown until host clicks Démarrer) -->
+      <div class="wp-lobby" id="wp-lobby" style="display:none">
+        <div class="wp-lobby-card">
+          <div class="wp-lobby-kicker">WATCH PARTY</div>
+          <h2 class="wp-lobby-title">Salon en attente</h2>
+          <p class="wp-lobby-subtitle" id="wp-lobby-subtitle">Partage ce code et attends que tout le monde rejoigne avant de démarrer.</p>
+          <div class="wp-lobby-code-row">
+            <span class="wp-lobby-code-label">Code</span>
+            <div class="wp-lobby-code" id="wp-lobby-code">------</div>
+            <button class="wp-lobby-copy" id="wp-lobby-copy" title="Copier le lien">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </div>
+          <div class="wp-lobby-section-title">
+            <span id="wp-lobby-count">1</span> participant<span id="wp-lobby-plural"></span>
+          </div>
+          <div class="wp-lobby-participants" id="wp-lobby-participants"></div>
+          <div class="wp-lobby-actions">
+            <button class="wp-lobby-start" id="wp-lobby-start" style="display:none">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+              Démarrer pour tout le monde
+            </button>
+            <div class="wp-lobby-waiting" id="wp-lobby-waiting" style="display:none">
+              <div class="wp-lobby-spinner"></div>
+              En attente que <span id="wp-lobby-host-name">l'hôte</span> démarre…
+            </div>
+            <button class="wp-lobby-leave" id="wp-lobby-leave">Quitter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Watch Party — Chat sidebar -->
+      <aside class="wp-chat" id="wp-chat" aria-label="Chat de la Watch Party" style="display:none">
+        <div class="wp-chat-header">
+          <span class="wp-chat-title">Chat</span>
+          <button class="wp-chat-close" id="wp-chat-close" aria-label="Fermer le chat">✕</button>
+        </div>
+        <div class="wp-chat-messages" id="wp-chat-messages"></div>
+        <form class="wp-chat-form" id="wp-chat-form">
+          <input type="text" class="wp-chat-input" id="wp-chat-input" placeholder="Écrire un message…" maxlength="500" autocomplete="off">
+          <button type="submit" class="wp-chat-send" aria-label="Envoyer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </form>
+      </aside>
+
+      <!-- Watch Party — Reactions picker -->
+      <div class="wp-reactions-picker" id="wp-reactions-picker" style="display:none">
+        <button class="wp-reaction-btn" data-emoji="❤️">❤️</button>
+        <button class="wp-reaction-btn" data-emoji="😂">😂</button>
+        <button class="wp-reaction-btn" data-emoji="🔥">🔥</button>
+        <button class="wp-reaction-btn" data-emoji="😮">😮</button>
+        <button class="wp-reaction-btn" data-emoji="👏">👏</button>
+        <button class="wp-reaction-btn" data-emoji="😢">😢</button>
+        <button class="wp-reaction-btn" data-emoji="🎉">🎉</button>
+      </div>
+
+      <!-- Watch Party — Floating reactions layer -->
+      <div class="wp-reactions-layer" id="wp-reactions-layer" aria-hidden="true"></div>
     </div>
 
     <!-- Watch Party modal — shown after creating a room -->
