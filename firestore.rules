@@ -28,10 +28,25 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
     }
     match /watchParties/{roomCode} {
-      // Any authenticated user can create or join a room
+      // Any authenticated user can read or create a room
       allow read, create: if request.auth != null;
-      // Any authenticated user can update (host for state, participants for join/leave)
-      allow update: if request.auth != null;
+      // Update : the host can change anything (state, participants, etc.)
+      // ; any other authenticated user can ONLY add/remove their own
+      // entry in the participants map (and bump updatedAt). This prevents
+      // a malicious user from flipping started, hijacking hostUid, or
+      // griefing currentTime.
+      allow update: if request.auth != null && (
+        resource.data.hostUid == request.auth.uid
+        || (
+          request.resource.data.diff(resource.data)
+            .affectedKeys().hasOnly(['participants', 'updatedAt'])
+          && (
+            !('participants' in request.resource.data)
+            || request.resource.data.participants.diff(resource.data.participants)
+                 .affectedKeys().hasOnly([request.auth.uid])
+          )
+        )
+      );
       // The host or any admin can delete the room (admin = cleanup)
       allow delete: if request.auth != null
         && (resource.data.hostUid == request.auth.uid

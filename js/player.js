@@ -351,6 +351,21 @@ BBM.Player = {
     document.getElementById('wp-lobby-waiting').style.display = isHost ? 'none' : '';
     if (this.video) this.video.pause();
     this._lobbyVisible = true;
+    this._lobbyOpenedAt = Date.now();
+
+    // Inactivity hint for the host — show after 5 min if still in lobby
+    // alone, in case they forgot the tab is open
+    if (isHost && !this._lobbyHostHintTimer) {
+      this._lobbyHostHintTimer = setTimeout(() => {
+        if (!this._lobbyVisible) return;
+        const subtitle = document.getElementById('wp-lobby-subtitle');
+        if (subtitle) {
+          subtitle.textContent = '👋 Toujours en attente ? Démarre quand tu veux ou ferme la fenêtre pour annuler.';
+          subtitle.style.color = 'var(--bbm-accent)';
+        }
+      }, 5 * 60 * 1000);
+    }
+  },
 
     // Copy share link
     const copyBtn = document.getElementById('wp-lobby-copy');
@@ -396,6 +411,10 @@ BBM.Player = {
     const lobby = document.getElementById('wp-lobby');
     if (lobby) lobby.style.display = 'none';
     this._lobbyVisible = false;
+    if (this._lobbyHostHintTimer) {
+      clearTimeout(this._lobbyHostHintTimer);
+      this._lobbyHostHintTimer = null;
+    }
     // Reveal chat button in the player controls (reactions live inside
     // the chat panel itself now)
     const chatBtn = document.getElementById('btn-wp-chat');
@@ -481,6 +500,19 @@ BBM.Player = {
   _attachPartyListener() {
     const countDisplay = document.getElementById('watch-party-count');
     this._partyUnsubscribe = BBM.API.listenWatchParty(this._partyCode, (state) => {
+      // Party was deleted (host ended it or admin purged it). Tell the
+      // user and redirect — no point staying on a dead session.
+      if (state === null) {
+        if (this._partyEnded) return; // already handled
+        this._partyEnded = true;
+        if (this._partyUnsubscribe) { this._partyUnsubscribe(); this._partyUnsubscribe = null; }
+        if (this._chatUnsubscribe) { this._chatUnsubscribe(); this._chatUnsubscribe = null; }
+        if (this._reactionsUnsubscribe) { this._reactionsUnsubscribe(); this._reactionsUnsubscribe = null; }
+        BBM.Toast?.show('La Watch Party a été terminée par l\'hôte', 'info', 4000);
+        // Small delay so the toast is visible before redirect
+        setTimeout(() => { window.location.href = 'browse.html'; }, 1200);
+        return;
+      }
       // Update participants count
       if (countDisplay && state.participants) {
         countDisplay.textContent = Object.keys(state.participants).length;
@@ -517,10 +549,29 @@ BBM.Player = {
     } else if (!state.isPlaying && !this.video.paused) {
       this.video.pause();
     }
-    // Sync position if drift > 2s
+    // Sync position if drift > 2s. Queue the seek if metadata isn't ready
+    // yet — setting currentTime before loadedmetadata is a no-op on most
+    // browsers and would leave the guest stuck at 0:00 indefinitely.
     if (typeof state.currentTime === 'number') {
-      const drift = Math.abs(this.video.currentTime - state.currentTime);
-      if (drift > 2) this.video.currentTime = state.currentTime;
+      const target = state.currentTime;
+      const dur = this.video.duration;
+      if (!dur || isNaN(dur)) {
+        // Metadata not loaded yet — replace any pending queued seek and
+        // wait for loadedmetadata to apply
+        this._pendingPartySeek = target;
+        if (!this._partySeekListenerAttached) {
+          this._partySeekListenerAttached = true;
+          this.video.addEventListener('loadedmetadata', () => {
+            if (this._pendingPartySeek != null) {
+              try { this.video.currentTime = this._pendingPartySeek; } catch (e) {}
+              this._pendingPartySeek = null;
+            }
+          }, { once: true });
+        }
+      } else {
+        const drift = Math.abs(this.video.currentTime - target);
+        if (drift > 2) this.video.currentTime = target;
+      }
     }
     setTimeout(() => { this._ignoreNextPlaybackEvent = false; }, 400);
   },
@@ -1514,7 +1565,11 @@ BBM.Player = {
   _saveMiniPlayerState(videoURL, title) {
     if (!BBM.MiniPlayer || !this.video) return;
     const t = this.video.currentTime || 0;
+    const dur = this.video.duration || 0;
     if (t < 5) { BBM.MiniPlayer.clearState(); return; } // not worth restoring barely-started videos
+    // Don't suggest "Reprendre" on a video that's essentially finished —
+    // the user has watched it, the mini-player would just be confusing.
+    if (dur > 0 && t / dur > 0.95) { BBM.MiniPlayer.clearState(); return; }
     let posterPath = this._cachedPosterPath || null;
     if (!posterPath) {
       try {

@@ -910,10 +910,13 @@ BBM.API = {
     } catch (e) { /* noop */ }
   },
 
+  /** Subscribe to a watch party. Callback receives the data on each
+   *  update, OR `null` when the party is deleted (host or admin ended
+   *  it). The caller is expected to handle null by toasting + redirecting. */
   listenWatchParty(code, callback) {
     if (!code) return () => {};
     return BBM.db.collection('watchParties').doc(code).onSnapshot(doc => {
-      if (doc.exists) callback(doc.data());
+      callback(doc.exists ? doc.data() : null);
     });
   },
 
@@ -926,8 +929,37 @@ BBM.API = {
     } catch (e) { /* noop */ }
   },
 
+  /** Delete sub-collections (messages, reactions) for a watch party.
+   *  Firestore doesn't cascade delete, so we batch-delete manually before
+   *  removing the parent doc. */
+  async _deleteWatchPartySubcollections(code) {
+    if (!code) return;
+    const ref = BBM.db.collection('watchParties').doc(code);
+    for (const subName of ['messages', 'reactions']) {
+      try {
+        const snap = await ref.collection(subName).get();
+        if (snap.empty) continue;
+        // Firestore batch is capped at 500 ops — chunk if needed
+        let batch = BBM.db.batch();
+        let count = 0;
+        for (const doc of snap.docs) {
+          batch.delete(doc.ref);
+          count++;
+          if (count >= 450) {
+            await batch.commit();
+            batch = BBM.db.batch();
+            count = 0;
+          }
+        }
+        if (count > 0) await batch.commit();
+      } catch (e) { /* noop — best effort */ }
+    }
+  },
+
   async endWatchParty(code) {
     if (!code) return;
+    // Clean sub-collections first so they don't get orphaned
+    await this._deleteWatchPartySubcollections(code);
     try { await BBM.db.collection('watchParties').doc(code).delete(); }
     catch (e) { /* noop */ }
   },
@@ -946,18 +978,19 @@ BBM.API = {
       const cutoff = Date.now() - staleHours * 3600 * 1000;
       const snap = await BBM.db.collection('watchParties')
         .where('hostUid', '==', user.uid).get();
-      let removed = 0;
-      const batch = BBM.db.batch();
+      const stale = [];
       snap.forEach(doc => {
         const data = doc.data();
         const updatedMs = this._msFromTimestamp(data.updatedAt) || this._msFromTimestamp(data.createdAt);
-        if (updatedMs && updatedMs < cutoff) {
-          batch.delete(doc.ref);
-          removed++;
-        }
+        if (updatedMs && updatedMs < cutoff) stale.push(doc.id);
       });
-      if (removed > 0) await batch.commit();
-      return removed;
+      // Delete sub-collections first, then the parent docs
+      for (const code of stale) {
+        await this._deleteWatchPartySubcollections(code);
+        try { await BBM.db.collection('watchParties').doc(code).delete(); }
+        catch (e) { /* noop */ }
+      }
+      return stale.length;
     } catch (e) {
       console.warn('cleanupOwnStaleWatchParties failed:', e);
       return 0;
@@ -972,18 +1005,18 @@ BBM.API = {
     try {
       const cutoff = Date.now() - staleHours * 3600 * 1000;
       const snap = await BBM.db.collection('watchParties').get();
-      let removed = 0;
-      const batch = BBM.db.batch();
+      const stale = [];
       snap.forEach(doc => {
         const data = doc.data();
         const updatedMs = this._msFromTimestamp(data.updatedAt) || this._msFromTimestamp(data.createdAt);
-        if (updatedMs && updatedMs < cutoff) {
-          batch.delete(doc.ref);
-          removed++;
-        }
+        if (updatedMs && updatedMs < cutoff) stale.push(doc.id);
       });
-      if (removed > 0) await batch.commit();
-      return removed;
+      for (const code of stale) {
+        await this._deleteWatchPartySubcollections(code);
+        try { await BBM.db.collection('watchParties').doc(code).delete(); }
+        catch (e) { /* noop */ }
+      }
+      return stale.length;
     } catch (e) {
       console.warn('purgeStaleWatchParties failed:', e);
       return 0;
@@ -992,9 +1025,17 @@ BBM.API = {
 
   /* --- Chat -------------------------------------------------------- */
 
+  /** Client-side rate-limits to prevent accidental spam. Not a security
+   *  mechanism (a determined user can bypass) but enough to avoid
+   *  burning Firestore writes when someone holds down a key. */
+  _rateLimit: { lastChatAt: 0, lastReactionAt: 0 },
+
   async sendChatMessage(code, text) {
     const user = BBM.Auth.currentUser;
     if (!user || !code) return;
+    const now = Date.now();
+    if (now - this._rateLimit.lastChatAt < 500) return; // 1 msg / 500ms max
+    this._rateLimit.lastChatAt = now;
     const trimmed = String(text || '').trim().slice(0, 500);
     if (!trimmed) return;
     const name = user.displayName || (user.email || '').split('@')[0] || 'Anon';
@@ -1025,6 +1066,9 @@ BBM.API = {
   async sendReaction(code, emoji) {
     const user = BBM.Auth.currentUser;
     if (!user || !code || !emoji) return;
+    const now = Date.now();
+    if (now - this._rateLimit.lastReactionAt < 250) return; // 1 reaction / 250ms max
+    this._rateLimit.lastReactionAt = now;
     const name = user.displayName || (user.email || '').split('@')[0] || 'Anon';
     await BBM.db.collection('watchParties').doc(code).collection('reactions').add({
       emoji: String(emoji).slice(0, 8),
@@ -1443,6 +1487,19 @@ BBM.Notify = {
     try { return await Notification.requestPermission(); } catch (e) { return 'denied'; }
   },
 
+  /** Sync the persisted toggle with the browser's current permission.
+   *  If the user revoked the permission externally (cleared site data,
+   *  changed browser settings), reset the toggle to false so we don't
+   *  silently no-op every notification. Called on page load. */
+  syncPermissionState() {
+    if (!BBM.Settings) return;
+    const enabled = BBM.Settings.get('notifications.browserPush') === true;
+    if (!enabled) return;
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+      BBM.Settings.set('notifications.browserPush', false);
+    }
+  },
+
   /**
    * Show a toast and (optionally) a browser notification.
    * @param {string} title - Headline shown in both surfaces.
@@ -1472,3 +1529,12 @@ BBM.Notify = {
     }
   }
 };
+
+// Re-check the browser notification permission on every page load. If the
+// user revoked it externally, reset the toggle so future notifications
+// don't silently fail.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => BBM.Notify.syncPermissionState());
+} else {
+  BBM.Notify.syncPermissionState();
+}
