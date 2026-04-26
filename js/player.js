@@ -280,6 +280,10 @@ BBM.Player = {
         if (codeDisplay) codeDisplay.textContent = this._partyCode;
       }
       if (btn) btn.style.display = 'none'; // guest can't re-create
+      // Reveal chat UI in case the party is already started — the
+      // listener will hide the lobby right after it fires the first
+      // snapshot, so the guest can use the chat immediately.
+      this._revealChatUI();
       this._showLobby({ isHost: false });
       this._attachPartyListener();
       this._attachPartyChat();
@@ -296,6 +300,10 @@ BBM.Player = {
       // Hide the "create party" button — host is already in one, clicking
       // it would create a new party and orphan the existing one
       if (btn) btn.style.display = 'none';
+      // Reveal the chat button + panel right away. If the party is still
+      // in lobby mode (started=false), the listener will show the lobby
+      // overlay over the player and the user can click Démarrer.
+      this._revealChatUI();
       this._attachPartyListener();
       this._attachPartyHostBindings();
       this._attachPartyChat();
@@ -414,19 +422,24 @@ BBM.Player = {
       clearTimeout(this._lobbyHostHintTimer);
       this._lobbyHostHintTimer = null;
     }
-    // Reveal chat button in the player controls (reactions live inside
-    // the chat panel itself now)
-    const chatBtn = document.getElementById('btn-wp-chat');
-    if (chatBtn) chatBtn.style.display = '';
-    // The chat panel uses display:none initially so it doesn't take
-    // hit-test space during the lobby. Now that the party is live, switch
-    // to using the .open class for the slide-in animation instead.
-    const chat = document.getElementById('wp-chat');
-    if (chat) chat.style.display = '';
+    this._revealChatUI();
     // For host, start playback
     if (this._isPartyHost && this.video?.paused) {
       this.video.play().catch(() => {});
     }
+  },
+
+  /** Show the chat button in the controls and the chat panel container.
+   *  Idempotent — safe to call multiple times. Used both when the lobby
+   *  ends and when an existing party is re-opened (host or guest). */
+  _revealChatUI() {
+    const chatBtn = document.getElementById('btn-wp-chat');
+    if (chatBtn) chatBtn.style.display = '';
+    // The chat panel uses display:none in HTML so it doesn't take
+    // hit-test space pre-party. Switching to '' lets the .open class
+    // drive the slide-in animation via transform.
+    const chat = document.getElementById('wp-chat');
+    if (chat) chat.style.display = '';
   },
 
   _renderLobbyParticipants(state) {

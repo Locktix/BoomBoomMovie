@@ -10609,6 +10609,23 @@ body.admin-body {
   border-radius: 4px;
   animation: bbm-pulse 2s ease-in-out infinite;
 }
+.join-party-own {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 2px 8px;
+  background: var(--bbm-accent);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(var(--bbm-accent-rgb), 0.4);
+}
+.join-party-card.is-mine {
+  border-color: rgba(var(--bbm-accent-rgb), 0.4);
+  background: linear-gradient(180deg, rgba(var(--bbm-accent-rgb), 0.06) 0%, transparent 60%);
+}
 @keyframes bbm-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }

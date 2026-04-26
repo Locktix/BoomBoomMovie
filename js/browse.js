@@ -2892,7 +2892,9 @@ BBM.Browse = {
     if (input) input.value = '';
     list.innerHTML = '<div class="loader" style="margin:30px auto"></div>';
 
-    const parties = await BBM.API.listActiveWatchParties();
+    // Include own parties — the host might want to rejoin a session they
+    // left earlier. Marked visually as "Ta session" in the list.
+    const parties = await BBM.API.listActiveWatchParties({ excludeOwn: false });
     this.renderJoinPartyList(parties);
   },
 
@@ -2911,6 +2913,13 @@ BBM.Browse = {
     }
 
     list.innerHTML = '';
+    const myUid = BBM.Auth.currentUser?.uid;
+    // Sort own parties first so they're easy to find
+    parties.sort((a, b) => {
+      if (a.hostUid === myUid && b.hostUid !== myUid) return -1;
+      if (a.hostUid !== myUid && b.hostUid === myUid) return 1;
+      return 0;
+    });
     parties.forEach(p => {
       const tmdb = this.tmdbCache.get(String(p.tmdbID));
       const poster = tmdb?.poster_path ? BBM.API.getPosterURL(tmdb.poster_path, 'w185') : null;
@@ -2923,13 +2932,15 @@ BBM.Browse = {
         seTag,
         `${p.participantsCount} ${p.participantsCount > 1 ? 'participants' : 'participant'}`
       ].filter(Boolean).join(' · ');
+      const isMine = p.hostUid === myUid;
 
       const card = document.createElement('article');
-      card.className = 'join-party-card';
+      card.className = 'join-party-card' + (isMine ? ' is-mine' : '');
       card.innerHTML = `
         <div class="join-party-poster">
           ${poster ? `<img src="${poster}" alt="${p.title}" loading="lazy">` : '<div class="join-party-poster-ph">?</div>'}
           ${p.isPlaying ? '<span class="join-party-live">● LIVE</span>' : ''}
+          ${isMine ? '<span class="join-party-own">TA SESSION</span>' : ''}
         </div>
         <div class="join-party-info">
           <h3 class="join-party-title">${p.title || 'Watch Party'}</h3>
@@ -2942,7 +2953,7 @@ BBM.Browse = {
         </div>
         <button class="history-btn history-btn-primary join-party-join">
           <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>
-          <span>Rejoindre</span>
+          <span>${isMine ? 'Reprendre' : 'Rejoindre'}</span>
         </button>`;
       card.querySelector('.join-party-join').addEventListener('click', (e) => {
         e.stopPropagation();
