@@ -122,6 +122,15 @@ BBM.Player = {
     // full player page again
     BBM.MiniPlayer?.clearState();
 
+    // Warm up the TMDB cache for this item so the mini-player has the
+    // poster_path ready when the user navigates away
+    if (this.tmdbID && BBM.API?.getTMDBData) {
+      const tmdbType = this.type === 'series' ? 'tv' : 'movie';
+      BBM.API.getTMDBData(this.tmdbID, tmdbType).then(data => {
+        if (data?.poster_path) this._cachedPosterPath = data.poster_path;
+      }).catch(() => {});
+    }
+
     // Honor a deep-link ?t=SECONDS to seek on first canplay (used by the
     // mini-player widget to resume exactly where we left off)
     const resumeAt = parseInt(params.get('t') || '0', 10);
@@ -1240,13 +1249,15 @@ BBM.Player = {
     if (!BBM.MiniPlayer || !this.video) return;
     const t = this.video.currentTime || 0;
     if (t < 5) { BBM.MiniPlayer.clearState(); return; } // not worth restoring barely-started videos
-    let posterPath = null;
-    try {
-      const cacheKey = `tmdb_${this.type === 'series' ? 'tv' : 'movie'}_${this.tmdbID}`;
-      const tmdb = BBM.API?._cache?.[cacheKey]
-        || (localStorage.getItem(cacheKey) ? JSON.parse(localStorage.getItem(cacheKey)) : null);
-      posterPath = tmdb?.poster_path || null;
-    } catch (e) {}
+    let posterPath = this._cachedPosterPath || null;
+    if (!posterPath) {
+      try {
+        const cacheKey = `tmdb_${this.type === 'series' ? 'tv' : 'movie'}_${this.tmdbID}`;
+        const tmdb = BBM.API?._cache?.[cacheKey]
+          || (localStorage.getItem(cacheKey) ? JSON.parse(localStorage.getItem(cacheKey)) : null);
+        posterPath = tmdb?.poster_path || null;
+      } catch (e) {}
+    }
     BBM.MiniPlayer.saveState({
       videoURL,
       title: (document.getElementById('player-title')?.textContent || title || '').trim(),

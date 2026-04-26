@@ -1686,6 +1686,7 @@ BBM.Browse = {
 
       // Mini-trailer preview — replace the backdrop with a muted YouTube
       // iframe after a small delay (so quick passes don't load the video)
+      const S = (window.BBM && BBM.Settings) ? BBM.Settings : null;
       const previewOn = !S || (S.get('performance.previewVideo') !== false
         && !S.get('performance.potatoMode'));
       const trailer = previewOn ? (
