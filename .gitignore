@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Test runner output
+coverage/
+.vitest-cache/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environnement local
+.env
+.env.local
+
+# Firebase debug
+.firebase/
+firebase-debug.log
