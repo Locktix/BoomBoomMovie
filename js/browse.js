@@ -772,6 +772,21 @@ BBM.Browse = {
       }
     });
 
+    // Global "/" shortcut to focus the search bar (skip if user is typing
+    // in another input or a modifier key is held)
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== '/') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = (e.target?.tagName || '').toLowerCase();
+      const isEditable = tag === 'input' || tag === 'textarea' || tag === 'select'
+        || e.target?.isContentEditable;
+      if (isEditable) return;
+      e.preventDefault();
+      searchContainer.classList.add('open');
+      searchInput.focus();
+      searchInput.select();
+    });
+
     // Champ de recherche du menu mobile
     const mobileInput = document.getElementById('mobile-search-input');
     if (mobileInput) {
@@ -1668,9 +1683,32 @@ BBM.Browse = {
         });
       }
       panel.addEventListener('mouseleave', removePanel);
+
+      // Mini-trailer preview — replace the backdrop with a muted YouTube
+      // iframe after a small delay (so quick passes don't load the video)
+      const previewOn = !S || (S.get('performance.previewVideo') !== false
+        && !S.get('performance.potatoMode'));
+      if (previewOn) {
+        previewTimer = setTimeout(() => {
+          const trailer = (tmdb.videos?.results || []).find(v =>
+            v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+          ) || (tmdb.videos?.results || []).find(v => v.site === 'YouTube');
+          if (!trailer || !trailer.key) return;
+          const imgWrap = panel.querySelector('.hover-panel-img');
+          if (!imgWrap) return;
+          const iframe = document.createElement('iframe');
+          iframe.className = 'hover-panel-trailer';
+          iframe.allow = 'autoplay; encrypted-media';
+          iframe.setAttribute('frameborder', '0');
+          iframe.src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&loop=1&playlist=${trailer.key}&iv_load_policy=3`;
+          imgWrap.appendChild(iframe);
+        }, 1500);
+      }
     };
+    let previewTimer;
     const removePanel = () => {
       clearTimeout(hoverTimer);
+      clearTimeout(previewTimer);
       if (panel) {
         panel.classList.remove('visible');
         const p = panel;

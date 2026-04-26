@@ -64,9 +64,15 @@ BBM.Player = {
     // pas de support natif (Chrome/Firefox/Edge)
     this._attachVideoSource(videoURL);
 
-    // Cleanup hls.js on page unload
+    // Cleanup hls.js on page unload + save mini-player state for resume
     window.addEventListener('beforeunload', () => {
       if (this._hls) { try { this._hls.destroy(); } catch (e) {} }
+      this._saveMiniPlayerState(videoURL, title);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        this._saveMiniPlayerState(videoURL, title);
+      }
     });
 
     // Buffer overlay feedback (works for both mobile and desktop paths)
@@ -107,6 +113,20 @@ BBM.Player = {
 
     // Skip intro / outro markers (load + wire up admin panel if admin)
     this.setupSkipMarkers();
+
+    // Mini-player came back? Clear the saved state since we're now on the
+    // full player page again
+    BBM.MiniPlayer?.clearState();
+
+    // Honor a deep-link ?t=SECONDS to seek on first canplay (used by the
+    // mini-player widget to resume exactly where we left off)
+    const resumeAt = parseInt(params.get('t') || '0', 10);
+    if (resumeAt > 0) {
+      const seekOnce = () => {
+        try { this.video.currentTime = resumeAt; } catch (e) {}
+      };
+      this.video.addEventListener('loadedmetadata', seekOnce, { once: true });
+    }
 
     // Autoplay
     this.video.addEventListener('canplay', () => {
@@ -1209,6 +1229,32 @@ BBM.Player = {
     return `${m}:${String(s).padStart(2, '0')}`;
   },
 
+  /** Snapshot the current playback state into the mini-player widget so
+      the user can resume after navigating away. */
+  _saveMiniPlayerState(videoURL, title) {
+    if (!BBM.MiniPlayer || !this.video) return;
+    const t = this.video.currentTime || 0;
+    if (t < 5) { BBM.MiniPlayer.clearState(); return; } // not worth restoring barely-started videos
+    let posterPath = null;
+    try {
+      const cacheKey = `tmdb_${this.type === 'series' ? 'tv' : 'movie'}_${this.tmdbID}`;
+      const tmdb = BBM.API?._cache?.[cacheKey]
+        || (localStorage.getItem(cacheKey) ? JSON.parse(localStorage.getItem(cacheKey)) : null);
+      posterPath = tmdb?.poster_path || null;
+    } catch (e) {}
+    BBM.MiniPlayer.saveState({
+      videoURL,
+      title: (document.getElementById('player-title')?.textContent || title || '').trim(),
+      currentTime: t,
+      duration: this.video.duration || 0,
+      tmdbID: this.tmdbID,
+      type: this.type,
+      season: this.season,
+      episode: this.episode,
+      posterPath
+    });
+  },
+
   /* ----------------------------------------
      Progress Save/Load
      ---------------------------------------- */
@@ -1308,8 +1354,9 @@ BBM.Player = {
   async setupSkipMarkers() {
     if (!this.tmdbID) return;
 
-    this._skipMarkers = { introStart: null, introEnd: null, outroStart: null, outroEnd: null, postCreditsAt: null };
+    this._skipMarkers = { recapStart: null, recapEnd: null, introStart: null, introEnd: null, outroStart: null, outroEnd: null, postCreditsAt: null };
 
+    const recapBtn = document.getElementById('skip-btn-recap');
     const introBtn = document.getElementById('skip-btn-intro');
     const outroBtn = document.getElementById('skip-btn-outro');
     const outroBtnLabel = outroBtn?.querySelector('.skip-btn-label');
@@ -1318,7 +1365,7 @@ BBM.Player = {
     try {
       const data = await BBM.API.getSkipMarkers(this.tmdbID, this.type, this.season, this.episode);
       if (data) {
-        ['introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt'].forEach(k => {
+        ['recapStart', 'recapEnd', 'introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt'].forEach(k => {
           if (data[k] != null && !isNaN(data[k])) this._skipMarkers[k] = Number(data[k]);
         });
       }
@@ -1328,6 +1375,12 @@ BBM.Player = {
     this._refreshOutroBtnLabel();
 
     // Skip buttons — click handlers
+    recapBtn?.addEventListener('click', () => {
+      const end = this._skipMarkers.recapEnd;
+      if (end != null && this.video) {
+        this.video.currentTime = end + 0.1;
+      }
+    });
     introBtn?.addEventListener('click', () => {
       const end = this._skipMarkers.introEnd;
       if (end != null && this.video) {
@@ -1350,10 +1403,13 @@ BBM.Player = {
       if (!this.video || !this._skipMarkers) return;
       const t = this.video.currentTime;
       const m = this._skipMarkers;
+      const inRecap = m.recapStart != null && m.recapEnd != null
+        && t >= m.recapStart && t < m.recapEnd;
       const inIntro = m.introStart != null && m.introEnd != null
         && t >= m.introStart && t < m.introEnd;
       const inOutro = m.outroStart != null && m.outroEnd != null
         && t >= m.outroStart && t < m.outroEnd;
+      if (recapBtn) recapBtn.style.display = inRecap ? '' : 'none';
       if (introBtn) introBtn.style.display = inIntro ? '' : 'none';
       if (outroBtn) outroBtn.style.display = inOutro ? '' : 'none';
       // Auto-skip intro if user opted in via settings (only once per session,
@@ -1379,11 +1435,13 @@ BBM.Player = {
   },
 
   _renderSkipMarkers() {
+    const recapMark = document.getElementById('skip-marker-recap');
     const introMark = document.getElementById('skip-marker-intro');
     const outroMark = document.getElementById('skip-marker-outro');
     const postMark = document.getElementById('skip-marker-postcredits');
     const duration = this.video?.duration;
     if (!duration || isNaN(duration)) {
+      if (recapMark) recapMark.style.display = 'none';
       if (introMark) introMark.style.display = 'none';
       if (outroMark) outroMark.style.display = 'none';
       if (postMark) postMark.style.display = 'none';
@@ -1405,6 +1463,7 @@ BBM.Player = {
       el.style.left = ((t / duration) * 100) + '%';
       el.style.display = '';
     };
+    placeRange(recapMark, m.recapStart, m.recapEnd);
     placeRange(introMark, m.introStart, m.introEnd);
     placeRange(outroMark, m.outroStart, m.outroEnd);
     placePoint(postMark, m.postCreditsAt);
@@ -1432,12 +1491,14 @@ BBM.Player = {
     const refreshDisplay = () => {
       const m = this._skipMarkers || {};
       const fmt = (v) => (v != null && !isNaN(v)) ? this.formatTime(v) : '—';
-      document.getElementById('skip-admin-intro-start-time').textContent = fmt(m.introStart);
-      document.getElementById('skip-admin-intro-end-time').textContent = fmt(m.introEnd);
-      document.getElementById('skip-admin-outro-start-time').textContent = fmt(m.outroStart);
-      document.getElementById('skip-admin-outro-end-time').textContent = fmt(m.outroEnd);
-      const postEl = document.getElementById('skip-admin-postcredits-time');
-      if (postEl) postEl.textContent = fmt(m.postCreditsAt);
+      const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setText('skip-admin-recap-start-time', fmt(m.recapStart));
+      setText('skip-admin-recap-end-time', fmt(m.recapEnd));
+      setText('skip-admin-intro-start-time', fmt(m.introStart));
+      setText('skip-admin-intro-end-time', fmt(m.introEnd));
+      setText('skip-admin-outro-start-time', fmt(m.outroStart));
+      setText('skip-admin-outro-end-time', fmt(m.outroEnd));
+      setText('skip-admin-postcredits-time', fmt(m.postCreditsAt));
     };
     refreshDisplay();
 

@@ -38,6 +38,7 @@
     'performance.grain': true,
     'performance.heroTrailer': true,
     'performance.hoverPanel': true,
+    'performance.previewVideo': true,
     'performance.parallax': true,
     'performance.orbs': true,
     'performance.animations': true,

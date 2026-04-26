@@ -2263,6 +2263,7 @@ select:focus-visible {
   pointer-events: none;
   opacity: 0.65;
 }
+.skip-marker-recap { background: #a855f7; }
 .skip-marker-intro { background: #22c55e; }
 .skip-marker-outro { background: #f59e0b; }
 
@@ -2382,6 +2383,7 @@ select:focus-visible {
   width: 9px; height: 9px;
   border-radius: 50%;
 }
+.skip-admin-dot-recap { background: #a855f7; }
 .skip-admin-dot-intro { background: #22c55e; }
 .skip-admin-dot-outro { background: #f59e0b; }
 .skip-admin-dot-postcredits { background: #38bdf8; }
@@ -2440,6 +2442,144 @@ select:focus-visible {
 .skip-admin-status {
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.65);
+}
+
+/* ============================================
+   MINI-PLAYER FLOTTANT
+   Affiché sur toutes les pages sauf watch.html quand une lecture
+   a été interrompue (sessionStorage). Click → reprise au timecode.
+   ============================================ */
+.mini-player {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 8000;
+  width: 320px;
+  background: rgba(15, 15, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  overflow: hidden;
+}
+.mini-player.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.mini-player-link {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.mini-player-poster {
+  position: relative;
+  flex: none;
+  width: 60px;
+  height: 90px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1a1f;
+}
+.mini-player-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mini-player-poster-ph {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2a2a30, #1a1a1f);
+}
+.mini-player-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.mini-player:hover .mini-player-play { opacity: 1; }
+.mini-player-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.mini-player-kicker {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--bbm-accent);
+}
+.mini-player-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-player-ep {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+.mini-player-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.mini-player-progress-fill {
+  height: 100%;
+  background: var(--bbm-accent);
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.mini-player-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  opacity: 0;
+}
+.mini-player:hover .mini-player-close { opacity: 1; }
+.mini-player-close:hover {
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+}
+
+/* Mobile : centre bas et plus large */
+@media (max-width: 600px) {
+  .mini-player {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: 12px;
+  }
 }
 
 /* Next Episode Overlay */
@@ -5757,6 +5897,22 @@ select:focus-visible {
 .hover-panel-gradient {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, transparent 40%, var(--bbm-bg-glass-strong) 100%);
+}
+.hover-panel-trailer {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  /* YouTube embed needs 16:9 area, but we scale up to fully cover the
+     16:9 panel area accounting for chrome around the iframe video. */
+  width: 177.78%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
+  animation: hoverPanelTrailerIn 0.4s ease;
+}
+@keyframes hoverPanelTrailerIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .hover-panel-body { padding: 14px 18px 18px; }

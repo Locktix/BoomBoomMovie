@@ -43,6 +43,7 @@
       { key: 'performance.heroTrailer', type: 'toggle', label: 'Trailer auto sur la bannière', hint: 'Lance le trailer YouTube après 2,5 s sur le hero', disabledBy: 'performance.potatoMode' },
       { key: 'performance.grain', type: 'toggle', label: 'Grain cinéma', hint: 'Texture SVG subtile pour l\'ambiance', disabledBy: 'performance.potatoMode' },
       { key: 'performance.hoverPanel', type: 'toggle', label: 'Panneau détaillé au survol', hint: 'Apparait après 550 ms sur les posters', disabledBy: 'performance.potatoMode' },
+      { key: 'performance.previewVideo', type: 'toggle', label: 'Mini-trailer au survol', hint: 'Lance le trailer YouTube en muet dans le panneau de survol après 1,5 s', disabledBy: 'performance.potatoMode' },
       { key: 'performance.parallax', type: 'toggle', label: 'Effet parallax sur le hero', disabledBy: 'performance.potatoMode' },
       { key: 'performance.orbs', type: 'toggle', label: 'Orbs d\'ambiance en arrière-plan', disabledBy: 'performance.potatoMode' },
       { key: 'performance.animations', type: 'toggle', label: 'Animations générales', hint: 'Transitions, fade, pulse...', disabledBy: 'performance.potatoMode' },
