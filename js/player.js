@@ -395,6 +395,11 @@ BBM.Player = {
     const reactBtn = document.getElementById('btn-wp-reactions');
     if (chatBtn) chatBtn.style.display = '';
     if (reactBtn) reactBtn.style.display = '';
+    // The chat panel uses display:none initially so it doesn't take
+    // hit-test space during the lobby. Now that the party is live, switch
+    // to using the .open class for the slide-in animation instead.
+    const chat = document.getElementById('wp-chat');
+    if (chat) chat.style.display = '';
     // For host, start playback
     if (this._isPartyHost && this.video?.paused) {
       this.video.play().catch(() => {});
