@@ -293,6 +293,9 @@ BBM.Player = {
         badge.style.display = '';
         if (codeDisplay) codeDisplay.textContent = this._partyCode;
       }
+      // Hide the "create party" button — host is already in one, clicking
+      // it would create a new party and orphan the existing one
+      if (btn) btn.style.display = 'none';
       this._attachPartyListener();
       this._attachPartyHostBindings();
       this._attachPartyChat();
@@ -319,6 +322,9 @@ BBM.Player = {
           badge.style.display = '';
           if (codeDisplay) codeDisplay.textContent = code;
         }
+        // Hide the create button now that we're in a party — prevents an
+        // accidental click that would create a second one
+        btn.style.display = 'none';
         this._showLobby({ isHost: true });
         this.video.pause();
         this._attachPartyListener();
