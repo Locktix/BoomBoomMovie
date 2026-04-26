@@ -959,10 +959,20 @@ BBM.Player = {
   setupControls() {
     const v = this.video;
 
-    // Back button
-    document.getElementById('player-back').addEventListener('click', () => {
+    // Back button — explicit leave BEFORE navigating. The async write
+    // queued in beforeunload isn't reliable (Firestore SDK keeps writes
+    // in memory only by default, and the page is destroyed before
+    // flush), so we await the leave here so the system message +
+    // participant removal actually reach the server.
+    document.getElementById('player-back').addEventListener('click', async (e) => {
+      e.preventDefault();
       this.saveProgress();
       this._saveMiniPlayerState(this._currentVideoURL, this._currentTitle);
+      if (this._partyCode) {
+        try {
+          await BBM.API.leaveWatchParty(this._partyCode, BBM.Auth.currentUser?.uid);
+        } catch (err) { /* navigate anyway */ }
+      }
       window.location.href = 'browse.html';
     });
 

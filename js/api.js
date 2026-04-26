@@ -930,11 +930,15 @@ BBM.API = {
   async leaveWatchParty(code, uid) {
     if (!code || !uid) return;
     // Post a "X est parti" system message BEFORE removing the entry, so
-    // the message has the correct senderUid/senderName for the rules
+    // the message has the correct senderUid/senderName for the rules.
+    // We AWAIT both writes so the caller (typically the back-button
+    // handler awaiting before navigation) can guarantee they reach the
+    // server before the page is destroyed.
     const user = BBM.Auth.currentUser;
     if (user && user.uid === uid) {
       const name = user.displayName || (user.email || '').split('@')[0] || 'Anon';
-      this.sendSystemMessage(code, `${name} a quitté la session`).catch(() => {});
+      try { await this.sendSystemMessage(code, `${name} a quitté la session`); }
+      catch (e) { /* noop */ }
     }
     try {
       await BBM.db.collection('watchParties').doc(code).update({
