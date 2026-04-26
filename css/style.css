@@ -2769,46 +2769,60 @@ select:focus-visible {
   box-shadow: 0 0 0 2px rgba(15, 15, 20, 0.95);
 }
 
-/* --- Reactions picker + floating animations --- */
-.wp-reactions-picker {
-  position: absolute;
-  bottom: 100px;
-  right: 80px;
-  z-index: 65;
+/* --- Reaction emoji bar inside the chat panel --- */
+.wp-chat-reactions {
   display: flex;
-  gap: 6px;
-  padding: 10px 12px;
-  background: rgba(20, 20, 24, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 100px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: wpPickerIn 0.18s ease;
-}
-@keyframes wpPickerIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  justify-content: space-around;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
 }
 .wp-reaction-btn {
   background: transparent;
   border: none;
-  font-size: 1.4rem;
-  width: 38px;
-  height: 38px;
+  font-size: 1.25rem;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   cursor: pointer;
   transition: background 0.12s ease, transform 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .wp-reaction-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   transform: scale(1.15);
 }
+.wp-reaction-btn.pulsed {
+  animation: wpReactionPulse 0.25s ease;
+}
+@keyframes wpReactionPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* Reactions float layer — only animates emojis over the visible video.
+   When the chat is open, restrict to the left side so reactions don't
+   appear under the chat panel. */
 .wp-reactions-layer {
   position: absolute;
-  inset: 0;
+  top: 0; bottom: 0; left: 0; right: 0;
   z-index: 50;
   pointer-events: none;
   overflow: hidden;
+  transition: right 0.25s ease;
+}
+.player-container.with-chat .wp-reactions-layer {
+  right: 340px;
+}
+@media (max-width: 600px) {
+  .player-container.with-chat .wp-reactions-layer {
+    right: 0;
+  }
 }
 .wp-reaction-float {
   position: absolute;

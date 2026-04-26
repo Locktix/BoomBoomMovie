@@ -396,11 +396,10 @@ BBM.Player = {
     const lobby = document.getElementById('wp-lobby');
     if (lobby) lobby.style.display = 'none';
     this._lobbyVisible = false;
-    // Reveal chat / reactions buttons in the player controls
+    // Reveal chat button in the player controls (reactions live inside
+    // the chat panel itself now)
     const chatBtn = document.getElementById('btn-wp-chat');
-    const reactBtn = document.getElementById('btn-wp-reactions');
     if (chatBtn) chatBtn.style.display = '';
-    if (reactBtn) reactBtn.style.display = '';
     // The chat panel uses display:none initially so it doesn't take
     // hit-test space during the lobby. Now that the party is live, switch
     // to using the .open class for the slide-in animation instead.
@@ -614,29 +613,17 @@ BBM.Player = {
   /* --- Watch Party — Reactions ------------------------------------ */
 
   _attachPartyReactions() {
-    const btn = document.getElementById('btn-wp-reactions');
-    const picker = document.getElementById('wp-reactions-picker');
     const layer = document.getElementById('wp-reactions-layer');
-    if (!btn || !picker || !layer) return;
+    const reactionsBar = document.getElementById('wp-chat-reactions');
+    if (!layer) return;
 
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      picker.style.display = picker.style.display === 'none' ? '' : 'none';
-    });
-    document.addEventListener('click', (e) => {
-      if (picker.style.display !== 'none'
-          && !picker.contains(e.target)
-          && e.target !== btn
-          && !btn.contains(e.target)) {
-        picker.style.display = 'none';
-      }
-    });
-
-    picker.querySelectorAll('.wp-reaction-btn').forEach(b => {
+    reactionsBar?.querySelectorAll('.wp-reaction-btn').forEach(b => {
       b.addEventListener('click', () => {
         const emoji = b.dataset.emoji;
         BBM.API.sendReaction(this._partyCode, emoji);
-        picker.style.display = 'none';
+        // Quick visual feedback — bump the button briefly
+        b.classList.add('pulsed');
+        setTimeout(() => b.classList.remove('pulsed'), 250);
       });
     });
 

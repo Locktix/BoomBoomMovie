@@ -187,11 +187,6 @@
                 </svg>
                 <span class="chat-unread-dot" id="chat-unread-dot" style="display:none"></span>
               </button>
-              <button class="ctrl-btn" id="btn-wp-reactions" title="Envoyer une réaction" style="display:none">
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-              </button>
               <button class="ctrl-btn" id="btn-cast" title="Diffuser (Cast / AirPlay)" style="display:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2 16a6 6 0 0 1 6 6"/>
@@ -421,6 +416,16 @@
           <button class="wp-chat-close" id="wp-chat-close" aria-label="Fermer le chat">✕</button>
         </div>
         <div class="wp-chat-messages" id="wp-chat-messages"></div>
+        <!-- Reaction emoji bar — sends a floating reaction to all participants -->
+        <div class="wp-chat-reactions" id="wp-chat-reactions" aria-label="Réactions rapides">
+          <button class="wp-reaction-btn" data-emoji="❤️" title="Réagir avec ❤️">❤️</button>
+          <button class="wp-reaction-btn" data-emoji="😂" title="Réagir avec 😂">😂</button>
+          <button class="wp-reaction-btn" data-emoji="🔥" title="Réagir avec 🔥">🔥</button>
+          <button class="wp-reaction-btn" data-emoji="😮" title="Réagir avec 😮">😮</button>
+          <button class="wp-reaction-btn" data-emoji="👏" title="Réagir avec 👏">👏</button>
+          <button class="wp-reaction-btn" data-emoji="😢" title="Réagir avec 😢">😢</button>
+          <button class="wp-reaction-btn" data-emoji="🎉" title="Réagir avec 🎉">🎉</button>
+        </div>
         <form class="wp-chat-form" id="wp-chat-form">
           <input type="text" class="wp-chat-input" id="wp-chat-input" placeholder="Écrire un message…" maxlength="500" autocomplete="off">
           <button type="submit" class="wp-chat-send" aria-label="Envoyer">
@@ -431,17 +436,6 @@
           </button>
         </form>
       </aside>
-
-      <!-- Watch Party — Reactions picker -->
-      <div class="wp-reactions-picker" id="wp-reactions-picker" style="display:none">
-        <button class="wp-reaction-btn" data-emoji="❤️">❤️</button>
-        <button class="wp-reaction-btn" data-emoji="😂">😂</button>
-        <button class="wp-reaction-btn" data-emoji="🔥">🔥</button>
-        <button class="wp-reaction-btn" data-emoji="😮">😮</button>
-        <button class="wp-reaction-btn" data-emoji="👏">👏</button>
-        <button class="wp-reaction-btn" data-emoji="😢">😢</button>
-        <button class="wp-reaction-btn" data-emoji="🎉">🎉</button>
-      </div>
 
       <!-- Watch Party — Floating reactions layer -->
       <div class="wp-reactions-layer" id="wp-reactions-layer" aria-hidden="true"></div>
