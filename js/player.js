@@ -365,7 +365,6 @@ BBM.Player = {
         }
       }, 5 * 60 * 1000);
     }
-  },
 
     // Copy share link
     const copyBtn = document.getElementById('wp-lobby-copy');
