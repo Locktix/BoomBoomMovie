@@ -895,15 +895,16 @@ BBM.API = {
     if (!doc.exists) throw new Error('Watch party introuvable');
     const data = doc.data();
     const name = user.displayName || (user.email || '').split('@')[0] || 'Invité';
-    const wasAlreadyIn = !!(data.participants && data.participants[user.uid]);
     await ref.update({
       [`participants.${user.uid}`]: { name, joinedAt: firebase.firestore.Timestamp.now() }
     });
-    // Post a system "X a rejoint" message — only on the first join
-    // (refreshes / reconnects don't need to re-announce)
-    if (!wasAlreadyIn) {
-      this.sendSystemMessage(code, `${name} a rejoint la session`).catch(() => {});
-    }
+    // Always post a "X a rejoint" message. We used to skip it when the
+    // user was already in `participants` (typical of a refresh where
+    // beforeunload didn't manage to flush the leave write), but that
+    // check is unreliable — the "leave" message would show without a
+    // matching "join" on the way back. Symmetric is better : every
+    // join logs, every leave logs.
+    this.sendSystemMessage(code, `${name} a rejoint la session`).catch(() => {});
     return data;
   },
 
