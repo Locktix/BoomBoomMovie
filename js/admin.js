@@ -78,7 +78,87 @@
     });
     // Section-specific re-render when switching to
     if (section === 'users') renderUsers();
+    if (section === 'parties') loadWatchParties();
   }
+
+  /* ---------- Watch Parties (admin) ---------- */
+
+  async function loadWatchParties() {
+    const list = document.getElementById('admin-parties-list');
+    const label = document.getElementById('parties-count-label');
+    const badge = document.getElementById('sidebar-parties-count');
+    if (!list) return;
+    list.innerHTML = '<div class="admin-empty-state">Chargement…</div>';
+    let parties = [];
+    try {
+      parties = await BBM.API.listAllWatchParties();
+    } catch (e) {
+      list.innerHTML = '<p class="admin-empty">Erreur de chargement.</p>';
+      return;
+    }
+    if (label) label.textContent = `${parties.length} session${parties.length > 1 ? 's' : ''}`;
+    if (badge) badge.textContent = String(parties.length);
+    if (parties.length === 0) {
+      list.innerHTML = '<div class="admin-empty-state">Aucune Watch Party active actuellement.</div>';
+      return;
+    }
+    const safe = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const fmtDate = (ts) => {
+      if (!ts) return '—';
+      try {
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+      } catch (e) { return '—'; }
+    };
+    list.innerHTML = parties.map(p => {
+      const epLabel = p.type === 'series' && p.season != null && p.episode != null
+        ? ` · S${String(p.season).padStart(2, '0')}E${String(p.episode).padStart(2, '0')}` : '';
+      const stateChip = p.started
+        ? '<span class="admin-party-chip is-live">EN COURS</span>'
+        : '<span class="admin-party-chip is-lobby">LOBBY</span>';
+      return `
+        <div class="admin-party-row" data-code="${p.code}">
+          <div class="admin-party-main">
+            <div class="admin-party-code">${p.code}</div>
+            <div class="admin-party-info">
+              <div class="admin-party-title">${safe(p.title)}${epLabel}</div>
+              <div class="admin-party-meta">
+                ${stateChip}
+                <span>👤 ${safe(p.hostName)}</span>
+                <span>${p.participantsCount} participant${p.participantsCount > 1 ? 's' : ''}</span>
+                <span>Mis à jour ${fmtDate(p.updatedAt)}</span>
+              </div>
+            </div>
+          </div>
+          <button class="admin-party-kill" data-code="${p.code}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Terminer
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('.admin-party-kill').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const code = btn.dataset.code;
+        if (!confirm(`Terminer la Watch Party ${code} ? Tous les invités seront éjectés.`)) return;
+        btn.disabled = true;
+        try {
+          await BBM.API.endWatchParty(code);
+          BBM.Toast?.show('Watch Party terminée', 'success');
+          await loadWatchParties();
+        } catch (e) {
+          BBM.Toast?.show('Erreur lors de la suppression', 'error');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // Refresh button
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#parties-refresh')) loadWatchParties();
+  });
 
   /* ---------- Requests ---------- */
 

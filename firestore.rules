@@ -32,9 +32,10 @@ service cloud.firestore {
       allow read, create: if request.auth != null;
       // Any authenticated user can update (host for state, participants for join/leave)
       allow update: if request.auth != null;
-      // Only the host can delete the room
+      // The host or any admin can delete the room (admin = cleanup)
       allow delete: if request.auth != null
-        && resource.data.hostUid == request.auth.uid;
+        && (resource.data.hostUid == request.auth.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true);
 
       // Chat messages — any auth participant can read+post; only the
       // sender can edit/delete their own message

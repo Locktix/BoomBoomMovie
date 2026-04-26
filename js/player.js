@@ -923,7 +923,15 @@ BBM.Player = {
     const playPauseBtn = document.getElementById('btn-play-pause');
     const playPauseCenter = document.getElementById('btn-center-play');
 
+    /** Returns true if the current user is a guest in a watch party.
+        Guests aren't allowed to control playback — only the host is. */
+    const isPartyGuest = () => !!this._partyCode && !this._isPartyHost;
+
     const togglePlay = () => {
+      if (isPartyGuest()) {
+        BBM.Toast?.show('Seul l\'hôte peut contrôler la lecture', 'info', 1800);
+        return;
+      }
       if (v.paused) { v.play(); } else { v.pause(); }
     };
 
@@ -948,12 +956,20 @@ BBM.Player = {
     // Double click for fullscreen
     v.addEventListener('dblclick', () => this.toggleFullscreen());
 
-    // Rewind / Forward
+    // Rewind / Forward (also blocked for guests — would desync them)
     document.getElementById('btn-rewind').addEventListener('click', () => {
+      if (isPartyGuest()) {
+        BBM.Toast?.show('Seul l\'hôte peut contrôler la lecture', 'info', 1800);
+        return;
+      }
       v.currentTime = Math.max(0, v.currentTime - 10);
     });
 
     document.getElementById('btn-forward').addEventListener('click', () => {
+      if (isPartyGuest()) {
+        BBM.Toast?.show('Seul l\'hôte peut contrôler la lecture', 'info', 1800);
+        return;
+      }
       v.currentTime = Math.min(v.duration, v.currentTime + 10);
     });
 
@@ -1108,6 +1124,11 @@ BBM.Player = {
     };
 
     progressBar.addEventListener('mousedown', (e) => {
+      // Block seek for guests in a watch party — only the host can seek
+      if (this._partyCode && !this._isPartyHost) {
+        BBM.Toast?.show('Seul l\'hôte peut contrôler la lecture', 'info', 1800);
+        return;
+      }
       seeking = true;
       seekFromX(e.clientX);
     });
@@ -1125,6 +1146,10 @@ BBM.Player = {
 
     // Touch support for progress bar
     progressBar.addEventListener('touchstart', (e) => {
+      if (this._partyCode && !this._isPartyHost) {
+        BBM.Toast?.show('Seul l\'hôte peut contrôler la lecture', 'info', 1800);
+        return;
+      }
       seeking = true;
       seekFromX(e.touches[0].clientX);
       e.preventDefault();
@@ -1369,6 +1394,19 @@ BBM.Player = {
       const tag = (e.target?.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select'
           || e.target?.isContentEditable) return;
+      // Guests in a watch party can't control playback — only the host can.
+      // Allow only "F" (fullscreen), "M" (mute), "?" (shortcuts) which are
+      // local-only and don't affect playback state.
+      const isPartyGuest = !!this._partyCode && !this._isPartyHost;
+      const allowedForGuest = ['f', 'F', 'm', 'M', '?', 'Escape'];
+      if (isPartyGuest && !allowedForGuest.includes(e.key)) {
+        const blocking = [' ', 'k', 'K', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'j', 'J', 'l', 'L'];
+        if (blocking.includes(e.key)) {
+          e.preventDefault();
+          BBM.Toast?.show('Seul l\'hôte peut contrôler la lecture', 'info', 1800);
+        }
+        return;
+      }
       switch (e.key) {
         case ' ':
         case 'k':

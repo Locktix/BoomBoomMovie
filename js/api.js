@@ -997,6 +997,39 @@ BBM.API = {
       });
   },
 
+  /** Liste TOUTES les watch parties actives (admin only). Pas de filtre
+   *  d'âge, pas d'exclusion. À utiliser dans le panel admin pour purge. */
+  async listAllWatchParties() {
+    try {
+      const snap = await BBM.db.collection('watchParties').get();
+      const parties = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (!data || !data.code) return;
+        parties.push({
+          code: data.code,
+          hostName: data.hostName || 'Hôte',
+          hostUid: data.hostUid,
+          tmdbID: data.tmdbID,
+          title: data.title || '',
+          type: data.type || 'movie',
+          season: data.season != null ? data.season : null,
+          episode: data.episode != null ? data.episode : null,
+          isPlaying: !!data.isPlaying,
+          started: !!data.started,
+          participantsCount: data.participants ? Object.keys(data.participants).length : 0,
+          updatedAt: data.updatedAt,
+          createdAt: data.createdAt
+        });
+      });
+      parties.sort((a, b) => this._msFromTimestamp(b.updatedAt) - this._msFromTimestamp(a.updatedAt));
+      return parties;
+    } catch (e) {
+      console.warn('listAllWatchParties failed:', e);
+      return [];
+    }
+  },
+
   /** Liste les watch parties actives (mises à jour < `maxAgeHours`).
    *  Exclut par défaut celles dont l'utilisateur courant est hôte. */
   async listActiveWatchParties({ excludeOwn = true, maxAgeHours = 6 } = {}) {
