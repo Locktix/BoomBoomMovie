@@ -2866,6 +2866,36 @@ select:focus-visible {
   }
 }
 
+/* When the chat is open, resize the video and overlay so they don't sit
+   under the chat panel — the chat takes the right 340px, everything else
+   fits in the remaining width. */
+.player-container.with-chat .player-overlay,
+.player-container.with-chat video {
+  width: calc(100% - 340px);
+  transition: width 0.25s ease;
+}
+.player-container video,
+.player-container .player-overlay {
+  transition: width 0.25s ease;
+}
+@media (max-width: 600px) {
+  /* On mobile the chat takes full width, so the player is fully covered
+     while open — no resize needed. */
+  .player-container.with-chat .player-overlay,
+  .player-container.with-chat video {
+    width: 100%;
+  }
+}
+
+/* Shift floating skip buttons + admin panel so they don't disappear
+   under the chat panel when it's open. */
+.player-container.with-chat .skip-btn {
+  right: 380px;
+}
+.player-container.with-chat .skip-admin-panel {
+  right: 364px;
+}
+
 /* ============================================
    MINI-PLAYER FLOTTANT
    Affiché sur toutes les pages sauf watch.html quand une lecture

@@ -577,9 +577,11 @@ BBM.Player = {
 
     this._chatUnsubscribe = BBM.API.listenChatMessages(this._partyCode, renderMessages);
 
+    const container = document.querySelector('.player-container');
     btn?.addEventListener('click', () => {
       chatOpen = !chatOpen;
       chat.classList.toggle('open', chatOpen);
+      container?.classList.toggle('with-chat', chatOpen);
       if (chatOpen) {
         input.focus();
         if (unreadDot) unreadDot.style.display = 'none';
@@ -588,6 +590,7 @@ BBM.Player = {
     closeBtn?.addEventListener('click', () => {
       chatOpen = false;
       chat.classList.remove('open');
+      container?.classList.remove('with-chat');
     });
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1361,6 +1364,11 @@ BBM.Player = {
      ---------------------------------------- */
   setupKeyboard() {
     document.addEventListener('keydown', (e) => {
+      // Ignore shortcuts when typing in any text field (chat input, search,
+      // etc.) — otherwise space/k/?/f trigger play, shortcuts overlay, etc.
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select'
+          || e.target?.isContentEditable) return;
       switch (e.key) {
         case ' ':
         case 'k':
