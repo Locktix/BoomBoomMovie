@@ -4488,6 +4488,21 @@ html.is-admin body.admin-show-tc-badge .tc-badge.missing {
   letter-spacing: 1px;
   margin-top: 4px;
 }
+.admin-stat-sub {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--bbm-text-muted);
+  margin-top: 4px;
+}
+/* Variante : 3 colonnes au lieu de 4 (utilisé par la section Timecodes) */
+.admin-stats.admin-stats-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 700px) {
+  .admin-stats.admin-stats-3 {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Admin Global Stats */
 .admin-global-stats {
