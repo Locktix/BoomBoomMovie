@@ -893,7 +893,7 @@ BBM.API = {
       payload.season = season;
       payload.episode = episode;
     }
-    ['recapStart', 'recapEnd', 'introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt'].forEach(k => {
+    ['recapStart', 'recapEnd', 'introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt', 'postCreditsAt2'].forEach(k => {
       const v = markers[k];
       payload[k] = (v != null && !isNaN(v)) ? Math.round(v * 10) / 10 : null;
     });

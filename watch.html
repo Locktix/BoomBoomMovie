@@ -143,6 +143,7 @@
             <div class="skip-marker skip-marker-intro" id="skip-marker-intro" style="display:none"></div>
             <div class="skip-marker skip-marker-outro" id="skip-marker-outro" style="display:none"></div>
             <div class="skip-marker-point skip-marker-postcredits" id="skip-marker-postcredits" style="display:none" title="Scène post-générique"></div>
+            <div class="skip-marker-point skip-marker-postcredits2" id="skip-marker-postcredits2" style="display:none" title="2e scène post-générique"></div>
             <div class="player-progress-thumb" id="progress-thumb"></div>
           </div>
 
@@ -294,6 +295,13 @@
           <line x1="19" y1="5" x2="19" y2="19"/>
         </svg>
       </button>
+      <button class="skip-btn skip-btn-postcredits2" id="skip-btn-postcredits2" style="display:none">
+        Aller à la 2e scène
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <polygon points="5 4 15 12 5 20 5 4"/>
+          <line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      </button>
 
       <!-- Admin panel for setting intro/outro timecodes -->
       <div class="skip-admin-panel" id="skip-admin-panel" style="display:none">
@@ -367,6 +375,15 @@
             <div class="skip-admin-time" id="skip-admin-postcredits-time">—</div>
             <button class="skip-admin-btn" data-set="postCreditsAt">Set</button>
             <button class="skip-admin-btn skip-admin-btn-clear" data-clear="postCreditsAt" aria-label="Effacer">✕</button>
+          </div>
+          <div class="skip-admin-row">
+            <div class="skip-admin-label">
+              <span class="skip-admin-dot skip-admin-dot-postcredits2"></span>
+              Post-générique 2 <span style="opacity:0.5;font-size:0.7rem">(Marvel)</span>
+            </div>
+            <div class="skip-admin-time" id="skip-admin-postcredits2-time">—</div>
+            <button class="skip-admin-btn" data-set="postCreditsAt2">Set</button>
+            <button class="skip-admin-btn skip-admin-btn-clear" data-clear="postCreditsAt2" aria-label="Effacer">✕</button>
           </div>
           <div class="skip-admin-footer">
             <button class="skip-admin-save" id="skip-admin-save">Sauvegarder</button>

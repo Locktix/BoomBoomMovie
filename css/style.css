@@ -2387,6 +2387,8 @@ select:focus-visible {
 .skip-admin-dot-intro { background: #22c55e; }
 .skip-admin-dot-outro { background: #f59e0b; }
 .skip-admin-dot-postcredits { background: #38bdf8; }
+.skip-admin-dot-postcredits2 { background: #818cf8; }
+.skip-marker-postcredits2 { background: #818cf8; }
 .skip-admin-time {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;

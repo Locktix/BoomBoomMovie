@@ -1751,18 +1751,19 @@ BBM.Player = {
   async setupSkipMarkers() {
     if (!this.tmdbID) return;
 
-    this._skipMarkers = { recapStart: null, recapEnd: null, introStart: null, introEnd: null, outroStart: null, outroEnd: null, postCreditsAt: null };
+    this._skipMarkers = { recapStart: null, recapEnd: null, introStart: null, introEnd: null, outroStart: null, outroEnd: null, postCreditsAt: null, postCreditsAt2: null };
 
     const recapBtn = document.getElementById('skip-btn-recap');
     const introBtn = document.getElementById('skip-btn-intro');
     const outroBtn = document.getElementById('skip-btn-outro');
+    const post2Btn = document.getElementById('skip-btn-postcredits2');
     const outroBtnLabel = outroBtn?.querySelector('.skip-btn-label');
 
     // Load stored markers
     try {
       const data = await BBM.API.getSkipMarkers(this.tmdbID, this.type, this.season, this.episode);
       if (data) {
-        ['recapStart', 'recapEnd', 'introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt'].forEach(k => {
+        ['recapStart', 'recapEnd', 'introStart', 'introEnd', 'outroStart', 'outroEnd', 'postCreditsAt', 'postCreditsAt2'].forEach(k => {
           if (data[k] != null && !isNaN(data[k])) this._skipMarkers[k] = Number(data[k]);
         });
       }
@@ -1794,6 +1795,13 @@ BBM.Player = {
         this.video.currentTime = target + 0.1;
       }
     });
+    post2Btn?.addEventListener('click', () => {
+      // Saut vers la 2e scène post-générique (typique Marvel)
+      const target = this._skipMarkers.postCreditsAt2;
+      if (target != null && this.video) {
+        this.video.currentTime = target + 0.1;
+      }
+    });
 
     // Watch currentTime to show/hide skip buttons (and auto-skip intro if enabled)
     const tick = () => {
@@ -1806,9 +1814,16 @@ BBM.Player = {
         && t >= m.introStart && t < m.introEnd;
       const inOutro = m.outroStart != null && m.outroEnd != null
         && t >= m.outroStart && t < m.outroEnd;
+      // Bouton "Aller à la 2e scène" : visible quand on a déjà passé la
+      // 1ère scène post-générique (postCreditsAt+30s) et qu'on n'a pas
+      // encore atteint la 2e (postCreditsAt2). 30s = buffer minimum
+      // typique pour la durée d'une scène post-générique.
+      const inBetweenPostCredits = m.postCreditsAt != null && m.postCreditsAt2 != null
+        && t > m.postCreditsAt + 30 && t < m.postCreditsAt2;
       if (recapBtn) recapBtn.style.display = inRecap ? '' : 'none';
       if (introBtn) introBtn.style.display = inIntro ? '' : 'none';
-      if (outroBtn) outroBtn.style.display = inOutro ? '' : 'none';
+      if (outroBtn) outroBtn.style.display = inOutro && !inBetweenPostCredits ? '' : 'none';
+      if (post2Btn) post2Btn.style.display = inBetweenPostCredits ? '' : 'none';
       // Auto-skip intro if user opted in via settings (only once per session,
       // so a manual seek back into the intro doesn't get auto-skipped again)
       const autoSkip = window.BBM?.Settings?.get?.('playback.skipIntro');
@@ -1836,12 +1851,14 @@ BBM.Player = {
     const introMark = document.getElementById('skip-marker-intro');
     const outroMark = document.getElementById('skip-marker-outro');
     const postMark = document.getElementById('skip-marker-postcredits');
+    const post2Mark = document.getElementById('skip-marker-postcredits2');
     const duration = this.video?.duration;
     if (!duration || isNaN(duration)) {
       if (recapMark) recapMark.style.display = 'none';
       if (introMark) introMark.style.display = 'none';
       if (outroMark) outroMark.style.display = 'none';
       if (postMark) postMark.style.display = 'none';
+      if (post2Mark) post2Mark.style.display = 'none';
       return;
     }
     const m = this._skipMarkers || {};
@@ -1864,6 +1881,7 @@ BBM.Player = {
     placeRange(introMark, m.introStart, m.introEnd);
     placeRange(outroMark, m.outroStart, m.outroEnd);
     placePoint(postMark, m.postCreditsAt);
+    placePoint(post2Mark, m.postCreditsAt2);
   },
 
   _refreshOutroBtnLabel() {
@@ -1896,6 +1914,7 @@ BBM.Player = {
       setText('skip-admin-outro-start-time', fmt(m.outroStart));
       setText('skip-admin-outro-end-time', fmt(m.outroEnd));
       setText('skip-admin-postcredits-time', fmt(m.postCreditsAt));
+      setText('skip-admin-postcredits2-time', fmt(m.postCreditsAt2));
     };
     refreshDisplay();
 

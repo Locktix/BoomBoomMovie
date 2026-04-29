@@ -162,6 +162,16 @@ describe('BBM.API skip markers', () => {
     expect(data.episode).toBe(2);
   });
 
+  test('setSkipMarkers persiste postCreditsAt2 (2e scène Marvel)', async () => {
+    await BBM.API.setSkipMarkers('1726', 'movie', null, null, {
+      outroStart: 7000, outroEnd: 7900,
+      postCreditsAt: 7920, postCreditsAt2: 8400
+    });
+    const data = await BBM.API.getSkipMarkers('1726', 'movie', null, null);
+    expect(data.postCreditsAt).toBe(7920);
+    expect(data.postCreditsAt2).toBe(8400);
+  });
+
   test('setSkipMarkers refuse sans tmdbID', async () => {
     await expect(BBM.API.setSkipMarkers(null, 'movie', null, null, {}))
       .rejects.toThrow('tmdbID manquant');
