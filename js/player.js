@@ -248,13 +248,33 @@ BBM.Player = {
       return;
     }
 
-    // hls.js
+    // hls.js — config optimisée pour un démarrage rapide
     if (window.Hls && window.Hls.isSupported()) {
       this._hls = new window.Hls({
-        // Tuning raisonnable pour streaming long-form
-        maxBufferLength: 30,
+        // Buffer initial bas → la vidéo démarre plus tôt (~10s suffisent)
+        // au lieu d'attendre 30s de buffer pré-rempli
+        maxBufferLength: 12,
         maxMaxBufferLength: 60,
-        enableWorker: true
+        // Ne charge pas la qualité max d'entrée — démarre avec une
+        // qualité raisonnable que l'écran peut afficher, hls.js upgrade
+        // automatiquement après quelques segments
+        capLevelToPlayerSize: true,
+        startLevel: -1, // -1 = auto choix par hls.js basé sur la bande passante mesurée
+        // Pré-fetch le 1er segment dès que le manifest est parsé
+        startFragPrefetch: true,
+        // Délais de timeout plus serrés sur le manifest pour fail-fast
+        // si le serveur est down (au lieu d'attendre 60s par défaut)
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 2,
+        levelLoadingTimeOut: 10000,
+        levelLoadingMaxRetry: 4,
+        fragLoadingTimeOut: 20000,
+        fragLoadingMaxRetry: 6,
+        // Utilise un Web Worker pour le parse + transmux → main thread
+        // libre pour rendre l'UI pendant le chargement
+        enableWorker: true,
+        // Réduit l'empreinte mémoire (default 90s, on garde 30s d'historique)
+        backBufferLength: 30
       });
       this._hls.loadSource(url);
       this._hls.attachMedia(this.video);
