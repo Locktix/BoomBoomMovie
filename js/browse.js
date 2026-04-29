@@ -247,7 +247,32 @@ BBM.Browse = {
       try { localStorage.setItem(`bbm_is_admin_${user.uid}`, isAdmin ? '1' : '0'); } catch (e) {}
     };
 
-    BBM.Auth.isAdmin().then(setAdminFlag).catch(() => {});
+    BBM.Auth.isAdmin().then((isAdmin) => {
+      setAdminFlag(isAdmin);
+      // Précharge la liste des tmdbID timecodés pour afficher le badge
+      // sur les cartes (admin only, pas de fuite côté user normal).
+      // Active aussi la classe body si le setting est ON.
+      if (isAdmin) {
+        if (BBM.Settings?.get?.('admin.showTimecodesBadge') === true) {
+          document.body.classList.add('admin-show-tc-badge');
+        }
+        BBM.API.listSkipMarkersTmdbIDs().then(set => {
+          this.skipMarkersIDs = set;
+          // Re-render minimal : juste recharger les badges sur les cartes
+          // déjà rendues sans repasser par tout le pipeline
+          document.querySelectorAll('.title-card[data-tmdbid]').forEach(card => {
+            const id = card.dataset.tmdbid;
+            const badge = card.querySelector('.tc-badge');
+            if (!badge) return;
+            const has = set.has(String(id));
+            badge.classList.toggle('has', has);
+            badge.classList.toggle('missing', !has);
+            badge.textContent = has ? '✓ TC' : 'TC';
+            badge.title = has ? 'Timecodes définis' : 'Aucun timecode';
+          });
+        }).catch(() => {});
+      }
+    }).catch(() => {});
 
     // Logout
     const logoutBtn = document.getElementById('btn-logout');
@@ -1548,10 +1573,17 @@ BBM.Browse = {
     const watchedBadge = isWatched && !isContinueWatching ? '<div class="watched-badge">VU</div>' : '';
     const isNew = !isWatched && BBM.API.isNewlyAdded(tmdbID);
 
+    // Badge admin "TC" — visible uniquement pour les admins (body.is-admin)
+    // ET quand le toggle est ON (body.admin-show-tc-badge). Vert si le
+    // titre a au moins un timecode, rouge si manquant.
+    const hasTC = this.skipMarkersIDs?.has(String(tmdbID)) === true;
+    const tcBadge = `<div class="tc-badge ${hasTC ? 'has' : 'missing'}" title="${hasTC ? 'Timecodes définis' : 'Aucun timecode'}">${hasTC ? '✓ TC' : 'TC'}</div>`;
+
     card.innerHTML = `
       <div class="title-card-img">
         ${isNew ? '<div class="new-badge">NOUVEAU</div>' : ''}
         ${watchedBadge}
+        ${tcBadge}
         ${posterURL ? `<img data-src="${posterURL}" alt="${title}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.8rem;padding:10px;text-align:center">${title}</div>`}
         <div class="title-card-overlay">
           <div class="card-buttons">

@@ -47,6 +47,9 @@
     loadDashboard();
     loadCatalog();
     loadSystemInfo();
+    // Load timecodes stats in background so the sidebar badge shows
+    // the count of "non timecodés" sans attendre que l'admin clique
+    loadTimecodes().catch(() => {});
 
     // Realtime listener sur la collection users — pas besoin de polling,
     // on est notifié dès qu'un user pulse son lastSeen ou change watching
@@ -92,7 +95,137 @@
     // Section-specific re-render when switching to
     if (section === 'users') renderUsers();
     if (section === 'parties') loadWatchParties();
+    if (section === 'timecodes') loadTimecodes();
   }
+
+  /* ---------- Timecodes (admin) ---------- */
+
+  let timecodesData = null;          // { items, marked, stats }
+  let timecodesFilter = 'all';
+
+  async function loadTimecodes() {
+    const list = document.getElementById('admin-timecodes-missing');
+    if (!list) return;
+    list.innerHTML = '<div class="admin-empty-state">Chargement…</div>';
+
+    let items = [];
+    let markerIds = new Set();
+    try {
+      [items, markerIds] = await Promise.all([
+        BBM.API.fetchAllItems(),
+        BBM.API.listSkipMarkersTmdbIDs()
+      ]);
+    } catch (e) {
+      list.innerHTML = '<p class="admin-empty">Erreur de chargement.</p>';
+      return;
+    }
+
+    // Dedupe par tmdbID
+    const uniq = new Map();
+    items.forEach(it => {
+      const id = String(it.tmdbID);
+      if (!uniq.has(id)) {
+        uniq.set(id, {
+          tmdbID: id,
+          type: it.category === 'movie' ? 'movie' : 'series',
+          title: it.title || it.seriesTitle || ''
+        });
+      }
+    });
+    const titles = Array.from(uniq.values());
+    const movies = titles.filter(t => t.type === 'movie');
+    const series = titles.filter(t => t.type === 'series');
+    const moviesWithMarker = movies.filter(t => markerIds.has(t.tmdbID));
+    const seriesWithMarker = series.filter(t => markerIds.has(t.tmdbID));
+
+    timecodesData = {
+      titles, movies, series,
+      moviesWithMarker, seriesWithMarker,
+      markerIds
+    };
+
+    // Stats
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setText('timecodes-movies-done', moviesWithMarker.length);
+    setText('timecodes-movies-total', `/ ${movies.length} total`);
+    setText('timecodes-series-done', seriesWithMarker.length);
+    setText('timecodes-series-total', `/ ${series.length} total`);
+    const totalDone = moviesWithMarker.length + seriesWithMarker.length;
+    const totalAll = movies.length + series.length;
+    const pct = totalAll === 0 ? 0 : Math.round(totalDone / totalAll * 100);
+    setText('timecodes-coverage', `${pct}%`);
+
+    // Sidebar badge = # de titres MANQUANTS pour rappeler le boulot restant
+    const sideBadge = document.getElementById('sidebar-timecodes-count');
+    if (sideBadge) sideBadge.textContent = String(totalAll - totalDone);
+
+    renderTimecodesMissing();
+  }
+
+  function renderTimecodesMissing() {
+    if (!timecodesData) return;
+    const list = document.getElementById('admin-timecodes-missing');
+    const countEl = document.getElementById('timecodes-missing-count');
+    if (!list) return;
+
+    let pool = timecodesData.titles.filter(t => !timecodesData.markerIds.has(t.tmdbID));
+    if (timecodesFilter === 'movies') pool = pool.filter(t => t.type === 'movie');
+    else if (timecodesFilter === 'series') pool = pool.filter(t => t.type === 'series');
+    pool.sort((a, b) => a.title.localeCompare(b.title));
+
+    if (countEl) countEl.textContent = `(${pool.length})`;
+
+    if (pool.length === 0) {
+      list.innerHTML = '<div class="admin-empty-state">Tout est timecodé ici 🎉</div>';
+      return;
+    }
+
+    list.innerHTML = pool.map(t => {
+      const tmdb = (BBM.API._cache?.[`tmdb_${t.type === 'movie' ? 'movie' : 'tv'}_${t.tmdbID}`]) || null;
+      const poster = tmdb?.poster_path ? BBM.API.getPosterURL(tmdb.poster_path, 'w185') : null;
+      const year = (tmdb?.release_date || tmdb?.first_air_date || '').slice(0, 4);
+      const safeTitle = String(tmdb?.title || tmdb?.name || t.title || 'Titre').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      return `
+        <div class="admin-timecodes-row" data-tmdbid="${t.tmdbID}" data-type="${t.type}">
+          <div class="admin-timecodes-poster">
+            ${poster ? `<img src="${poster}" alt="" loading="lazy">` : '<div class="admin-timecodes-poster-ph"></div>'}
+          </div>
+          <div class="admin-timecodes-info">
+            <div class="admin-timecodes-title">${safeTitle}${year ? ` <span class="admin-muted">(${year})</span>` : ''}</div>
+            <div class="admin-timecodes-meta">${t.type === 'movie' ? '🎬 Film' : '📺 Série'} · ID ${t.tmdbID}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.addEventListener('click', (e) => {
+    const filterBtn = e.target.closest('[data-tc-filter]');
+    if (filterBtn) {
+      timecodesFilter = filterBtn.dataset.tcFilter;
+      document.querySelectorAll('[data-tc-filter]').forEach(b => {
+        b.classList.toggle('active', b.dataset.tcFilter === timecodesFilter);
+      });
+      renderTimecodesMissing();
+      return;
+    }
+    if (e.target.closest('#timecodes-refresh')) loadTimecodes();
+  });
+
+  // Toggle "afficher badge timecodes sur les posters"
+  document.addEventListener('change', (e) => {
+    if (e.target.id !== 'toggle-show-timecodes-badge') return;
+    BBM.Settings?.set('admin.showTimecodesBadge', !!e.target.checked);
+    document.body.classList.toggle('admin-show-tc-badge', !!e.target.checked);
+  });
+  // Initialise l'état du toggle au load
+  document.addEventListener('DOMContentLoaded', () => {
+    const t = document.getElementById('toggle-show-timecodes-badge');
+    if (!t || !BBM.Settings) return;
+    const on = BBM.Settings.get('admin.showTimecodesBadge') === true;
+    t.checked = on;
+    document.body.classList.toggle('admin-show-tc-badge', on);
+  });
 
   /* ---------- Watch Parties (admin) ---------- */
 

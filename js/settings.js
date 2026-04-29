@@ -64,7 +64,10 @@
 
     // Privacy
     'privacy.saveProgress': true,
-    'privacy.saveHistory': true
+    'privacy.saveHistory': true,
+
+    // Admin overlays (visibles uniquement si user.admin === true)
+    'admin.showTimecodesBadge': false
   });
 
   function loadRaw() {

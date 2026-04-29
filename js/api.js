@@ -878,6 +878,39 @@ BBM.API = {
     }
   },
 
+  /** Liste tous les tmdbID qui ont AU MOINS UN doc skipMarkers (admin
+   *  only). Le doc.id est soit le tmdbID brut (films), soit
+   *  `${tmdbID}_s${season}_e${episode}` (séries). On extrait la partie
+   *  tmdbID pour répondre à la question "ce titre a-t-il des markers ?".
+   *  Retourne un Set<string>.
+   */
+  async listSkipMarkersTmdbIDs() {
+    try {
+      const snap = await BBM.db.collection('skipMarkers').get();
+      const ids = new Set();
+      snap.forEach(doc => {
+        const baseId = doc.id.split('_')[0];
+        if (baseId) ids.add(baseId);
+      });
+      return ids;
+    } catch (e) {
+      console.warn('listSkipMarkersTmdbIDs failed:', e);
+      return new Set();
+    }
+  },
+
+  /** Liste les docs complets de skipMarkers (admin only). Utilisé pour
+   *  les stats du panel admin. */
+  async listSkipMarkersDocs() {
+    try {
+      const snap = await BBM.db.collection('skipMarkers').get();
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      console.warn('listSkipMarkersDocs failed:', e);
+      return [];
+    }
+  },
+
   async setSkipMarkers(tmdbID, type, season, episode, markers) {
     const user = BBM.Auth.currentUser;
     if (!user) throw new Error('Connexion requise');

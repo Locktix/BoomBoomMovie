@@ -71,6 +71,11 @@
             <span>Watch Parties</span>
             <span class="admin-nav-badge" id="sidebar-parties-count">0</span>
           </button>
+          <button class="admin-nav-btn" data-section="timecodes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Timecodes</span>
+            <span class="admin-nav-badge" id="sidebar-timecodes-count">0</span>
+          </button>
           <button class="admin-nav-btn" data-section="system">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Système</span>
@@ -273,6 +278,60 @@
             </div>
           </div>
           <div class="admin-parties-list" id="admin-parties-list">
+            <div class="admin-empty-state">Chargement…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TIMECODES -->
+      <section class="admin-section" id="section-timecodes" hidden>
+        <header class="admin-section-header">
+          <h1>Timecodes intro / outro</h1>
+          <p>Gestion globale des marqueurs (recap, intro, outro, post-générique). Repère vite ce qui n'est pas encore renseigné.</p>
+        </header>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Affichage admin</h3>
+          </div>
+          <label class="admin-toggle-row">
+            <input type="checkbox" id="toggle-show-timecodes-badge">
+            <span>Afficher un badge sur chaque poster pour les titres timecodés (visible seulement par les admins)</span>
+          </label>
+        </div>
+
+        <div class="admin-stats">
+          <div class="admin-stat-card">
+            <div class="admin-stat-label">Films timecodés</div>
+            <div class="admin-stat-value" id="timecodes-movies-done">—</div>
+            <div class="admin-stat-sub" id="timecodes-movies-total">/ — total</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-label">Séries timecodées</div>
+            <div class="admin-stat-value" id="timecodes-series-done">—</div>
+            <div class="admin-stat-sub" id="timecodes-series-total">/ — total</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-label">Couverture globale</div>
+            <div class="admin-stat-value" id="timecodes-coverage">—</div>
+            <div class="admin-stat-sub">titres avec ≥1 marqueur</div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Sans timecode <span class="admin-card-subtitle" id="timecodes-missing-count">—</span></h3>
+            <button class="admin-btn-ghost" id="timecodes-refresh">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Rafraîchir
+            </button>
+          </div>
+          <div class="admin-filter-group" style="margin-bottom:12px">
+            <button class="admin-filter-btn active" data-tc-filter="all">Tous</button>
+            <button class="admin-filter-btn" data-tc-filter="movies">Films</button>
+            <button class="admin-filter-btn" data-tc-filter="series">Séries</button>
+          </div>
+          <div class="admin-timecodes-missing" id="admin-timecodes-missing">
             <div class="admin-empty-state">Chargement…</div>
           </div>
         </div>

@@ -206,6 +206,37 @@ describe('BBM.API ratings (movie + episode)', () => {
   });
 });
 
+describe('BBM.API.listSkipMarkersTmdbIDs', () => {
+  test('extrait tmdbID depuis les doc IDs (films + séries)', async () => {
+    await BBM.API.setSkipMarkers('100', 'movie', null, null, { introStart: 0, introEnd: 30 });
+    await BBM.API.setSkipMarkers('200', 'series', 1, 1, { introStart: 0, introEnd: 30 });
+    await BBM.API.setSkipMarkers('200', 'series', 1, 2, { introStart: 0, introEnd: 30 });
+    await BBM.API.setSkipMarkers('300', 'movie', null, null, { outroStart: 7000, outroEnd: 7100 });
+    const ids = await BBM.API.listSkipMarkersTmdbIDs();
+    expect(ids).toBeInstanceOf(Set);
+    expect(ids.has('100')).toBe(true);
+    expect(ids.has('200')).toBe(true); // une série avec ≥1 épisode timecodé compte
+    expect(ids.has('300')).toBe(true);
+    expect(ids.has('999')).toBe(false);
+  });
+
+  test('Set vide si aucun marqueur', async () => {
+    const ids = await BBM.API.listSkipMarkersTmdbIDs();
+    expect(ids.size).toBe(0);
+  });
+});
+
+describe('BBM.API.listSkipMarkersDocs', () => {
+  test('retourne les docs complets avec id', async () => {
+    await BBM.API.setSkipMarkers('42', 'movie', null, null, { introStart: 0, introEnd: 30 });
+    const docs = await BBM.API.listSkipMarkersDocs();
+    expect(docs.length).toBe(1);
+    expect(docs[0].id).toBe('42');
+    expect(docs[0].introStart).toBe(0);
+    expect(docs[0].introEnd).toBe(30);
+  });
+});
+
 describe('BBM.API listAllWatchParties (admin)', () => {
   test('retourne toutes les sessions', async () => {
     await BBM.API.createWatchParty({ tmdbID: 1, title: 'A', videoURL: 'a' });

@@ -1059,6 +1059,34 @@ select:focus-visible {
   z-index: 5;
 }
 
+/* Badge "TC" admin-only — affiche l'état des timecodes sur chaque
+   carte. Caché par défaut, visible UNIQUEMENT si l'user est admin
+   ET si le toggle est activé dans le panel admin Timecodes. */
+.tc-badge { display: none; }
+html.is-admin body.admin-show-tc-badge .tc-badge {
+  display: inline-flex;
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  align-items: center;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  border-radius: 4px;
+  z-index: 5;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+html.is-admin body.admin-show-tc-badge .tc-badge.has {
+  background: rgba(34, 197, 94, 0.92);
+  color: #fff;
+}
+html.is-admin body.admin-show-tc-badge .tc-badge.missing {
+  background: rgba(239, 68, 68, 0.92);
+  color: #fff;
+}
+
 .new-badge {
   position: absolute;
   top: 8px;
@@ -7915,6 +7943,75 @@ body.admin-body {
   border-color: rgba(224, 85, 85, 0.6);
 }
 .admin-party-kill:disabled { opacity: 0.5; cursor: wait; }
+
+/* Admin — Timecodes section */
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 0.92rem;
+  color: var(--bbm-text);
+  cursor: pointer;
+}
+.admin-toggle-row input[type="checkbox"] {
+  width: 18px; height: 18px;
+  accent-color: var(--bbm-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.admin-timecodes-missing {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+.admin-timecodes-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+.admin-timecodes-poster {
+  width: 50px;
+  height: 75px;
+  flex: none;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bbm-bg-card);
+}
+.admin-timecodes-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.admin-timecodes-poster-ph {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2a2a30, #1a1a1f);
+}
+.admin-timecodes-info {
+  min-width: 0;
+  flex: 1;
+}
+.admin-timecodes-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bbm-text-bright);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-timecodes-meta {
+  font-size: 0.72rem;
+  color: var(--bbm-text-secondary);
+}
 
 /* Filters */
 .admin-filters {
