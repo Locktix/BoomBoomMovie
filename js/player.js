@@ -187,7 +187,7 @@ BBM.Player = {
      Presence — push "currently watching" info
      ---------------------------------------- */
   _pushPresenceWatching() {
-    if (!this.video || this.video.paused) return;
+    if (!this.video) return;
     const titleEl = document.getElementById('player-title');
     const title = titleEl?.textContent || 'Lecture en cours';
     BBM.API.updatePresence({
@@ -197,7 +197,23 @@ BBM.Player = {
       season: this.season != null ? this.season : null,
       episode: this.episode != null ? this.episode : null,
       currentTime: Math.floor(this.video.currentTime || 0),
+      paused: !!this.video.paused,
       duration: Math.floor(this.video.duration || 0)
+    }).catch(() => {});
+  },
+
+  /** Persiste le titre courant comme "dernier vu" (1× par session de
+   *  lecture, déclenché au-delà de 30s de visionnage). */
+  _recordLastWatched() {
+    if (!this.tmdbID) return;
+    const titleEl = document.getElementById('player-title');
+    BBM.API.recordLastWatched({
+      tmdbID: this.tmdbID,
+      title: titleEl?.textContent || '',
+      type: this.type || 'movie',
+      season: this.season,
+      episode: this.episode,
+      posterPath: this._cachedPosterPath || null
     }).catch(() => {});
   },
 
@@ -939,20 +955,28 @@ BBM.Player = {
     const v = this.video;
 
     v.addEventListener('play', () => { this.isPlaying = true; this._pushPresenceWatching(); });
-    v.addEventListener('pause', () => { BBM.API.updatePresence(null).catch(() => {}); });
+    // Sur pause, on garde watching (avec paused:true) pour que l'admin
+    // voit toujours ce qu'il regarde — un "pause de 1s pour boire" ne
+    // doit pas faire disparaître l'user de la liste "Regarde"
     v.addEventListener('pause', () => {
       this.isPlaying = false;
+      this._pushPresenceWatching();
       if (v.currentTime > 5) this.saveProgress();
     });
 
-    // Save progress periodically
+    // Heartbeat continu : refresh la présence toutes les 20s tant que
+    // le player est ouvert (peu importe play/pause)
     setInterval(() => {
       if (this.isPlaying && v.currentTime > 5) {
         this.saveProgress();
+        // Enregistre comme "dernier vu" après 30s de visionnage
+        if (v.currentTime > 30 && !this._lastWatchedRecorded) {
+          this._lastWatchedRecorded = true;
+          this._recordLastWatched();
+        }
       }
-      // Also refresh presence (watching state) every tick while playing
-      if (this.isPlaying) this._pushPresenceWatching();
-    }, 10000);
+      this._pushPresenceWatching();
+    }, 20000);
 
     window.addEventListener('beforeunload', () => {
       if (v.currentTime > 5) this.saveProgress();
@@ -1237,21 +1261,31 @@ BBM.Player = {
       seekRAF = null;
     });
 
-    // Save progress periodically (every 10s)
+    // Save progress + push presence heartbeat (every 20s, peu importe
+    // play/pause — l'admin doit voir l'user comme actif tant que le
+    // player est ouvert)
     setInterval(() => {
       if (this.isPlaying && v.currentTime > 5) {
         this.saveProgress();
+        if (v.currentTime > 30 && !this._lastWatchedRecorded) {
+          this._lastWatchedRecorded = true;
+          this._recordLastWatched();
+        }
       }
-    }, 10000);
+      this._pushPresenceWatching();
+    }, 20000);
 
-    // Save on pause
+    // Save + push presence on pause (gardé visible côté admin avec paused:true)
     v.addEventListener('pause', () => {
       if (v.currentTime > 5) this.saveProgress();
+      this._pushPresenceWatching();
     });
+    v.addEventListener('play', () => this._pushPresenceWatching());
 
     // Save when leaving page
     window.addEventListener('beforeunload', () => {
       if (v.currentTime > 5) this.saveProgress();
+      BBM.API.updatePresence(null).catch(() => {});
     });
 
     // Video ended

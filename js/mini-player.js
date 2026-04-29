@@ -147,10 +147,28 @@
   window.BBM = window.BBM || {};
   BBM.MiniPlayer = MiniPlayer;
 
-  // Auto-render au chargement de la page
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => MiniPlayer.render());
-  } else {
+  // Auto-render au chargement de la page + démarre le heartbeat de
+  // présence pour que l'admin voie tout le monde en temps réel, peu
+  // importe la page (browse, settings, mcu, stats, etc.). Le heartbeat
+  // est skippé sur watch.html où le player gère sa propre cadence.
+  function bootstrap() {
     MiniPlayer.render();
+    // L'API peut ne pas être prête (chargée après mini-player.js).
+    // On retry brièvement jusqu'à ce qu'Auth + API soient là.
+    let tries = 0;
+    const tryStart = () => {
+      tries++;
+      if (window.BBM?.API?.startPresenceHeartbeat && BBM.Auth?.currentUser) {
+        BBM.API.startPresenceHeartbeat();
+      } else if (tries < 20) {
+        setTimeout(tryStart, 500);
+      }
+    };
+    tryStart();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
   }
 })();

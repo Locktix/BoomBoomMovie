@@ -169,13 +169,7 @@ BBM.Browse = {
      ---------------------------------------- */
   startPresenceHeartbeat() {
     if (this._presenceTimer) return;
-    const tick = () => BBM.API.updatePresence(null).catch(() => {});
-    tick();
-    this._presenceTimer = setInterval(tick, 60000);
-    window.addEventListener('beforeunload', () => {
-      // Best-effort clear: it's ok if this doesn't reach Firestore
-      try { BBM.API.updatePresence(null); } catch (e) {}
-    });
+    BBM.API.startPresenceHeartbeat();
   },
 
   showLoading(show) {

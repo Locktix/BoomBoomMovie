@@ -206,6 +206,95 @@ describe('BBM.API listAllWatchParties (admin)', () => {
   });
 });
 
+describe('BBM.API.updatePresence', () => {
+  test('écrit lastSeen + watching dans le doc user', async () => {
+    await BBM.API.updatePresence({
+      tmdbID: '42', title: 'Inception', type: 'movie',
+      season: null, episode: null, paused: false
+    });
+    const data = (await BBM.db.collection('users').doc('test-uid').get()).data();
+    expect(data.presence).toBeTruthy();
+    expect(data.presence.watching.tmdbID).toBe('42');
+    expect(data.presence.watching.paused).toBe(false);
+    expect(data.displayName).toBe('Tester');
+    expect(data.email).toBe('test@x.com');
+  });
+
+  test('watching null pour les pages hors player', async () => {
+    await BBM.API.updatePresence(null);
+    const data = (await BBM.db.collection('users').doc('test-uid').get()).data();
+    expect(data.presence.watching).toBeNull();
+  });
+
+  test('paused=true gardé dans watching', async () => {
+    await BBM.API.updatePresence({
+      tmdbID: '42', title: 'X', type: 'movie', paused: true
+    });
+    const data = (await BBM.db.collection('users').doc('test-uid').get()).data();
+    expect(data.presence.watching.paused).toBe(true);
+  });
+
+  test('skip si pas connecté', async () => {
+    BBM.Auth.currentUser = null;
+    await expect(BBM.API.updatePresence(null)).resolves.toBeUndefined();
+  });
+});
+
+describe('BBM.API.recordLastWatched', () => {
+  test('persiste tmdbID + title + at', async () => {
+    await BBM.API.recordLastWatched({
+      tmdbID: 99, title: 'Stranger Things',
+      type: 'series', season: 1, episode: 3,
+      posterPath: '/poster.jpg'
+    });
+    const data = (await BBM.db.collection('users').doc('test-uid').get()).data();
+    expect(data.lastWatched).toBeTruthy();
+    expect(data.lastWatched.tmdbID).toBe('99');
+    expect(data.lastWatched.title).toBe('Stranger Things');
+    expect(data.lastWatched.type).toBe('series');
+    expect(data.lastWatched.season).toBe(1);
+    expect(data.lastWatched.episode).toBe(3);
+    expect(data.lastWatched.at).toBeTruthy();
+  });
+
+  test('skip si tmdbID manquant', async () => {
+    await BBM.API.recordLastWatched({ title: 'X' });
+    const snap = await BBM.db.collection('users').doc('test-uid').get();
+    expect(snap.data()?.lastWatched).toBeUndefined();
+  });
+
+  test('skip si pas connecté', async () => {
+    BBM.Auth.currentUser = null;
+    await expect(BBM.API.recordLastWatched({ tmdbID: 1, title: 'X' }))
+      .resolves.toBeUndefined();
+  });
+});
+
+describe('BBM.API.startPresenceHeartbeat', () => {
+  test('idempotent — pas de double-timer', () => {
+    BBM.API._presenceTimer = null;
+    BBM.API.startPresenceHeartbeat();
+    const first = BBM.API._presenceTimer;
+    BBM.API.startPresenceHeartbeat();
+    expect(BBM.API._presenceTimer).toBe(first);
+    if (BBM.API._presenceTimer) clearInterval(BBM.API._presenceTimer);
+    BBM.API._presenceTimer = null;
+  });
+});
+
+describe('BBM.API.listenAllUsers', () => {
+  test('callback reçoit la liste avec uid', async () => {
+    await BBM.db.collection('users').doc('a').set({ displayName: 'A' });
+    await BBM.db.collection('users').doc('b').set({ displayName: 'B' });
+    let received = null;
+    const off = BBM.API.listenAllUsers((users) => { received = users; });
+    expect(received).toBeTruthy();
+    expect(received.length).toBe(2);
+    expect(received[0].uid).toMatch(/^[ab]$/);
+    if (typeof off === 'function') off();
+  });
+});
+
 describe('BBM.API auto-cleanup', () => {
   test('cleanupOwnStaleWatchParties supprime les vieilles parties', async () => {
     const code = await BBM.API.createWatchParty({ tmdbID: 1, title: 'X', videoURL: 'a' });

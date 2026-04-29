@@ -760,15 +760,21 @@ BBM.API = {
      Firestore — Presence (heartbeat)
      ---------------------------------------- */
 
-  /** Writes the current user's presence. `watching` may be null when idle. */
+  /** Writes the current user's presence.
+   *  @param {object|null} watching - { tmdbID, title, type, season, episode,
+   *    currentTime, paused } ou null quand l'user est juste sur le site
+   *    sans regarder de contenu (sur browse, settings, etc.).
+   */
   async updatePresence(watching) {
     const user = BBM.Auth.currentUser;
     if (!user) return;
     try {
+      const path = (typeof location !== 'undefined' ? location.pathname : '') || '';
       await BBM.db.collection('users').doc(user.uid).set({
         presence: {
           lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
           watching: watching || null,
+          path: path.split('/').pop() || 'browse.html',
           ua: (navigator.userAgent || '').slice(0, 200)
         },
         // Cache display fields on the root doc for admin listing
@@ -776,6 +782,58 @@ BBM.API = {
         email: user.email || null
       }, { merge: true });
     } catch (e) { /* noop */ }
+  },
+
+  /** Persiste le dernier titre regardé pour ≥ 30 secondes. Utilisé par
+   *  l'admin pour montrer "le dernier truc qu'il a vu" dans la liste,
+   *  même quand l'user n'est plus en lecture active. */
+  async recordLastWatched({ tmdbID, title, type, season, episode, posterPath }) {
+    const user = BBM.Auth.currentUser;
+    if (!user || !tmdbID) return;
+    try {
+      await BBM.db.collection('users').doc(user.uid).set({
+        lastWatched: {
+          tmdbID: String(tmdbID),
+          title: title || '',
+          type: type || 'movie',
+          season: season != null ? season : null,
+          episode: episode != null ? episode : null,
+          posterPath: posterPath || null,
+          at: firebase.firestore.FieldValue.serverTimestamp()
+        }
+      }, { merge: true });
+    } catch (e) { /* noop */ }
+  },
+
+  /** Démarre un heartbeat de présence (30s) qui pulse `lastSeen` côté
+   *  Firestore. Appelable depuis n'importe quelle page — idempotent.
+   *  Pas de heartbeat sur watch.html : le player gère sa propre cadence
+   *  pour pousser aussi `watching` (titre en cours).
+   */
+  startPresenceHeartbeat() {
+    if (this._presenceTimer) return;
+    if (typeof location !== 'undefined' && /watch\.html$/.test(location.pathname)) {
+      return; // le player s'en charge avec watching enrichi
+    }
+    const tick = () => this.updatePresence(null).catch(() => {});
+    tick();
+    this._presenceTimer = setInterval(tick, 30000);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        try { this.updatePresence(null); } catch (e) {}
+      });
+    }
+  },
+
+  /** Listen to all users in real-time (admin only). Returns unsubscribe. */
+  listenAllUsers(callback) {
+    return BBM.db.collection('users').onSnapshot(snap => {
+      const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+      callback(users);
+    }, err => {
+      console.warn('listenAllUsers failed:', err);
+      callback([]);
+    });
   },
 
   /* ----------------------------------------

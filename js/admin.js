@@ -48,8 +48,21 @@
     loadCatalog();
     loadSystemInfo();
 
-    // Poll users every 30s so "online" status refreshes
-    setInterval(() => loadUsers().then(renderUsers).then(updateSidebarCounts), 30000);
+    // Realtime listener sur la collection users — pas besoin de polling,
+    // on est notifié dès qu'un user pulse son lastSeen ou change watching
+    if (BBM.API.listenAllUsers) {
+      BBM.API.listenAllUsers((users) => {
+        allUsers = users;
+        renderUsers();
+        updateSidebarCounts();
+        // Re-render aussi le dashboard online list
+        try { renderDashboardOnline(); } catch (e) {}
+      });
+    }
+    // Re-render toutes les 15s même sans changement Firestore : les
+    // labels relatifs ("il y a X min") doivent se rafraîchir, et un
+    // user qui n'a plus pulsé doit basculer en "Inactif" / "Offline"
+    setInterval(() => { renderUsers(); updateSidebarCounts(); }, 15000);
   });
 
   /* ---------- Sidebar navigation ---------- */
@@ -332,6 +345,26 @@
     return epCode ? `${title} · ${epCode}` : title;
   }
 
+  function lastWatchedText(user) {
+    const lw = user?.lastWatched;
+    if (!lw || !lw.title) return '';
+    const epCode = (lw.type === 'series' && lw.season != null && lw.episode != null)
+      ? `S${String(lw.season).padStart(2,'0')}E${String(lw.episode).padStart(2,'0')}`
+      : '';
+    const title = lw.title;
+    return epCode ? `${title} · ${epCode}` : title;
+  }
+
+  function lastWatchedRelative(user) {
+    const ts = user?.lastWatched?.at;
+    if (!ts) return '';
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    const delta = Date.now() - date.getTime();
+    if (delta < 3600000) return 'il y a ' + Math.max(1, Math.floor(delta / 60000)) + ' min';
+    if (delta < 86400000) return 'il y a ' + Math.floor(delta / 3600000) + ' h';
+    return 'il y a ' + Math.floor(delta / 86400000) + ' j';
+  }
+
   function renderUsers() {
     const container = document.getElementById('admin-users-table');
     if (!container) return;
@@ -368,6 +401,7 @@
         <div>Utilisateur</div>
         <div>Statut</div>
         <div>Regarde</div>
+        <div>Dernier vu</div>
         <div>Rôle</div>
         <div></div>
       </div>
@@ -378,6 +412,9 @@
         const away = !online && isAway(u);
         const statusCls = online ? 'online' : away ? 'away' : 'offline';
         const watching = watchingText(u);
+        const isPaused = !!u?.presence?.watching?.paused;
+        const lastTitle = lastWatchedText(u);
+        const lastRel = lastWatchedRelative(u);
         return `
           <div class="admin-user-row">
             <div class="admin-user-identity">
@@ -395,7 +432,14 @@
               <span>${presenceLabel(u)}</span>
             </div>
             <div class="admin-user-watching">
-              ${watching ? `<span class="admin-watching-dot"></span><span class="admin-watching-text" title="${escapeHtml(watching)}">${escapeHtml(watching)}</span>` : '<span class="admin-muted">—</span>'}
+              ${watching
+                ? `<span class="admin-watching-icon ${isPaused ? 'paused' : 'playing'}" title="${isPaused ? 'En pause' : 'En lecture'}">${isPaused ? '⏸' : '▶'}</span><span class="admin-watching-text" title="${escapeHtml(watching)}">${escapeHtml(watching)}</span>`
+                : '<span class="admin-muted">—</span>'}
+            </div>
+            <div class="admin-user-lastwatched" title="${escapeHtml(lastTitle || '')}">
+              ${lastTitle
+                ? `<span class="admin-lastwatched-text">${escapeHtml(lastTitle)}</span><span class="admin-muted admin-lastwatched-rel">${lastRel}</span>`
+                : '<span class="admin-muted">—</span>'}
             </div>
             <div class="admin-user-role">
               ${u.admin ? '<span class="admin-role-badge admin">Admin</span>' : '<span class="admin-role-badge">User</span>'}
