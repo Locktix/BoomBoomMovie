@@ -2,11 +2,18 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=settings.html#account">
-  <title>BoomBoomMovie — Redirection</title>
-  <script>window.location.replace('settings.html#account');</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBoomMovie — Site déplacé</title>
+  <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
-  <p>Redirection vers <a href="settings.html#account">les paramètres</a>…</p>
+  <script>
+    var NEW_ORIGIN = 'https://boomboommovie.live';
+    var path = window.location.pathname.replace(/^\/BoomBoomMovie/, '') || '/';
+    window.location.replace(NEW_ORIGIN + path + window.location.search + window.location.hash);
+  </script>
+  <noscript>
+    <p>Le site a été déplacé. <a href="https://boomboommovie.live">Cliquez ici pour y accéder.</a></p>
+  </noscript>
 </body>
 </html>

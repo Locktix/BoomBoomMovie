@@ -3,438 +3,248 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoomBoomMovie — Ton cinéma. Tes séries. Sans limites.</title>
-  <meta name="description" content="Des milliers de films et séries en streaming, partout, sur tous tes écrans. Aucune pub. Aucun compromis.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://boomboommovie.live/">
-  <meta property="og:title" content="BoomBoomMovie — Ton cinéma. Tes séries. Sans limites.">
-  <meta property="og:description" content="Des milliers de films et séries en streaming. Interface léchée, lecture instantanée, zéro pub. C'est tout ce que tu mérites.">
-  <meta property="og:image" content="https://boomboommovie.live/icons/og-image.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="BoomBoomMovie — Ton cinéma. Tes séries. Sans limites.">
-  <meta name="twitter:description" content="Des milliers de films et séries en streaming. Interface léchée, lecture instantanée, zéro pub.">
-  <meta name="twitter:image" content="https://boomboommovie.live/icons/og-image.png">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#8B5CF6">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>BoomBoomMovie — Site déplacé</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #e2e8f0;
+      overflow: hidden;
+    }
+
+    /* Ambient orbs */
+    .orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: #8B5CF6;
+      top: -150px; left: -100px;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: #6D28D9;
+      bottom: -120px; right: -80px;
+      animation: drift 15s ease-in-out infinite alternate-reverse;
+    }
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: #7C3AED;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: drift 10s ease-in-out infinite alternate;
+    }
+    @keyframes drift {
+      from { transform: translateY(0) scale(1); }
+      to   { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* Card */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(139,92,246,0.25);
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 520px;
+      width: calc(100% - 32px);
+      text-align: center;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 60px rgba(139,92,246,0.12), 0 20px 60px rgba(0,0,0,0.5);
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo */
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 28px;
+      display: block;
+    }
+    .logo .accent { color: #8B5CF6; }
+
+    /* Icon */
+    .icon-wrap {
+      width: 64px;
+      height: 64px;
+      background: rgba(139,92,246,0.15);
+      border: 1px solid rgba(139,92,246,0.35);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 28px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+    p {
+      color: #94a3b8;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    p + p { margin-top: 10px; }
+
+    /* New URL chip */
+    .url-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(139,92,246,0.12);
+      border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 100px;
+      padding: 8px 16px;
+      margin: 24px auto;
+      font-size: 0.9rem;
+      color: #a78bfa;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      word-break: break-all;
+    }
+    .url-chip::before {
+      content: "🔗";
+      font-size: 0.85rem;
+    }
+
+    /* Note preserved */
+    .note {
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 20px 0 28px;
+      font-size: 0.85rem;
+      color: #6ee7b7;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      text-align: left;
+    }
+    .note-icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+
+    /* CTA button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+      color: #fff;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      box-shadow: 0 4px 20px rgba(139,92,246,0.4);
+      width: 100%;
+      justify-content: center;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(139,92,246,0.55);
+    }
+    .btn:active { transform: translateY(0); opacity: 0.9; }
+
+    /* Countdown */
+    .countdown {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    .countdown span {
+      color: #8B5CF6;
+      font-weight: 700;
+    }
+  </style>
 </head>
-<body class="landing-page">
-  <!-- Ambient orbs -->
-  <div class="landing-orbs" aria-hidden="true">
-    <div class="orb"></div>
-    <div class="orb"></div>
-    <div class="orb"></div>
+<body>
+  <div class="orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
   </div>
 
-  <!-- Top nav -->
-  <nav class="landing-nav" id="landing-nav">
-    <a href="#" class="logo">Boom<span class="accent">Boom</span>Movie<span class="dot"></span></a>
-    <div class="landing-nav-actions">
-      <a class="landing-nav-link" href="#features">Fonctionnalités</a>
-      <a class="landing-nav-link" href="#catalog">Catalogue</a>
-      <a class="landing-nav-link landing-nav-cta" href="#auth">Se connecter</a>
-    </div>
-  </nav>
+  <div class="card">
+    <span class="logo">Boom<span class="accent">Boom</span>Movie</span>
 
-  <!-- Hero -->
-  <section class="landing-hero" id="auth">
-    <div class="landing-hero-backdrop" aria-hidden="true"></div>
+    <div class="icon-wrap" aria-hidden="true">📦</div>
 
-    <div class="landing-hero-content">
-      <span class="landing-kicker">
-        <span class="landing-kicker-dot"></span>
-        NOUVEAUTÉS CHAQUE SEMAINE
+    <h1>Le site a été déplacé</h1>
+    <p>
+      Cette adresse n'est plus active. BoomBoomMovie a migré vers une nouvelle
+      plateforme avec une infrastructure entièrement repensée.
+    </p>
+
+    <div class="url-chip">https://boomboommovie.live</div>
+
+    <div class="note">
+      <span class="note-icon">✅</span>
+      <span>
+        <strong>Tes liens restent valides.</strong> Les URLs de films et de séries
+        sont identiques sur le nouveau site — tes favoris et partages fonctionnent toujours.
       </span>
-
-      <h1 class="landing-title">
-        Ton cinéma.<br>
-        Tes séries.<br>
-        <em>Sans limites.</em>
-      </h1>
-
-      <p class="landing-lead">
-        Des milliers de films et séries en streaming, partout, sur tous tes écrans.
-        Interface léchée, lecture instantanée, zéro pub. C'est tout ce que tu mérites.
-      </p>
-
-      <div class="landing-hero-ctas">
-        <button class="landing-cta-primary" id="cta-start">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
-          Commencer maintenant
-        </button>
-        <a class="landing-cta-secondary" href="#features">
-          En savoir plus
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
-      </div>
-
-      <div class="landing-stats">
-        <div>
-          <div class="landing-stat-value" id="stat-total">—</div>
-          <div class="landing-stat-label">TITRES AU CATALOGUE</div>
-        </div>
-        <div>
-          <div class="landing-stat-value" id="stat-movies">—</div>
-          <div class="landing-stat-label">FILMS</div>
-        </div>
-        <div>
-          <div class="landing-stat-value" id="stat-series">—</div>
-          <div class="landing-stat-label">SÉRIES</div>
-        </div>
-      </div>
     </div>
 
-    <!-- Auth panel -->
-    <div class="landing-auth-panel">
-      <h1 id="form-title">S'identifier</h1>
-      <p class="subtitle" id="form-subtitle">Connecte-toi pour accéder à ton espace</p>
+    <a class="btn" href="https://boomboommovie.live" id="redirect-btn">
+      Aller sur boomboommovie.live
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
 
-      <div class="login-error" id="login-error"></div>
-
-      <form id="auth-form" autocomplete="on">
-        <div class="form-group" id="name-group" style="display: none">
-          <input type="text" id="input-name" placeholder="Nom d'utilisateur" autocomplete="name">
-        </div>
-
-        <div class="form-group">
-          <input type="email" id="input-email" placeholder="Adresse email" autocomplete="email" required>
-        </div>
-
-        <div class="form-group">
-          <input type="password" id="input-password" placeholder="Mot de passe" autocomplete="current-password" required minlength="6">
-        </div>
-
-        <button type="submit" class="btn-primary" id="btn-submit">S'identifier</button>
-      </form>
-
-      <p class="login-forgot" id="forgot-wrap">
-        <a id="forgot-link">Mot de passe oublié ?</a>
-      </p>
-
-      <p class="login-toggle">
-        <span id="toggle-text">Nouveau sur BoomBoomMovie ?</span>
-        <a id="toggle-link">Inscris-toi.</a>
-      </p>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section class="landing-section" id="features">
-    <div class="landing-section-head">
-      <span class="landing-section-kicker">POURQUOI BOOMBOOM</span>
-      <h2 class="landing-section-title">Une expérience <em>premium</em>, pensée pour les vrais cinéphiles.</h2>
-      <p class="landing-section-lead">
-        On ne coupe jamais les coins ronds. Interface soignée, lecture fluide, sync sur tous tes écrans.
-        Pas d'abonnement, pas de pub, pas de compromis.
-      </p>
-    </div>
-
-    <div class="landing-features-grid">
-      <div class="landing-feature">
-        <div class="landing-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="23 7 16 12 23 17 23 7"/>
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-          </svg>
-        </div>
-        <h3>Catalogue massif</h3>
-        <p>Des milliers de films et séries, classiques cultes et sorties récentes. Du MCU aux animés en passant par les séries HBO.</p>
-      </div>
-
-      <div class="landing-feature">
-        <div class="landing-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-            <line x1="8" y1="21" x2="16" y2="21"/>
-            <line x1="12" y1="17" x2="12" y2="21"/>
-          </svg>
-        </div>
-        <h3>Sur tous tes écrans</h3>
-        <p>Ordi, mobile, tablette, Android TV. Commence un épisode dans le métro, finis-le sur le canapé. La progression suit.</p>
-      </div>
-
-      <div class="landing-feature">
-        <div class="landing-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-        </div>
-        <h3>Lecture instantanée</h3>
-        <p>Zéro buffering, démarrage immédiat, qualité 4K. Player custom avec raccourcis clavier et pistes audio/sous-titres.</p>
-      </div>
-
-      <div class="landing-feature">
-        <div class="landing-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-        </div>
-        <h3>Ta liste, tes règles</h3>
-        <p>Ajoute ce que tu veux, note ce que tu aimes. Des recommandations basées sur ce que tu regardes vraiment, pas sur un algo louche.</p>
-      </div>
-
-      <div class="landing-feature">
-        <div class="landing-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <h3>Reprise auto</h3>
-        <p>On sauvegarde ta progression à chaque seconde. Tu reprends exactement où tu t'étais arrêté, même après trois mois.</p>
-      </div>
-
-      <div class="landing-feature">
-        <div class="landing-feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-        </div>
-        <h3>Demande-le, on le trouve</h3>
-        <p>Un film manque ? Tu demandes, on ajoute. Pas de menu à choix multiples, juste les titres que la communauté veut vraiment voir.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Catalog strip -->
-  <section class="landing-catalog-strip" id="catalog" aria-hidden="true">
-    <div class="landing-catalog-track" id="catalog-track">
-      <!-- Posters injected via JS -->
-    </div>
-  </section>
-
-  <!-- Final CTA -->
-  <section class="landing-final-cta">
-    <div class="landing-final-card">
-      <span class="landing-section-kicker">DERNIÈRE CHANCE</span>
-      <h2>Prêt à passer au <em style="font-style:normal;background:linear-gradient(135deg,var(--bbm-accent),var(--bbm-accent-hover));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">niveau au-dessus</em> ?</h2>
-      <p>Crée ton compte en 10 secondes. Pas de carte bleue, pas d'engagement. Juste le meilleur du cinéma, à portée de clic.</p>
-      <button class="landing-cta-primary" id="cta-final">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
-        Créer mon compte
-      </button>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="landing-footer">
-    <div class="landing-footer-links">
-      <a href="#features">Fonctionnalités</a>
-      <a href="#catalog">Catalogue</a>
-      <a href="#auth">Connexion</a>
-    </div>
-    <p>BoomBoomMovie © 2026 — Fait avec 🎬 pour les cinéphiles exigeants.</p>
-  </footer>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-  <!-- App -->
-  <script src="js/config.js"></script>
-  <script src="js/settings.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/api.js"></script>
+    <p class="countdown">Redirection automatique dans <span id="counter">30</span> s</p>
+  </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      let isLogin = true;
+    // Preserve path: redirect to the same path on the new domain
+    const NEW_ORIGIN = 'https://boomboommovie.live';
+    const currentPath = window.location.pathname.replace(/^\/BoomBoomMovie/, '') || '/';
+    const target = NEW_ORIGIN + currentPath + window.location.search + window.location.hash;
 
-      const form = document.getElementById('auth-form');
-      const formTitle = document.getElementById('form-title');
-      const nameGroup = document.getElementById('name-group');
-      const inputName = document.getElementById('input-name');
-      const inputEmail = document.getElementById('input-email');
-      const inputPassword = document.getElementById('input-password');
-      const btnSubmit = document.getElementById('btn-submit');
-      const toggleText = document.getElementById('toggle-text');
-      const toggleLink = document.getElementById('toggle-link');
-      const errorEl = document.getElementById('login-error');
-      const subtitleEl = document.getElementById('form-subtitle');
-      const forgotLink = document.getElementById('forgot-link');
-      const forgotWrap = document.getElementById('forgot-wrap');
+    document.getElementById('redirect-btn').href = target;
 
-      // Redirect si déjà connecté
-      BBM.Auth.redirectIfLoggedIn();
-
-      // Nav scroll effect
-      const nav = document.getElementById('landing-nav');
-      const onScroll = () => {
-        nav.classList.toggle('scrolled', window.scrollY > 30);
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-
-      // CTAs → focus auth panel
-      const focusAuth = (register) => {
-        if (register && isLogin) toggleLink.click();
-        document.getElementById('auth').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(() => inputEmail.focus(), 500);
-      };
-      document.getElementById('cta-start').addEventListener('click', () => focusAuth(false));
-      document.getElementById('cta-final').addEventListener('click', () => focusAuth(true));
-
-      // Toggle Login / Register
-      toggleLink.addEventListener('click', () => {
-        isLogin = !isLogin;
-        if (isLogin) {
-          formTitle.textContent = "S'identifier";
-          subtitleEl.textContent = 'Connecte-toi pour accéder à ton espace';
-          btnSubmit.textContent = "S'identifier";
-          toggleText.textContent = 'Nouveau sur BoomBoomMovie ?';
-          toggleLink.textContent = 'Inscris-toi.';
-          nameGroup.style.display = 'none';
-          inputPassword.autocomplete = 'current-password';
-          forgotWrap.style.display = '';
-        } else {
-          formTitle.textContent = "S'inscrire";
-          subtitleEl.textContent = 'Crée ton compte en quelques secondes';
-          btnSubmit.textContent = "S'inscrire";
-          toggleText.textContent = 'Déjà un compte ?';
-          toggleLink.textContent = 'Connecte-toi.';
-          nameGroup.style.display = 'block';
-          inputPassword.autocomplete = 'new-password';
-          forgotWrap.style.display = 'none';
-        }
-        errorEl.classList.remove('show');
-      });
-
-      // Submit
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = inputEmail.value.trim();
-        const password = inputPassword.value;
-        const name = inputName.value.trim();
-        if (!email || !password) return;
-
-        btnSubmit.disabled = true;
-        btnSubmit.textContent = 'Chargement...';
-        errorEl.classList.remove('show');
-
-        try {
-          if (isLogin) {
-            await BBM.Auth.login(email, password);
-          } else {
-            await BBM.Auth.register(email, password, name);
-          }
-          window.location.href = 'browse.html';
-        } catch (err) {
-          errorEl.textContent = BBM.Auth.translateError(err.code);
-          errorEl.classList.add('show');
-          btnSubmit.disabled = false;
-          btnSubmit.textContent = isLogin ? "S'identifier" : "S'inscrire";
-        }
-      });
-
-      // Forgot password
-      forgotLink.addEventListener('click', async () => {
-        const email = inputEmail.value.trim();
-        if (!email) {
-          errorEl.textContent = 'Entre ton adresse email ci-dessus, puis clique ici.';
-          errorEl.classList.add('show');
-          inputEmail.focus();
-          return;
-        }
-        forgotLink.style.pointerEvents = 'none';
-        forgotLink.textContent = 'Envoi en cours...';
-        try {
-          await BBM.Auth.resetPassword(email);
-          errorEl.textContent = '';
-          errorEl.classList.remove('show');
-          forgotLink.textContent = 'Email envoyé !';
-          setTimeout(() => {
-            forgotLink.textContent = 'Mot de passe oublié ?';
-            forgotLink.style.pointerEvents = '';
-          }, 4000);
-        } catch (err) {
-          errorEl.textContent = BBM.Auth.translateError(err.code);
-          errorEl.classList.add('show');
-          forgotLink.textContent = 'Mot de passe oublié ?';
-          forgotLink.style.pointerEvents = '';
-        }
-      });
-
-      // Real catalog stats — fetch from worker API, update values live
-      (async () => {
-        try {
-          await BBM.API.fetchAllItems();
-          const movies = BBM.API.getMovies();
-          const seriesMap = BBM.API.getSeriesMap();
-          const moviesCount = movies.length;
-          const seriesCount = seriesMap.size;
-          const uniqueIDs = new Set([...movies.map(m => String(m.tmdbID)), ...[...seriesMap.keys()].map(String)]);
-          const totalCount = uniqueIDs.size;
-
-          const fmt = (n) => {
-            if (n >= 1000) {
-              const k = n / 1000;
-              return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
-            }
-            return String(n);
-          };
-
-          const animateCount = (el, target) => {
-            const duration = 900;
-            const start = performance.now();
-            const step = (now) => {
-              const t = Math.min(1, (now - start) / duration);
-              const eased = 1 - Math.pow(1 - t, 3);
-              const current = Math.round(target * eased);
-              el.textContent = fmt(current);
-              if (t < 1) requestAnimationFrame(step);
-              else el.textContent = fmt(target);
-            };
-            requestAnimationFrame(step);
-          };
-
-          animateCount(document.getElementById('stat-total'), totalCount);
-          animateCount(document.getElementById('stat-movies'), moviesCount);
-          animateCount(document.getElementById('stat-series'), seriesCount);
-        } catch (e) {
-          // If the catalog is unreachable, keep the placeholders
-          console.warn('Stats fetch failed:', e);
-        }
-      })();
-
-      // Catalog poster strip (iconic TMDB posters, doubled for seamless loop)
-      const POSTERS = [
-        '/dKqa850uvbNSCaQCV4Im1XlzEtQ.jpg',   // Inception
-        '/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg',   // Interstellar
-        '/q719jXXEzOoYaps6babgKnONONX.jpg',   // Dune
-        '/9n2tJBplPbgR2ca05hS5CKXwP2c.jpg',   // Barbie
-        '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',   // Oppenheimer
-        '/rktDFPbfHfUbArZ6OOOKsXcv0Bm.jpg',   // Spider-Man NWH
-        '/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg',   // House of the Dragon
-        '/jsoz1HlxczSuTx0mDl2h0lxy36l.jpg',   // The Last of Us
-        '/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',   // The Lord of the Rings
-        '/iZLqwUxDgJ7vh7zjcpIUq7jM7sY.jpg',   // John Wick
-        '/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg',   // The Matrix
-        '/kqjL17yufvn9OVLyXYpvtyrFfak.jpg',   // Mad Max Fury Road
-        '/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg',   // Mandalorian
-        '/jMBpJFRzI1SwcSCoJL3PPXOx2o9.jpg',   // Breaking Bad
-        '/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg',   // Stranger Things
-        '/aTvePCU7exLepwg5hWySjwxojQK.jpg',   // Arcane
-      ];
-      const TMDB_IMG = 'https://image.tmdb.org/t/p/w342';
-      const track = document.getElementById('catalog-track');
-      const frag = document.createDocumentFragment();
-      // Double the list for infinite-scroll illusion
-      [...POSTERS, ...POSTERS].forEach(path => {
-        const img = document.createElement('img');
-        img.className = 'landing-poster';
-        img.loading = 'lazy';
-        img.alt = '';
-        img.src = TMDB_IMG + path;
-        img.onerror = () => { img.style.display = 'none'; };
-        frag.appendChild(img);
-      });
-      track.appendChild(frag);
-    });
+    // Countdown
+    let s = 30;
+    const counter = document.getElementById('counter');
+    const timer = setInterval(() => {
+      s--;
+      counter.textContent = s;
+      if (s <= 0) {
+        clearInterval(timer);
+        window.location.replace(target);
+      }
+    }, 1000);
   </script>
-  <script src="js/tv-nav.js"></script>
 </body>
 </html>
